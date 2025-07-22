@@ -12,6 +12,22 @@
     },
     {
       "type": "release",
+      "date": "2025-07-22",
+      "version": "1.12.99",
+      "title": "Version 1.12.99 Agent Beta",
+      "changes": [
+        {
+          "type": "added",
+          "description": "Agent config validation logic - [#2357](https://github.com/aws/amazon-q-developer-cli/pull/2357)"
+        },
+        {
+          "type": "fixed",
+          "description": "In memory default agent not loading global mcp - [#2356](https://github.com/aws/amazon-q-developer-cli/pull/2356)"
+        }
+      ]
+    },
+    {
+      "type": "release",
       "date": "2025-07-17",
       "version": "1.12.6",
       "title": "Version 1.12.6",
