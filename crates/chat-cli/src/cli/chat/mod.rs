@@ -141,9 +141,10 @@ use crate::telemetry::{
     get_error_reason,
 };
 
-const LIMIT_REACHED_TEXT: &str = color_print::cstr! { "You've used all your free requests for this month. You have two options:
-1. Upgrade to a paid subscription for increased limits. See our Pricing page for what's included> <blue!>https://docs.aws.amazon.com/console/amazonq/subscriptions</blue!>
-2. Wait until next month when your limit automatically resets." };
+const LIMIT_REACHED_TEXT: &str = color_print::cstr! { "You've used all your free requests for this month. You have three options:
+1. Upgrade your subscription tier for increased limits. See our Pricing page for what's included in each tier> <blue!>https://aws.amazon.com/q/developer/pricing/</blue!>
+2. Enable overages in the Q Developer console so that you can continue to work beyond your monthly limit. Learn more: <blue!>https://docs.aws.amazon.com/console/amazonq/subscription</blue!>
+3. Wait until next month when your limit automatically resets." };
 
 pub const EXTRA_HELP: &str = color_print::cstr! {"
 <cyan,em>MCP:</cyan,em>
@@ -872,7 +873,7 @@ impl ChatSession {
                             self.stderr,
                             style::Print("\n"),
                             style::Print(
-                                "Enable overages in the Q Developer management console to continue working beyond the monthly request limit.\n"
+                                "To increase your capacity, ask your account administrator to upgrade your subscription tier or enable overages.\n"
                             ),
                             style::Print("Learn more: "),
                             style::SetForegroundColor(Color::Blue),
