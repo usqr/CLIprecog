@@ -77,9 +77,9 @@ export default function Page() {
     } catch (error) {
       console.error("Failed to generate console URL:", error);
       const defaultUrl =
-        usageLimits?.subscriptionTier === "free"
-          ? "https://docs.aws.amazon.com/console/amazonq/upgrade-builder-id"
-          : "https://us-east-1.console.aws.amazon.com/amazonq/developer/home#/subscriptions";
+        auth.authKind === "BuilderId"
+          ? "https://us-east-1.console.aws.amazon.com/amazonq/developer/home#/subscriptions"
+          : "https://docs.aws.amazon.com/console/amazonq/subscriptions";
       await Native.open(defaultUrl);
     } finally {
       setGeneratingUrl(false);
@@ -207,10 +207,9 @@ export default function Page() {
                   >
                     {generatingUrl
                       ? "Loading..."
-                      : usageLimits.subscriptionTier === "pro" ||
-                          usageLimits.subscriptionTier === "proPlus"
-                        ? "Manage subscription"
-                        : "Upgrade to Pro"}
+                      : auth.authKind === "BuilderId"
+                        ? "Upgrade Subscription"
+                        : "Learn More"}
                   </Button>
                 </>
               ) : (

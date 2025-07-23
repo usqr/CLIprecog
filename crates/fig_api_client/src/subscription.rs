@@ -38,16 +38,19 @@ pub struct UsageLimitsInfo {
     pub subscription_tier: SubscriptionTier,
     pub reset_date_utc: Option<String>,
 }
+
+const PRICING_DOCS_LINK: &str = "https://docs.aws.amazon.com/console/amazonq/subscriptions";
+
 pub async fn generate_console_url() -> Result<String, Error> {
     let token = builder_id_token().await.ok().flatten();
     let region = token.as_ref().and_then(|t| t.region.clone());
 
-    // IAM Identity Center (IdC) users always go to the console subscription page
+    // IAM Identity Center (IdC) users's subscription is managed by admin
     if token
         .as_ref()
         .is_some_and(|t| matches!(t.token_type(), TokenType::IamIdentityCenter))
     {
-        return Ok(console_url(region.as_deref()));
+        return Ok(PRICING_DOCS_LINK.to_string());
     }
 
     // Builder ID users
