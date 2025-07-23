@@ -6,12 +6,13 @@ use std::sync::{
 use amzn_codewhisperer_client::Client as CodewhispererClient;
 use amzn_codewhisperer_client::operation::create_subscription_token::CreateSubscriptionTokenOutput;
 use amzn_codewhisperer_client::operation::generate_completions::GenerateCompletionsError;
-use amzn_codewhisperer_client::operation::get_usage_limits::GetUsageLimitsOutput;
 use amzn_codewhisperer_client::types::error::AccessDeniedError;
 use amzn_codewhisperer_client::types::{
     AccessDeniedExceptionReason,
     OptOutPreference,
+    ResourceType,
     TelemetryEvent,
+    UsageBreakdown,
     UsageLimitList,
     UsageLimitType,
     UserContext,
@@ -300,47 +301,44 @@ impl Client {
 
     pub async fn get_usage_limits(
         &self,
+        resource_type: Option<ResourceType>,
     ) -> Result<amzn_codewhisperer_client::operation::get_usage_limits::GetUsageLimitsOutput, Error> {
         match &self.inner {
-            inner::Inner::Codewhisperer(_client) => {
-                let mock_limits = UsageLimitList::builder()
-                // todo yifan: need to confirm type
-                    .r#type(UsageLimitType::Chat) 
-                    .value(1000)
-                    .percent_used(123.4)
-                    .build()
-                    .unwrap();
-
-                Ok(GetUsageLimitsOutput::builder()
-                    .limits(mock_limits)
-                    .days_until_reset(14)
-                    .build()
-                    .unwrap())
-                // let request = client.get_usage_limits();
-                // request
-                //     .set_profile_arn(self.profile_arn.clone())
-                //     .send()
-                //     .await
-                //     .map_err(Error::GetUsageLimits)
+            inner::Inner::Codewhisperer(client) => {
+                let request = client.get_usage_limits();
+                request
+                    .set_profile_arn(self.profile_arn.clone())
+                    .set_resource_type(resource_type)
+                    .send()
+                    .await
+                    .map_err(Error::GetUsageLimits)
             },
             inner::Inner::Consolas(_) => Err(Error::UnsupportedConsolas("get_usage_limits")),
             inner::Inner::Mock => {
-                use amzn_codewhisperer_client::types::{
-                    UsageLimitList,
-                    UsageLimitType,
+                use std::time::{
+                    Duration as StdDuration,
+                    SystemTime,
                 };
-
                 let mock_limits = UsageLimitList::builder()
-                    .r#type(UsageLimitType::Chat)
-                    .value(1000)
-                    .percent_used(123.4)
+                    .r#type(UsageLimitType::AgenticRequest)
+                    .current_usage(1000)
+                    .total_usage_limit(1100)
                     .build()
                     .unwrap();
+                use aws_smithy_types::DateTime as SmithyDateTime;
+                let next_reset = SmithyDateTime::from(SystemTime::now() + StdDuration::from_secs(14 * 24 * 3600));
+                let usage_breakdown = UsageBreakdown::builder()
+                    .current_usage(1_234)
+                    .current_overages(34)
+                    .usage_limit(1_000)
+                    .overage_charges(12.34)
+                    .next_date_reset(next_reset)
+                    .build()?;
 
                 Ok(
                     amzn_codewhisperer_client::operation::get_usage_limits::GetUsageLimitsOutput::builder()
                         .limits(mock_limits)
-                        .days_until_reset(14)
+                        .usage_breakdown(usage_breakdown)
                         .build()
                         .unwrap(),
                 )

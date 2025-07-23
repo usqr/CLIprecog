@@ -3042,6 +3042,7 @@ dependencies = [
  "aws-smithy-types",
  "aws-types",
  "bytes",
+ "chrono",
  "fig_auth",
  "fig_aws_common",
  "fig_request",

@@ -25,11 +25,8 @@ export default function Page() {
   const auth = useAuth();
   const [profile, setProfile] = useState<Profile | undefined>(undefined);
   const [profiles, setProfiles] = useState<Profile[] | undefined>(undefined);
-  const [subscriptionStatus, setSubscriptionStatus] =
-    useState<Subscription.SubscriptionStatus | null>(null);
   const [usageLimits, setUsageLimits] =
     useState<Subscription.UsageLimits | null>(null);
-  const [loadingSubscription, setLoadingSubscription] = useState(true);
   const [loadingUsage, setLoadingUsage] = useState(true);
   const [generatingUrl, setGeneratingUrl] = useState(false);
 
@@ -57,11 +54,6 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    Subscription.getSubscriptionStatus()
-      .then(setSubscriptionStatus)
-      .catch(console.error)
-      .finally(() => setLoadingSubscription(false));
-
     Subscription.getUsageLimits()
       .then(setUsageLimits)
       .catch(console.error)
@@ -85,37 +77,13 @@ export default function Page() {
     } catch (error) {
       console.error("Failed to generate console URL:", error);
       const defaultUrl =
-        subscriptionStatus?.tier === "free"
+        usageLimits?.subscriptionTier === "free"
           ? "https://docs.aws.amazon.com/console/amazonq/upgrade-builder-id"
           : "https://us-east-1.console.aws.amazon.com/amazonq/developer/home#/subscriptions";
       await Native.open(defaultUrl);
     } finally {
       setGeneratingUrl(false);
     }
-  };
-
-  const formatResetDate = () => {
-    if (!usageLimits) return "";
-    const resetDate = new Date();
-    resetDate.setDate(resetDate.getDate() + usageLimits.daysUntilReset);
-    return resetDate.toLocaleDateString("en-US", {
-      month: "numeric",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const calculateUsageData = () => {
-    if (!usageLimits || usageLimits.limits.length === 0) {
-      return { used: 1234, total: 1000, averagePerDay: 59.36 }; // Mock 数据
-    }
-
-    const queryLimit = usageLimits.limits[0];
-    const total = queryLimit.value;
-    const used = Math.round((total * queryLimit.percentUsed) / 100);
-    const averagePerDay = 59.36; // Mock 数据，API 暂未提供
-
-    return { used, total, averagePerDay };
   };
 
   let authKind;
@@ -221,15 +189,15 @@ export default function Page() {
             {/* Subscription Section */}
             <div className="py-4 border-b">
               <h2 className="text-xl font-medium mb-2">Subscription</h2>
-              {loadingSubscription ? (
+              {loadingUsage ? (
                 <Skeleton className="w-40 h-10" />
-              ) : subscriptionStatus ? (
+              ) : usageLimits ? (
                 <>
                   <p className="text-sm mb-2">
-                    {subscriptionStatus.tier === "pro"
+                    {usageLimits.subscriptionTier === "pro"
                       ? "Pro tier"
-                      : subscriptionStatus.tier === "expiring"
-                        ? "Pro tier (expiring)"
+                      : usageLimits.subscriptionTier === "proPlus"
+                        ? "Pro Plus tier"
                         : "Free tier"}
                   </p>
                   <Button
@@ -239,8 +207,8 @@ export default function Page() {
                   >
                     {generatingUrl
                       ? "Loading..."
-                      : subscriptionStatus.tier === "pro" ||
-                          subscriptionStatus.tier === "expiring"
+                      : usageLimits.subscriptionTier === "pro" ||
+                          usageLimits.subscriptionTier === "proPlus"
                         ? "Manage subscription"
                         : "Upgrade to Pro"}
                   </Button>
@@ -263,16 +231,13 @@ export default function Page() {
                 </div>
               ) : usageLimits ? (
                 <div className="text-sm space-y-1">
-                  {(() => {
-                    const { used, total, averagePerDay } = calculateUsageData();
-                    return (
-                      <>
-                        <p>{`${used}/${total} queries used`}</p>
-                        <p>{`$${averagePerDay.toFixed(2)} incurred in average`}</p>
-                        <p>{`Limits reset on ${formatResetDate()} at TT:TT:TT`}</p>
-                      </>
-                    );
-                  })()}
+                  <p>{`${usageLimits.currentUsage}/${usageLimits.usageLimit} queries used`}</p>
+                  <p>
+                    {usageLimits.overageEnabled
+                      ? `$${usageLimits.overageCharges.toFixed(2)} incurred in overages`
+                      : "Overage disabled by admin"}
+                  </p>
+                  <p>{`Limits reset on ${usageLimits.resetDate}`}</p>
                 </div>
               ) : (
                 <p className="text-sm text-gray-500">

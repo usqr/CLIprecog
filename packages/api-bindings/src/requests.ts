@@ -53,9 +53,6 @@ import {
   GetSettingsPropertyRequest,
   GetSettingsPropertyRequestSchema,
   GetSettingsPropertyResponse,
-  GetSubscriptionStatusRequest,
-  GetSubscriptionStatusRequestSchema,
-  GetSubscriptionStatusResponse,
   GetUsageLimitsRequest,
   GetUsageLimitsRequestSchema,
   GetUsageLimitsResponse,
@@ -685,35 +682,6 @@ export async function sendListAvailableProfilesRequest(
             reject(
               Error(
                 `Invalid response '${response?.case}' for 'ListAvailableProfilesRequest'`,
-              ),
-            );
-        }
-      },
-    );
-  });
-}
-
-export async function sendGetSubscriptionStatusRequest(
-  request: Omit<GetSubscriptionStatusRequest, "$typeName" | "$unknown">,
-): Promise<GetSubscriptionStatusResponse> {
-  return new Promise((resolve, reject) => {
-    sendMessage(
-      {
-        case: "getSubscriptionStatusRequest",
-        value: create(GetSubscriptionStatusRequestSchema, request),
-      },
-      (response) => {
-        switch (response?.case) {
-          case "getSubscriptionStatusResponse":
-            resolve(response.value);
-            break;
-          case "error":
-            reject(Error(response.value));
-            break;
-          default:
-            reject(
-              Error(
-                `Invalid response '${response?.case}' for 'GetSubscriptionStatusRequest'`,
               ),
             );
         }

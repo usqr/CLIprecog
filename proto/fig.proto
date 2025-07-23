@@ -46,9 +46,8 @@ message ClientOriginatedMessage {
     GetPlatformInfoRequest get_platform_info_request = 152;
     ListAvailableProfilesRequest list_available_profiles_request = 155;
     SetProfileRequest set_profile_request = 156;
-    GetSubscriptionStatusRequest get_subscription_status_request = 157;
-    GetUsageLimitsRequest get_usage_limits_request = 158;
-    GenerateConsoleUrlRequest generate_console_url_request = 159;
+    GetUsageLimitsRequest get_usage_limits_request = 157;
+    GenerateConsoleUrlRequest generate_console_url_request = 158;
   }
 
   reserved 115;
@@ -81,9 +80,8 @@ message ServerOriginatedMessage {
     AuthCancelPkceAuthorizationResponse auth_cancel_pkce_authorization_response = 124;
     GetPlatformInfoResponse get_platform_info_response = 125;
     ListAvailableProfilesResponse list_available_profiles_response = 155;
-    GetSubscriptionStatusResponse get_subscription_status_response = 157;
-    GetUsageLimitsResponse get_usage_limits_response = 158;
-    GenerateConsoleUrlResponse generate_console_url_response = 159;
+    GetUsageLimitsResponse get_usage_limits_response = 157;
+    GenerateConsoleUrlResponse generate_console_url_response = 158;
     
     Notification notification = 1000;
   }
@@ -406,27 +404,31 @@ message SetProfileRequest {
 enum SubscriptionTier {
   FREE = 0;
   PRO  = 1;     
-  EXPIRING = 2; 
+  PRO_PLUS = 2;
 }
-
-message GetSubscriptionStatusRequest {}
-
-message GetSubscriptionStatusResponse {
-  SubscriptionTier tier = 1;
-}
-
 
 /// Usage
 message GetUsageLimitsRequest {}
+
 message GetUsageLimitsResponse {
-  repeated UsageLimit limits = 1;
-  int32 days_until_reset = 2;
+  UsageBreakdown usage_breakdown = 1;
+  SubscriptionInfo subscription_info = 2;
+  OverageInfo overage_info = 3;
 }
 
-message UsageLimit {
-  string type = 1;           
-  int64 value = 2;           
-  double percent_used = 3;   
+message OverageInfo {
+  bool enabled = 1;
+}
+
+message SubscriptionInfo {
+  SubscriptionTier tier = 1;
+}
+
+message UsageBreakdown {
+  int32 current_usage = 1;
+  int32 usage_limit = 2;
+  double overage_charges = 3;
+  string reset_date = 4;
 }
 
 message GenerateConsoleUrlRequest {}

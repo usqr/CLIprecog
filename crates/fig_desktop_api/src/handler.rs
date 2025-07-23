@@ -180,7 +180,6 @@ where
                 GetLocalStateRequest,
                 GetPlatformInfoRequest,
                 GetSettingsPropertyRequest,
-                GetSubscriptionStatusRequest,
                 GetUsageLimitsRequest,
                 HistoryQueryRequest,
                 InsertTextRequest,
@@ -273,7 +272,6 @@ where
                 UserLogoutRequest(request) => event_handler.user_logout(request!(request)).await,
                 ListAvailableProfilesRequest(request) => profile::list_available_profiles(request).await,
                 SetProfileRequest(request) => profile::set_profile(request).await,
-                GetSubscriptionStatusRequest(request) => subscription::get_subscription_status(request).await,
                 GetUsageLimitsRequest(request) => subscription::get_usage_limits(request).await,
                 GenerateConsoleUrlRequest(request) => subscription::generate_console_url(request).await,
             }

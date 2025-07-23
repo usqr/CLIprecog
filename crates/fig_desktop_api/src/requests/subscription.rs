@@ -1,18 +1,17 @@
 use fig_api_client::subscription::{
     SubscriptionTier as ApiTier,
     generate_console_url as generate_url,
-    get_subscription_status as get_status,
     get_usage_limits as get_limits,
 };
 use fig_proto::fig::{
     GenerateConsoleUrlRequest,
     GenerateConsoleUrlResponse,
-    GetSubscriptionStatusRequest,
-    GetSubscriptionStatusResponse,
     GetUsageLimitsRequest,
     GetUsageLimitsResponse,
+    OverageInfo,
+    SubscriptionInfo,
     SubscriptionTier,
-    UsageLimit,
+    UsageBreakdown,
 };
 use tracing::debug;
 
@@ -22,48 +21,37 @@ use super::{
     ServerOriginatedSubMessage,
 };
 
-pub async fn get_subscription_status(_request: GetSubscriptionStatusRequest) -> RequestResult {
-    debug!("Getting subscription status");
-    match get_status().await {
-        Ok(status_info) => {
-            let tier_proto = match status_info.tier {
-                ApiTier::Free => SubscriptionTier::Free,
-                ApiTier::Pro => SubscriptionTier::Pro,
-                ApiTier::Expiring => SubscriptionTier::Expiring,
-            } as i32;
-
-            Ok(
-                ServerOriginatedSubMessage::GetSubscriptionStatusResponse(GetSubscriptionStatusResponse {
-                    tier: tier_proto,
-                })
-                .into(),
-            )
-        },
-        Err(e) => RequestResult::error(format!("Failed to get subscription status: {e}")),
-    }
-}
-
 pub async fn get_usage_limits(_request: GetUsageLimitsRequest) -> RequestResult {
     debug!("Getting usage limits");
 
     match get_limits().await {
-        // yifan todo: type
         Ok(usage_info) => {
-            let limits: Vec<UsageLimit> = usage_info
-                .limits
-                .into_iter()
-                .filter(|l| l.r#type.eq_ignore_ascii_case("chat"))
-                .map(|limit| UsageLimit {
-                    r#type: limit.r#type,
-                    value: limit.value,
-                    percent_used: limit.percent_used,
-                })
-                .collect();
+            let usage_breakdown = UsageBreakdown {
+                current_usage: usage_info.current_usage.unwrap_or(0),
+                usage_limit: usage_info.usage_limit.unwrap_or(0),
+                overage_charges: usage_info.overage_charges.unwrap_or(0.0),
+                reset_date: usage_info
+                    .reset_date_utc
+                    .unwrap_or_else(|| "1st of next month 12:00:00 GMT".to_string()),
+            };
+
+            let subscription_info = SubscriptionInfo {
+                tier: match usage_info.subscription_tier {
+                    ApiTier::Free => SubscriptionTier::Free,
+                    ApiTier::Pro => SubscriptionTier::Pro,
+                    ApiTier::ProPlus => SubscriptionTier::ProPlus,
+                } as i32,
+            };
+
+            let overage_info = OverageInfo {
+                enabled: usage_info.overage_enabled,
+            };
 
             Ok(
                 ServerOriginatedSubMessage::GetUsageLimitsResponse(GetUsageLimitsResponse {
-                    limits,
-                    days_until_reset: usage_info.days_until_reset,
+                    usage_breakdown: Some(usage_breakdown),
+                    subscription_info: Some(subscription_info),
+                    overage_info: Some(overage_info),
                 })
                 .into(),
             )
