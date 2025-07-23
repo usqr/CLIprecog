@@ -187,8 +187,8 @@ export default function Page() {
             )}
 
             {/* Subscription Section */}
-            <div className="py-4 border-b">
-              <h2 className="text-xl font-medium mb-2">Subscription</h2>
+            <div className="py-4">
+              <h3 className="font-medium leading-none mb-2">Subscription</h3>
               {loadingUsage ? (
                 <Skeleton className="w-40 h-10" />
               ) : usageLimits ? (
@@ -222,7 +222,7 @@ export default function Page() {
 
             {/* Usage Section */}
             <div className="py-4">
-              <h2 className="text-xl font-medium mb-2">Usage</h2>
+              <h3 className="font-medium leading-none mb-2">Usage</h3>
               {loadingUsage ? (
                 <div className="flex flex-col gap-1">
                   <Skeleton className="w-60 h-4" />
