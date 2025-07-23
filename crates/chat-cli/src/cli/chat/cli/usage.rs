@@ -1,3 +1,11 @@
+use std::convert::TryFrom;
+use std::time::SystemTime;
+
+use amzn_codewhisperer_client::types::{
+    OverageStatus,
+    ResourceType,
+    SubscriptionType,
+};
 use clap::Args;
 use crossterm::style::{
     Attribute,
@@ -183,57 +191,70 @@ impl UsageArgs {
             )),
         )?;
 
-        match os.client.get_usage_limits().await {
-            Ok(usage_response) => {
-                if let Some(query_limit) = usage_response.limits().first() {
-                    let total_limit = query_limit.value();
-                    let percent_used = query_limit.percent_used().unwrap_or(0.0);
-
-                    // Mock data
-                    let queries_used = ((total_limit as f64 * percent_used / 100.0) as i64).max(1234);
-                    let average_queries_per_day = 59.36;
-
-                    // calculate reset date
-                    let reset_date = (chrono::Local::now()
-                        + chrono::Duration::days(usage_response.days_until_reset() as i64))
-                    .format("%m/%d/%Y at %H:%M:%S");
-
+        match os.client.get_usage_limits(Some(ResourceType::AgenticRequest)).await {
+            Ok(resp) => {
+                tracing::debug!(?resp, "Raw get_usage_limits response");
+                // Subscription tier
+                if let Some(sub) = resp.subscription_info() {
+                    let tier_str = match sub.r#type() {
+                        SubscriptionType::QDeveloperStandaloneFree => "Free tier",
+                        SubscriptionType::QDeveloperStandalone => "Pro tier",
+                        SubscriptionType::QDeveloperStandaloneProPlus => "Pro Plus tier",
+                        _ => "",
+                    };
                     queue!(
                         session.stderr,
                         style::Print("\n"),
                         style::SetAttribute(Attribute::Bold),
-                        style::Print("📊 Usage limits\n"),
+                        style::Print(format!("📊 {} Usage limits\n", tier_str)),
                         style::SetAttribute(Attribute::Reset),
-                        // queries used
-                        style::Print("• "),
-                        style::SetForegroundColor(Color::Red),
-                        style::Print(format!("{}", queries_used)),
-                        style::SetForegroundColor(Color::Reset),
-                        style::Print(" of "),
-                        style::SetForegroundColor(Color::Red),
-                        style::Print(format!("{}", total_limit)),
-                        style::SetForegroundColor(Color::Reset),
-                        style::Print(" queries used\n"),
-                        // overages charged
-                        style::Print("• $"),
-                        style::SetForegroundColor(Color::Red),
-                        style::Print(format!("{:.2}", average_queries_per_day)),
-                        style::SetForegroundColor(Color::Reset),
-                        style::Print(" incurred in average\n"),
-                        // limit rest date
-                        // Line 3
-                        style::Print("• Limits reset on "),
-                        style::SetForegroundColor(Color::Red),
-                        style::Print(format!("{}\n", reset_date)),
-                        style::SetForegroundColor(Color::Reset),
                     )?;
                 }
+
+                // Usage breakdown
+                if let Some(ub) = resp.usage_breakdown() {
+                    let current = ub.current_usage();
+                    let limit = ub.usage_limit();
+                    let overage_charges = ub.overage_charges();
+                    let reset_local = match ub.next_date_reset() {
+                        Some(dt) => {
+                            //  DateTime → SystemTime
+                            match SystemTime::try_from(*dt) {
+                                Ok(st) => {
+                                    let local: chrono::DateTime<chrono::Local> = st.into();
+                                    local.format("%m/%d/%Y at %H:%M:%S").to_string()
+                                },
+                                Err(_) => "1st of next month 12:00:00 GMT".to_string(),
+                            }
+                        },
+                        None => "1st of next month 12:00:00 GMT".to_string(),
+                    };
+
+                    // Overage status
+                    let overage_msg = match resp.overage_configuration().map(|c| c.overage_status()) {
+                        Some(OverageStatus::Enabled) => format!("${:.2} incurred in overages", overage_charges),
+                        Some(OverageStatus::Disabled) => "Overage disabled by admin".to_string(),
+                        _ => String::new(),
+                    };
+
+                    queue!(
+                        session.stderr,
+                        // Line 1: queries used
+                        style::Print(format!("• {} of {} queries used\n", current, limit)),
+                        // Line 2: overage info
+                        style::Print(format!("• {}\n", overage_msg)),
+                        // Line 3: reset time
+                        style::Print(format!("• Limits reset on {}\n\n", reset_local)),
+                    )?;
+                } else {
+                    queue!(session.stderr, style::Print("\nUsage information unavailable\n\n"),)?;
+                }
             },
-            Err(err) => {
+            Err(e) => {
                 queue!(
                     session.stderr,
                     style::SetForegroundColor(Color::Red),
-                    style::Print(format!("Failed to get usage limit: {}\n\n", err)),
+                    style::Print(format!("\nFailed to load usage limits: {}\n\n", e)),
                     style::SetForegroundColor(Color::Reset),
                 )?;
             },

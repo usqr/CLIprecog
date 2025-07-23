@@ -15,8 +15,10 @@ use amzn_codewhisperer_client::operation::create_subscription_token::CreateSubsc
 use amzn_codewhisperer_client::operation::get_usage_limits::GetUsageLimitsOutput;
 use amzn_codewhisperer_client::types::{
     OptOutPreference,
+    ResourceType,
     SubscriptionStatus,
     TelemetryEvent,
+    UsageBreakdown,
     UsageLimitList,
     UsageLimitType,
     UserContext,
@@ -426,29 +428,45 @@ impl ApiClient {
         }
     }
 
-    pub async fn get_usage_limits(&self) -> Result<GetUsageLimitsOutput, ApiClientError> {
-        // if cfg!(test) {
-        let mock_limits = UsageLimitList::builder()
-                // todo yifan: need to confirm type
-                    .r#type(UsageLimitType::Chat) 
-                    .value(1000)
-                    .percent_used(123.4)
-                    .build()
-                    .unwrap();
+    pub async fn get_usage_limits(
+        &self,
+        resource_type: Option<ResourceType>,
+    ) -> Result<GetUsageLimitsOutput, ApiClientError> {
+        if cfg!(test) {
+            use std::time::{
+                Duration as StdDuration,
+                SystemTime,
+            };
+            let mock_limits = UsageLimitList::builder()
+                .r#type(UsageLimitType::AgenticRequest)
+                .current_usage(1000)
+                .total_usage_limit(1100)
+                .build()
+                .unwrap();
+            use aws_smithy_types::DateTime as SmithyDateTime;
+            let next_reset = SmithyDateTime::from(SystemTime::now() + StdDuration::from_secs(14 * 24 * 3600));
+            let usage_breakdown = UsageBreakdown::builder()
+                .current_usage(1_234)
+                .current_overages(34)
+                .usage_limit(1_000)
+                .overage_charges(12.34)
+                .next_date_reset(next_reset)
+                .build()?;
 
-        Ok(GetUsageLimitsOutput::builder()
-            .limits(mock_limits)
-            .days_until_reset(14)
-            .build()
-            .unwrap())
-        // }
+            return Ok(GetUsageLimitsOutput::builder()
+                .limits(mock_limits)
+                .usage_breakdown(usage_breakdown)
+                .build()?);
+        }
 
-        // self.client
-        //     .get_usage_limits()
-        //     .set_profile_arn(self.profile.as_ref().map(|p| p.arn.clone()))
-        //     .send()
-        //     .await
-        //     .map_err(ApiClientError::GetUsageLimits)
+        // Currently we should only use AgenticRequest for this API
+        self.client
+            .get_usage_limits()
+            .set_profile_arn(self.profile.as_ref().map(|p| p.arn.clone()))
+            .set_resource_type(resource_type)
+            .send()
+            .await
+            .map_err(ApiClientError::GetUsageLimits)
     }
 
     /// Only meant for testing. Do not use outside of testing responses.

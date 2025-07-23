@@ -844,7 +844,7 @@ impl ChatSession {
                     execute!(
                         self.stderr,
                         style::SetForegroundColor(Color::Yellow),
-                        style::Print("Monthly request limit reached"),
+                        style::Print("Monthly request limit reached\n"),
                         style::SetForegroundColor(Color::Reset),
                     )?;
 
@@ -870,12 +870,18 @@ impl ChatSession {
                     } else {
                         execute!(
                             self.stderr,
-                            style::SetForegroundColor(Color::Yellow),
-                            style::Print(format!(" - {limits_text}\n\n")),
+                            style::Print("\n"),
+                            style::Print(
+                                "Enable overages in the Q Developer management console to continue working beyond the monthly request limit.\n"
+                            ),
+                            style::Print("Learn more: "),
+                            style::SetForegroundColor(Color::Blue),
+                            style::Print("https://docs.aws.amazon.com/console/amazonq/subscription\n\n"),
                             style::SetForegroundColor(Color::Reset),
                         )?;
                     }
 
+                    self.conversation.reset_next_user_message();
                     self.inner = Some(ChatState::PromptUser {
                         skip_printing_tools: false,
                     });
