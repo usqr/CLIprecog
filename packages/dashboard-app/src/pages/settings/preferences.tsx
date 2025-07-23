@@ -18,7 +18,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-
+import {
+  BUILDER_ID_DEFAULT_CONSOLE_URL,
+  IAM_PRICING_DOCS_URL,
+} from "@/lib/constants";
 type Profile = { profileName: string; arn: string };
 
 export default function Page() {
@@ -78,8 +81,8 @@ export default function Page() {
       console.error("Failed to generate console URL:", error);
       const defaultUrl =
         auth.authKind === "BuilderId"
-          ? "https://us-east-1.console.aws.amazon.com/amazonq/developer/home#/subscriptions"
-          : "https://docs.aws.amazon.com/console/amazonq/subscriptions";
+          ? BUILDER_ID_DEFAULT_CONSOLE_URL
+          : IAM_PRICING_DOCS_URL;
       await Native.open(defaultUrl);
     } finally {
       setGeneratingUrl(false);
