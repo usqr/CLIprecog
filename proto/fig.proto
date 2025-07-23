@@ -82,7 +82,7 @@ message ServerOriginatedMessage {
     ListAvailableProfilesResponse list_available_profiles_response = 155;
     GetUsageLimitsResponse get_usage_limits_response = 157;
     GenerateConsoleUrlResponse generate_console_url_response = 158;
-    
+
     Notification notification = 1000;
   }
 }
@@ -400,11 +400,11 @@ message SetProfileRequest {
   Profile profile = 1;
 }
 
-/// Subscription 
+/// Subscription
 enum SubscriptionTier {
-  FREE = 0;
-  PRO  = 1;     
-  PRO_PLUS = 2;
+  SUBSCRIPTION_TIER_FREE = 0;
+  SUBSCRIPTION_TIER_PRO = 1;
+  SUBSCRIPTION_TIER_PRO_PLUS = 2;
 }
 
 /// Usage
