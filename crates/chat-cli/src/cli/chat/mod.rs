@@ -142,7 +142,7 @@ use crate::telemetry::{
 };
 
 const LIMIT_REACHED_TEXT: &str = color_print::cstr! { "You've used all your free requests for this month. You have two options:
-1. Upgrade to a paid subscription for increased limits. See our Pricing page for what's included> <blue!>https://aws.amazon.com/q/developer/pricing/</blue!>
+1. Upgrade to a paid subscription for increased limits. See our Pricing page for what's included> <blue!>https://docs.aws.amazon.com/console/amazonq/subscriptions</blue!>
 2. Wait until next month when your limit automatically resets." };
 
 pub const EXTRA_HELP: &str = color_print::cstr! {"

@@ -26,7 +26,7 @@ const SUBSCRIBE_TITLE_TEXT: &str = color_print::cstr! { "<white!,bold>Subscribe 
 
 const SUBSCRIBE_TEXT: &str = color_print::cstr! { "During the upgrade, you'll be asked to link your Builder ID to the AWS account that will be billed the monthly subscription fee.
 
-Need help? Visit our subscription support page> <blue!>https://docs.aws.amazon.com/console/amazonq/subscriptions</blue!>" };
+Need help? Visit our subscription support page> <blue!>https://docs.aws.amazon.com/console/amazonq/upgrade-builder-id</blue!>" };
 
 #[deny(missing_docs)]
 #[derive(Debug, PartialEq, Args)]
