@@ -338,9 +338,8 @@ impl Client {
                 Ok(
                     amzn_codewhisperer_client::operation::get_usage_limits::GetUsageLimitsOutput::builder()
                         .limits(mock_limits)
-                        .usage_breakdown(usage_breakdown)
-                        .build()
-                        .unwrap(),
+                        .usage_breakdown_list(usage_breakdown)
+                        .build(),
                 )
             },
         }

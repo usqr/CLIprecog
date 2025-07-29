@@ -1,5 +1,3 @@
-use std::time::SystemTime;
-
 use amzn_codewhisperer_client::types::{
     OverageStatus,
     ResourceType,
@@ -84,32 +82,30 @@ pub async fn get_usage_limits() -> Result<UsageLimitsInfo, Error> {
     };
 
     // Get usage breakdown
-    let (current_usage, usage_limit, overage_charges, reset_date_utc) = if let Some(ub) = response.usage_breakdown() {
-        let reset_local_str = ub
-            .next_date_reset()
-            .and_then(|dt| SystemTime::try_from(*dt).ok())
-            .map_or_else(
-                || "1st of next month 12:00:00 GMT".to_string(),
-                |st| {
-                    let local: chrono::DateTime<chrono::Local> = st.into();
-                    local.format("%m/%d/%Y at %H:%M:%S").to_string()
-                },
-            );
-        (
-            Some(ub.current_usage()),
-            Some(ub.usage_limit()),
-            Some(ub.overage_charges()),
-            Some(reset_local_str),
-        )
-    } else {
-        tracing::error!("get_usage_limits: missing UsageBreakdown in response");
-        (None, None, None, None)
-    };
+    let list = response.usage_breakdown_list();
+    let ub = list
+        .iter()
+        .find(|b: &&amzn_codewhisperer_client::types::UsageBreakdown| {
+            matches!(b.resource_type(), Some(ResourceType::AgenticRequest))
+        })
+        .unwrap_or_else(|| list.first().expect("usage_breakdown_list is not empty"));
 
-    let overage_enabled = match response.overage_configuration() {
-        Some(config) => matches!(config.overage_status(), OverageStatus::Enabled),
-        None => false,
-    };
+    let current_usage = Some(ub.current_usage());
+    let usage_limit = Some(ub.usage_limit());
+    let overage_charges = Some(ub.overage_charges());
+
+    let reset_date_utc = ub
+        .next_date_reset()
+        .and_then(|dt| std::time::SystemTime::try_from(*dt).ok())
+        .map(|st| {
+            let local: chrono::DateTime<chrono::Local> = st.into();
+            local.format("%m/%d/%Y at %H:%M:%S").to_string()
+        })
+        .or_else(|| Some("1st of next month 12:00:00 GMT".into()));
+
+    let overage_enabled = response
+        .overage_configuration()
+        .is_some_and(|c| matches!(c.overage_status(), OverageStatus::Enabled));
 
     Ok(UsageLimitsInfo {
         current_usage,
