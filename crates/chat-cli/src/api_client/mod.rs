@@ -455,11 +455,11 @@ impl ApiClient {
 
             return Ok(GetUsageLimitsOutput::builder()
                 .limits(mock_limits)
-                .usage_breakdown(usage_breakdown)
-                .build()?);
+                .usage_breakdown_list(usage_breakdown.clone())
+                .build());
         }
 
-        // Currently we should only use AgenticRequest for this API
+        // Currently for QDev we should only use AgenticRequest for this API
         self.client
             .get_usage_limits()
             .set_profile_arn(self.profile.as_ref().map(|p| p.arn.clone()))

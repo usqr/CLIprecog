@@ -5,6 +5,7 @@ use amzn_codewhisperer_client::types::{
     OverageStatus,
     ResourceType,
     SubscriptionType,
+    UsageBreakdown,
 };
 use clap::Args;
 use crossterm::style::{
@@ -191,7 +192,7 @@ impl UsageArgs {
             )),
         )?;
 
-        match os.client.get_usage_limits(Some(ResourceType::AgenticRequest)).await {
+        match os.client.get_usage_limits(None).await {
             Ok(resp) => {
                 tracing::debug!(?resp, "Raw get_usage_limits response");
                 // Subscription tier
@@ -212,7 +213,15 @@ impl UsageArgs {
                 }
 
                 // Usage breakdown
-                if let Some(ub) = resp.usage_breakdown() {
+                let list: &[UsageBreakdown] = resp.usage_breakdown_list();
+                if list.is_empty() {
+                    queue!(session.stderr, style::Print("\nUsage information unavailable\n\n"),)?;
+                } else {
+                    let ub = list
+                        .iter()
+                        .find(|b| matches!(b.resource_type(), Some(ResourceType::AgenticRequest)))
+                        .unwrap_or_else(|| list.first().expect("UsageBreakdown list is not null"));
+
                     let current = ub.current_usage();
                     let limit = ub.usage_limit();
                     let overage_charges = ub.overage_charges();
@@ -246,8 +255,6 @@ impl UsageArgs {
                         // Line 3: reset time
                         style::Print(format!("• Limits reset on {}\n\n", reset_local)),
                     )?;
-                } else {
-                    queue!(session.stderr, style::Print("\nUsage information unavailable\n\n"),)?;
                 }
             },
             Err(e) => {
