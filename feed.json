@@ -21,12 +21,12 @@
           "description": "JSON schema support for the agent specification. Try it with `/agent create` - [#2440](https://github.com/aws/amazon-q-developer-cli/pull/2440)"
         },
         {
-          "type": "fixed",
-          "description": "Tool permissioning not being reset - [#2469](https://github.com/aws/amazon-q-developer-cli/pull/2469)"
-        },
-        {
           "type": "deprecated",
           "description": "The `/profile` command - [#2468](https://github.com/aws/amazon-q-developer-cli/pull/2468)"
+        },
+        {
+          "type": "fixed",
+          "description": "Tool permissioning not being reset - [#2469](https://github.com/aws/amazon-q-developer-cli/pull/2469)"
         },
         {
           "type": "fixed",
