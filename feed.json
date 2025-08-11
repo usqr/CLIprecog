@@ -12,6 +12,18 @@
     },
     {
       "type": "release",
+      "date": "2025-08-11",
+      "version": "1.13.3",
+      "title": "Version 1.13.3",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "`q mcp add` from failing when the targeted `mcp.json` file does not exist - [#2561](https://github.com/aws/amazon-q-developer-cli/pull/2561)"
+        }
+      ]
+    },
+    {
+      "type": "release",
       "date": "2025-08-08",
       "version": "1.13.2",
       "title": "Version 1.13.2",
