@@ -22,11 +22,11 @@
         },
         {
           "type": "added",
-          "description": "A new command /agent generate for generating agent config with Q - [#2690](https://github.com/aws/amazon-q-developer-cli/pull/2690)"
+          "description": "A new command `/agent` generate for generating agent config with Q - [#2690](https://github.com/aws/amazon-q-developer-cli/pull/2690)"
         },
         {
           "type": "added",
-          "description": "A new command /tangent for going on a tangent without context pollution - [#2634](https://github.com/aws/amazon-q-developer-cli/pull/2634)"
+          "description": "A new command `/tangent` for going on a tangent without context pollution - [#2634](https://github.com/aws/amazon-q-developer-cli/pull/2634)"
         },
         {
           "type": "added",
@@ -38,7 +38,7 @@
         },
         {
           "type": "added",
-          "description": "Introspect tool for Q CLI self-awareness - [#2677](https://github.com/aws/amazon-q-developer-cli/pull/2677)"
+          "description": "A new tool introspect that allows Q CLI to answer questions about itself - [#2677](https://github.com/aws/amazon-q-developer-cli/pull/2677)"
         }
       ]
     },
