@@ -18,19 +18,19 @@
       "changes": [
         {
           "type": "added",
-          "description": "First round changes for `agent generate` (workshopping) - [#2690](https://github.com/aws/amazon-q-developer-cli/pull/2690)"
-        },
-        {
-          "type": "added",
           "description": "Introduce `/experiment` slash command for toggling experimental features - [#2711](https://github.com/aws/amazon-q-developer-cli/pull/2711)"
         },
         {
           "type": "added",
-          "description": "Gate `tangent` and `introspect` behind experimental feature flags - [#2720](https://github.com/aws/amazon-q-developer-cli/pull/2720)"
+          "description": "A new command /agent generate for generating agent config with Q - [#2690](https://github.com/aws/amazon-q-developer-cli/pull/2690)"
         },
         {
           "type": "added",
-          "description": "Add `/tangent` to the `/experiment` command group - [#2721](https://github.com/aws/amazon-q-developer-cli/pull/2721)"
+          "description": "A new command /tangent for going on a tangent without context pollution - [#2634](https://github.com/aws/amazon-q-developer-cli/pull/2634)"
+        },
+        {
+          "type": "added",
+          "description": "A new to-do list tool for handling complex multi-step prompts - [#2533](https://github.com/aws/amazon-q-developer-cli/pull/2533)"
         },
         {
           "type": "added",
@@ -39,22 +39,6 @@
         {
           "type": "added",
           "description": "Introspect tool for Q CLI self-awareness - [#2677](https://github.com/aws/amazon-q-developer-cli/pull/2677)"
-        },
-        {
-          "type": "added",
-          "description": "To-do list functionality in Q CLI - [#2533](https://github.com/aws/amazon-q-developer-cli/pull/2533)"
-        },
-        {
-          "type": "added",
-          "description": "Tangent mode duration tracking telemetry - [#2710](https://github.com/aws/amazon-q-developer-cli/pull/2710)"
-        },
-        {
-          "type": "fixed",
-          "description": "Include local time zone in per-prompt timestamp - [#2654](https://github.com/aws/amazon-q-developer-cli/pull/2654)"
-        },
-        {
-          "type": "fixed",
-          "description": "Short-term fix for SendTelemetry API validation errors - [#2694](https://github.com/aws/amazon-q-developer-cli/pull/2694)"
         }
       ]
     },
