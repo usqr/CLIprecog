@@ -38,7 +38,7 @@
         },
         {
           "type": "added",
-          "description": "A new tool introspect that allows Q CLI to answer questions about itself - [#2677](https://github.com/aws/amazon-q-developer-cli/pull/2677)"
+          "description": "A new tool `introspect` that allows Q CLI to answer questions about itself - [#2677](https://github.com/aws/amazon-q-developer-cli/pull/2677)"
         }
       ]
     },
