@@ -18,7 +18,7 @@
       "changes": [
         {
           "type": "added",
-          "description": "Introduce `/experiment` slash command for toggling experimental features - [#2711](https://github.com/aws/amazon-q-developer-cli/pull/2711)"
+          "description": "A new command `/experiment` command for toggling experimental features - [#2711](https://github.com/aws/amazon-q-developer-cli/pull/2711)"
         },
         {
           "type": "added",
