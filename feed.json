@@ -22,7 +22,7 @@
         },
         {
           "type": "added",
-          "description": "A new command `/agent` generate for generating agent config with Q - [#2690](https://github.com/aws/amazon-q-developer-cli/pull/2690)"
+          "description": "A new command `/agent generate` for generating agent config with Q - [#2690](https://github.com/aws/amazon-q-developer-cli/pull/2690)"
         },
         {
           "type": "added",
