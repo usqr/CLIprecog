@@ -2,7 +2,7 @@
   "$schema": "./feed-schema.json",
   "entries": [
     {
-      "$comment": "This is the next release, any changes here",
+      "$comment": "This is the next release, any changes here.",
       "type": "release",
       "date": "2999-01-01",
       "version": "0.0.0",
