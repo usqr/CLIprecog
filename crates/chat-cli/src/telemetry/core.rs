@@ -72,12 +72,13 @@ impl Event {
 
     pub fn into_metric_datum(self) -> Option<MetricDatum> {
         match self.ty {
-            EventType::UserLoggedIn {} => Some(
+            EventType::UserLoggedIn { social_provider } => Some(
                 CodewhispererterminalUserLoggedIn {
                     create_time: self.created_time,
                     value: None,
                     credential_start_url: self.credential_start_url.map(Into::into),
                     codewhispererterminal_in_cloudshell: None,
+                    social_provider: social_provider.map(Into::into),
                 }
                 .into_metric_datum(),
             ),
@@ -292,7 +293,9 @@ impl Event {
 #[serde(rename_all = "camelCase")]
 #[serde(tag = "type")]
 pub enum EventType {
-    UserLoggedIn {},
+    UserLoggedIn {
+        social_provider: Option<String>,
+    },
     RefreshCredentials {
         request_id: String,
         result: TelemetryResult,
