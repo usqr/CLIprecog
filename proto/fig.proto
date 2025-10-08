@@ -46,6 +46,8 @@ message ClientOriginatedMessage {
     GetPlatformInfoRequest get_platform_info_request = 152;
     ListAvailableProfilesRequest list_available_profiles_request = 155;
     SetProfileRequest set_profile_request = 156;
+    AuthStartSocialAuthorizationRequest auth_start_social_authorization_request = 157;
+    AuthFinishSocialAuthorizationRequest auth_finish_social_authorization_request = 158;
   }
 
   reserved 115;
@@ -76,6 +78,8 @@ message ServerOriginatedMessage {
     AuthStartPkceAuthorizationResponse auth_start_pkce_authorization_response = 122;
     AuthFinishPkceAuthorizationResponse auth_finish_pkce_authorization_response = 123;
     AuthCancelPkceAuthorizationResponse auth_cancel_pkce_authorization_response = 124;
+    AuthStartSocialAuthorizationResponse auth_start_social_authorization_response = 126;
+    AuthFinishSocialAuthorizationResponse auth_finish_social_authorization_response = 127;
     GetPlatformInfoResponse get_platform_info_response = 125;
     ListAvailableProfilesResponse list_available_profiles_response = 155;
 
@@ -608,6 +612,8 @@ message AuthStatusResponse {
   enum AuthKind {
     AUTH_KIND_BUILDER_ID = 0;
     AUTH_KIND_IAM_IDENTITY_CENTER = 1;
+    AUTH_KIND_SOCIAL_GOOGLE = 2; 
+    AUTH_KIND_SOCIAL_GITHUB = 3;
   }
 
   bool authed = 1;
@@ -616,6 +622,28 @@ message AuthStatusResponse {
   optional string start_url = 3;
   optional string region = 4;
 }
+
+message AuthStartSocialAuthorizationRequest {
+  enum Provider {
+    GOOGLE = 0;
+    GITHUB = 1;
+  }
+  Provider provider = 1;
+}
+
+message AuthStartSocialAuthorizationResponse {
+  string auth_request_id = 1;
+  string url = 2;
+}
+
+message AuthFinishSocialAuthorizationRequest {
+  string auth_request_id = 1;
+  // optional；when backend needs an invitation_code，front end will put code here to retry
+  optional string invitation_code = 2;
+}
+
+message AuthFinishSocialAuthorizationResponse {}
+
 
 message PingRequest {}
 

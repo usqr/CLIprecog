@@ -19,9 +19,15 @@ import {
   AuthFinishPkceAuthorizationRequest,
   AuthFinishPkceAuthorizationRequestSchema,
   AuthFinishPkceAuthorizationResponse,
+  AuthFinishSocialAuthorizationRequest,
+  AuthFinishSocialAuthorizationRequestSchema,
+  AuthFinishSocialAuthorizationResponse,
   AuthStartPkceAuthorizationRequest,
   AuthStartPkceAuthorizationRequestSchema,
   AuthStartPkceAuthorizationResponse,
+  AuthStartSocialAuthorizationRequest,
+  AuthStartSocialAuthorizationRequestSchema,
+  AuthStartSocialAuthorizationResponse,
   AuthStatusRequest,
   AuthStatusRequestSchema,
   AuthStatusResponse,
@@ -676,6 +682,64 @@ export async function sendListAvailableProfilesRequest(
             reject(
               Error(
                 `Invalid response '${response?.case}' for 'ListAvailableProfilesRequest'`,
+              ),
+            );
+        }
+      },
+    );
+  });
+}
+
+export async function sendAuthStartSocialAuthorizationRequest(
+  request: Omit<AuthStartSocialAuthorizationRequest, "$typeName" | "$unknown">,
+): Promise<AuthStartSocialAuthorizationResponse> {
+  return new Promise((resolve, reject) => {
+    sendMessage(
+      {
+        case: "authStartSocialAuthorizationRequest",
+        value: create(AuthStartSocialAuthorizationRequestSchema, request),
+      },
+      (response) => {
+        switch (response?.case) {
+          case "authStartSocialAuthorizationResponse":
+            resolve(response.value);
+            break;
+          case "error":
+            reject(Error(response.value));
+            break;
+          default:
+            reject(
+              Error(
+                `Invalid response '${response?.case}' for 'AuthStartSocialAuthorizationRequest'`,
+              ),
+            );
+        }
+      },
+    );
+  });
+}
+
+export async function sendAuthFinishSocialAuthorizationRequest(
+  request: Omit<AuthFinishSocialAuthorizationRequest, "$typeName" | "$unknown">,
+): Promise<AuthFinishSocialAuthorizationResponse> {
+  return new Promise((resolve, reject) => {
+    sendMessage(
+      {
+        case: "authFinishSocialAuthorizationRequest",
+        value: create(AuthFinishSocialAuthorizationRequestSchema, request),
+      },
+      (response) => {
+        switch (response?.case) {
+          case "authFinishSocialAuthorizationResponse":
+            resolve(response.value);
+            break;
+          case "error":
+            reject(Error(response.value));
+            break;
+          default:
+            reject(
+              Error(
+                `Invalid response '${response?.case}' for 'AuthFinishSocialAuthorizationRequest'`,
               ),
             );
         }

@@ -14,6 +14,10 @@ use fig_auth::pkce::{
     PkceRegistration,
 };
 use fig_auth::secret_store::SecretStore;
+use fig_auth::social::{
+    self,
+    SocialProvider,
+};
 use fig_proto::fig::auth_builder_id_poll_create_token_response::PollStatus;
 use fig_proto::fig::auth_status_response::AuthKind;
 use fig_proto::fig::server_originated_message::Submessage as ServerOriginatedSubMessage;
@@ -26,10 +30,15 @@ use fig_proto::fig::{
     AuthCancelPkceAuthorizationResponse,
     AuthFinishPkceAuthorizationRequest,
     AuthFinishPkceAuthorizationResponse,
+    AuthFinishSocialAuthorizationRequest,
+    AuthFinishSocialAuthorizationResponse,
     AuthStartPkceAuthorizationRequest,
     AuthStartPkceAuthorizationResponse,
+    AuthStartSocialAuthorizationRequest,
+    AuthStartSocialAuthorizationResponse,
     AuthStatusRequest,
     AuthStatusResponse,
+    auth_start_social_authorization_request,
 };
 use tokio::sync::Mutex;
 use tokio::sync::mpsc::{
@@ -218,24 +227,37 @@ impl<T: PkceClient + Send + Sync + 'static> PkceState<T> {
 }
 
 pub async fn status(_request: AuthStatusRequest) -> RequestResult {
-    let token = fig_auth::builder_id_token().await;
+    let builder_id_token = fig_auth::builder_id_token().await;
+    let secret_store = SecretStore::new()
+        .await
+        .map_err(|err| format!("Failed to load secret store: {err}"))?;
+    let social_token = fig_auth::social::social_token(&secret_store).await;
+
+    let authed = matches!(builder_id_token, Ok(Some(_))) || matches!(social_token, Ok(Some(_)));
+
+    let auth_kind = if let Ok(Some(social)) = &social_token {
+        Some(match social.provider {
+            SocialProvider::Google => AuthKind::SocialGoogle.into(),
+            SocialProvider::Github => AuthKind::SocialGithub.into(),
+        })
+    } else if let Ok(Some(auth)) = &builder_id_token {
+        Some(match auth.token_type() {
+            TokenType::BuilderId => AuthKind::BuilderId.into(),
+            TokenType::IamIdentityCenter => AuthKind::IamIdentityCenter.into(),
+        })
+    } else {
+        None
+    };
+    let (start_url, region) = match &builder_id_token {
+        Ok(Some(auth)) => (auth.start_url.clone(), auth.region.clone()),
+        _ => (None, None),
+    };
+
     Ok(ServerOriginatedSubMessage::AuthStatusResponse(AuthStatusResponse {
-        authed: matches!(token, Ok(Some(_))),
-        auth_kind: match &token {
-            Ok(Some(auth)) => match auth.token_type() {
-                TokenType::BuilderId => Some(AuthKind::BuilderId.into()),
-                TokenType::IamIdentityCenter => Some(AuthKind::IamIdentityCenter.into()),
-            },
-            _ => None,
-        },
-        start_url: match &token {
-            Ok(Some(auth)) => auth.start_url.clone(),
-            _ => None,
-        },
-        region: match &token {
-            Ok(Some(auth)) => auth.region.clone(),
-            _ => None,
-        },
+        authed,
+        auth_kind,
+        start_url,
+        region,
     })
     .into())
 }
@@ -354,6 +376,50 @@ pub async fn builder_id_poll_create_token(
     };
 
     Ok(ServerOriginatedSubMessage::AuthBuilderIdPollCreateTokenResponse(response).into())
+}
+
+pub async fn start_social_authorization(
+    AuthStartSocialAuthorizationRequest { provider }: AuthStartSocialAuthorizationRequest,
+) -> RequestResult {
+    let secret_store = SecretStore::new()
+        .await
+        .map_err(|err| format!("Failed to load secret store: {err}"))?;
+
+    let provider = match auth_start_social_authorization_request::Provider::from_i32(provider) {
+        Some(auth_start_social_authorization_request::Provider::Google) => SocialProvider::Google,
+        Some(auth_start_social_authorization_request::Provider::Github) => SocialProvider::Github,
+        None => return Err("unknown provider".into()),
+    };
+
+    let (auth_request_id, url) = social::start_social_authorization(provider, secret_store)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(
+        ServerOriginatedSubMessage::AuthStartSocialAuthorizationResponse(AuthStartSocialAuthorizationResponse {
+            auth_request_id,
+            url,
+        })
+        .into(),
+    )
+}
+
+pub async fn finish_social_authorization(
+    AuthFinishSocialAuthorizationRequest {
+        auth_request_id,
+        invitation_code,
+    }: AuthFinishSocialAuthorizationRequest,
+    ctx: &impl KVStore,
+) -> RequestResult {
+    social::finish_social_authorization(auth_request_id, invitation_code, ctx)
+        .await
+        .map_err(|e| e.to_string())?;
+
+    fig_telemetry::send_user_logged_in().await;
+    Ok(
+        ServerOriginatedSubMessage::AuthFinishSocialAuthorizationResponse(AuthFinishSocialAuthorizationResponse {})
+            .into(),
+    )
 }
 
 #[cfg(test)]

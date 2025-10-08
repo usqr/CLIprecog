@@ -168,7 +168,9 @@ where
                 AuthBuilderIdStartDeviceAuthorizationRequest,
                 AuthCancelPkceAuthorizationRequest,
                 AuthFinishPkceAuthorizationRequest,
+                AuthFinishSocialAuthorizationRequest,
                 AuthStartPkceAuthorizationRequest,
+                AuthStartSocialAuthorizationRequest,
                 AuthStatusRequest,
                 CheckForUpdatesRequest,
                 CodewhispererListCustomizationRequest,
@@ -256,6 +258,14 @@ where
                 AuthCancelPkceAuthorizationRequest(request) => auth::cancel_pkce_authorization(request).await,
                 AuthBuilderIdStartDeviceAuthorizationRequest(request) => {
                     auth::builder_id_start_device_authorization(request, &ctx).await
+                },
+                AuthStartSocialAuthorizationRequest(request) => auth::start_social_authorization(request).await,
+                AuthFinishSocialAuthorizationRequest(request) => {
+                    let result = auth::finish_social_authorization(request, &ctx).await;
+                    if result.is_ok() {
+                        event_handler.user_logged_in_callback(ctx).await;
+                    }
+                    result
                 },
                 AuthBuilderIdPollCreateTokenRequest(request) => auth::builder_id_poll_create_token(request, &ctx).await,
                 // codewhisperer api

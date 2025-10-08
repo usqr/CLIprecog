@@ -3082,6 +3082,7 @@ dependencies = [
  "hyper 1.6.0",
  "hyper-util",
  "insta",
+ "once_cell",
  "percent-encoding",
  "rand 0.9.1",
  "reqwest",
@@ -3093,6 +3094,8 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
+ "urlencoding",
+ "uuid",
 ]
 
 [[package]]

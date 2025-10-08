@@ -63,6 +63,7 @@ pub struct Constants {
     macos_version: String,
     #[cfg(target_os = "linux")]
     linux: LinuxConstants,
+    waitlist_url: &'static str,
 }
 
 impl Constants {
@@ -122,6 +123,7 @@ impl Constants {
                 desktop_environment: get_desktop_environment(&fig_os_shim::Context::new()).ok(),
                 os_release: get_os_release(),
             },
+            waitlist_url: "https://kiro.dev/waitlist/",
         }
     }
 }
