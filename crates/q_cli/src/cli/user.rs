@@ -30,6 +30,11 @@ use fig_auth::builder_id::{
 };
 use fig_auth::pkce::start_pkce_authorization;
 use fig_auth::secret_store::SecretStore;
+use fig_auth::social::{
+    SocialProvider,
+    finish_social_authorization,
+    start_social_authorization,
+};
 use fig_ipc::local::{
     login_command,
     logout_command,
@@ -42,6 +47,7 @@ use fig_util::system_info::is_remote;
 use fig_util::{
     CLI_BINARY_NAME,
     PRODUCT_NAME,
+    open_url_async,
 };
 use serde_json::json;
 use tokio::signal::unix::{
@@ -51,6 +57,7 @@ use tokio::signal::unix::{
 use tracing::{
     error,
     info,
+    warn,
 };
 
 use super::OutputFormat;
@@ -82,7 +89,7 @@ pub enum RootUserSubcommand {
 
 #[derive(Args, Debug, PartialEq, Eq, Clone, Default)]
 pub struct LoginArgs {
-    /// License type (pro for Identity Center, free for Builder ID)
+    /// License type (pro for Identity Center, free for Builder ID, Google and Github)
     #[arg(long, value_enum)]
     pub license: Option<LicenseType>,
 
@@ -94,6 +101,14 @@ pub struct LoginArgs {
     #[arg(long)]
     pub region: Option<String>,
 
+    /// Social provider (google or github)
+    #[arg(long, value_enum)]
+    pub social: Option<SocialProvider>,
+
+    /// Invitation code (for social login)
+    #[arg(long)]
+    pub invitation_code: Option<String>,
+
     /// Always use the OAuth device flow for authentication. Useful for instances where browser
     /// redirects cannot be handled.
     #[arg(long)]
@@ -102,7 +117,7 @@ pub struct LoginArgs {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
 pub enum LicenseType {
-    /// Free license with Builder ID
+    /// Free license (Builder ID or Social login)
     Free,
     /// Pro license with Identity Center
     Pro,
@@ -112,6 +127,8 @@ pub enum LicenseType {
 enum AuthMethod {
     /// Builder ID (free)
     BuilderId,
+    /// Social login (free)
+    Social(SocialProvider),
     /// IdC (enterprise)
     IdentityCenter,
 }
@@ -120,6 +137,8 @@ impl Display for AuthMethod {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             AuthMethod::BuilderId => write!(f, "Use for Free with Builder ID"),
+            AuthMethod::Social(SocialProvider::Google) => write!(f, "Use with Google"),
+            AuthMethod::Social(SocialProvider::Github) => write!(f, "Use with GitHub"),
             AuthMethod::IdentityCenter => write!(f, "Use with Pro license"),
         }
     }
@@ -153,6 +172,20 @@ impl RootUserSubcommand {
                 Ok(ExitCode::SUCCESS)
             },
             Self::Whoami { format } => {
+                if let Ok(secret_store) = SecretStore::new().await {
+                    if let Ok(Some(social_token)) = fig_auth::social::social_token(&secret_store).await {
+                        format.print(
+                            || format!("Logged in with {}", social_token.provider),
+                            || {
+                                serde_json::json!({
+                                    "accountType": format!("Social{}", social_token.provider),
+                                })
+                            },
+                        );
+                        return Ok(ExitCode::SUCCESS);
+                    }
+                }
+
                 let builder_id = fig_auth::builder_id_token().await;
 
                 match builder_id {
@@ -202,14 +235,12 @@ impl RootUserSubcommand {
                 assert_logged_in().await?;
 
                 if let Ok(Some(token)) = fig_auth::builder_id_token().await {
-                    if matches!(token.token_type(), TokenType::BuilderId) {
-                        bail!("This command is only available for IAM Identity Center users");
+                    if matches!(token.token_type(), TokenType::IamIdentityCenter) {
+                        select_profile_interactive(false).await?;
                     }
                 }
 
-                select_profile_interactive(false).await?;
-
-                Ok(ExitCode::SUCCESS)
+                bail!("This command is only available for IAM Identity Center users");
             },
         }
     }
@@ -230,27 +261,52 @@ impl UserSubcommand {
 }
 
 pub async fn login_interactive(args: LoginArgs) -> Result<()> {
-    let login_method = match args.license {
-        Some(LicenseType::Free) => AuthMethod::BuilderId,
-        Some(LicenseType::Pro) => AuthMethod::IdentityCenter,
-        None => {
-            if args.identity_provider.is_some() && args.region.is_some() {
-                // If license is specified and --identity-provider and --region are specified,
-                // the license is determined to be pro
-                AuthMethod::IdentityCenter
-            } else {
-                // --license is not specified, prompt the user to choose
-                let options = [AuthMethod::BuilderId, AuthMethod::IdentityCenter];
+    let login_method = if let Some(social_provider) = args.social {
+        // Direct social login via CLI flag
+        AuthMethod::Social(social_provider)
+    } else {
+        match args.license {
+            Some(LicenseType::Free) => {
+                // Show submenu for free options
+                let options = [
+                    AuthMethod::BuilderId,
+                    AuthMethod::Social(SocialProvider::Google),
+                    AuthMethod::Social(SocialProvider::Github),
+                ];
                 let i = match choose("Select login method", &options)? {
                     Some(i) => i,
                     None => bail!("No login method selected"),
                 };
                 options[i]
-            }
-        },
+            },
+            Some(LicenseType::Pro) => AuthMethod::IdentityCenter,
+            None => {
+                if args.identity_provider.is_some() && args.region.is_some() {
+                    // If license is specified and --identity-provider and --region are specified,
+                    // the license is determined to be pro
+                    AuthMethod::IdentityCenter
+                } else {
+                    // --license is not specified, prompt the user to choose
+                    let options = [
+                        AuthMethod::BuilderId,
+                        AuthMethod::Social(SocialProvider::Google),
+                        AuthMethod::Social(SocialProvider::Github),
+                        AuthMethod::IdentityCenter,
+                    ];
+                    let i = match choose("Select login method", &options)? {
+                        Some(i) => i,
+                        None => bail!("No login method selected"),
+                    };
+                    options[i]
+                }
+            },
+        }
     };
 
     match login_method {
+        AuthMethod::Social(provider) => {
+            login_with_social(provider, args.invitation_code.clone()).await?;
+        },
         AuthMethod::BuilderId | AuthMethod::IdentityCenter => {
             let (start_url, region) = match login_method {
                 AuthMethod::BuilderId => (None, None),
@@ -270,7 +326,9 @@ pub async fn login_interactive(args: LoginArgs) -> Result<()> {
 
                     (Some(start_url), Some(region))
                 },
+                AuthMethod::Social(_) => unreachable!(),
             };
+            // Existing BuilderId/IDC flow
             let secret_store = SecretStore::new().await?;
 
             // Remote machine won't be able to handle browser opening and redirects,
@@ -322,6 +380,56 @@ pub async fn login_interactive(args: LoginArgs) -> Result<()> {
     eprintln!("Logged in successfully");
 
     Ok(())
+}
+
+async fn login_with_social(provider: SocialProvider, first_code: Option<String>) -> Result<()> {
+    let secret_store = SecretStore::new().await?;
+    let (auth_request_id, url) = start_social_authorization(provider, secret_store).await?;
+
+    if let Err(err) = open_url_async(&url).await {
+        warn!(%err, "Failed to open browser; please copy & open URL manually");
+        eprintln!("Open this URL to continue login:\n{}", url);
+    }
+
+    match finish_social_authorization(auth_request_id.clone(), first_code.clone(), &()).await {
+        Ok(_) => {
+            fig_telemetry::send_user_logged_in().await;
+            Ok(())
+        },
+        Err(e) => {
+            let msg = e.to_string();
+            if msg.contains("SIGN_IN_BLOCKED") {
+                let prompt =
+                    "\nKiro CLI requires an access code to use—please enter the code you received via email below.";
+                let code = match input(prompt, None) {
+                    Ok(response) if !response.trim().is_empty() => response.trim().to_string(),
+                    _ => {
+                        error!("No access code entered. Aborting social login.");
+                        bail!("No invitation code");
+                    },
+                };
+
+                let mut spinner2 = Spinner::new(vec![
+                    SpinnerComponent::Spinner,
+                    SpinnerComponent::Text(format!(" Validating access code and logging in with {}...", provider)),
+                ]);
+
+                match fig_auth::social::finish_social_authorization(auth_request_id, Some(code), &()).await {
+                    Ok(_) => {
+                        fig_telemetry::send_user_logged_in().await;
+                        spinner2.stop_with_message(format!("Logged in with {}", provider));
+                        Ok(())
+                    },
+                    Err(e2) => {
+                        spinner2.stop();
+                        Err(e2.into())
+                    },
+                }
+            } else {
+                bail!(msg);
+            }
+        },
+    }
 }
 
 async fn try_device_authorization(

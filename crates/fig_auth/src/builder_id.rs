@@ -53,7 +53,6 @@ use time::OffsetDateTime;
 use tracing::{
     debug,
     error,
-    info,
     trace,
     warn,
 };

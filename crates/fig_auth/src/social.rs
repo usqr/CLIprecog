@@ -50,7 +50,7 @@ const DEFAULT_AUTHORIZATION_TIMEOUT: Duration = Duration::from_secs(300);
 const SIGN_UP_PAUSED_MESSAGE: &str = "New signups are temporarily paused.";
 const USER_AGENT: &str = "Kiro-Desktop";
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, clap::ValueEnum)]
 pub enum SocialProvider {
     #[serde(rename = "google")]
     Google,
@@ -319,7 +319,7 @@ pub async fn finish_social_authorization(
         if let Some(arn) = token.profile_arn.as_deref() {
             let profile_value = json!({
                 "arn": arn,
-                "profile_name": "Social_default_Profile"
+                "profile_name": "Social_Default_Profile"
             });
 
             if let Err(err) = fig_settings::state::set_value("api.codewhisperer.profile", profile_value) {

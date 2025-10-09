@@ -350,15 +350,15 @@ export default function LoginModal({ next }: { next: () => void }) {
 
             {waitlistUrl && (
               <div className="mt-3 text-sm text-white/80">
-                If you don't have a code, join our{" "}
-                <a
+                If you don't have a code please {" "}
+                <Link
                   href={waitlistUrl}
-                  target="_blank"
                   rel="noreferrer"
                   className="underline underline-offset-2 hover:text-white transition-colors"
                 >
-                  waitlist
-                </a>
+                  join our waitlist
+                </Link>
+                .
               </div>
             )}
           </div>

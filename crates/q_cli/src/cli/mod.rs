@@ -406,6 +406,7 @@ impl Cli {
         let secret_store = SecretStore::new().await.ok();
         if let Some(secret_store) = secret_store {
             if let Ok(database) = database().map_err(|err| error!(?err, "failed to open database")) {
+                // check builderid token flow
                 if let Ok(token) = BuilderIdToken::load(&secret_store, false).await {
                     // Save the device registration. This is required for token refresh to succeed.
                     if let Some(token) = token.as_ref() {
@@ -436,6 +437,34 @@ impl Cli {
                             .map_err(|err| error!(?err, "failed to write credentials to auth db"))
                             .ok();
                     }
+                }
+
+                // check social token flow
+                match fig_auth::social::SocialToken::load(&secret_store, false).await {
+                    Ok(Some(social)) => {
+                        if let Ok(social_json) = serde_json::to_string(&social) {
+                            database
+                                .set_auth_value("codewhisperer:social:token", social_json)
+                                .map_err(|err| error!(?err, "failed to write social token to auth db"))
+                                .ok();
+                        }
+
+                        if let Some(profile_arn) = social.profile_arn.clone() {
+                            let _ = fig_settings::state::set_value(
+                                "api.codewhisperer.profile",
+                                serde_json::json!({
+                                    "profileName": "Social_Default_Profile",
+                                    "arn": profile_arn,
+                                }),
+                            );
+                        }
+                    },
+                    Ok(None) => {
+                        warn!("no social token found");
+                    },
+                    Err(err) => {
+                        error!(?err, "failed to load social token from SecretStore");
+                    },
                 }
             }
         }

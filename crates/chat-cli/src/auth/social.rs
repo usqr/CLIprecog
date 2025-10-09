@@ -136,7 +136,7 @@ impl SocialToken {
         if let Some(profile_arn) = &self.profile_arn {
             database.set_auth_profile(&crate::database::AuthProfile {
                 arn: profile_arn.clone(),
-                profile_name: "Social_default_Profile".to_string(),
+                profile_name: "Social_Default_Profile".to_string(),
             })?;
         }
         Ok(())

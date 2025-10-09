@@ -3074,6 +3074,7 @@ dependencies = [
  "aws-types",
  "base64 0.22.1",
  "bytes",
+ "clap",
  "fig_aws_common",
  "fig_settings",
  "fig_telemetry_core",
