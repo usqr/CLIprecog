@@ -1,6 +1,6 @@
 import logger from "loglevel";
 
-import { executeCommand } from "@aws/amazon-q-developer-cli-api-bindings-wrappers";
+import { executeCommand } from "@kiro/api-bindings-wrappers";
 import { runPipingConsoleMethods } from "../utils";
 import {
   runCachedGenerator,

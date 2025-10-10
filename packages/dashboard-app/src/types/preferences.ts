@@ -1,4 +1,4 @@
-import { Platform } from "@aws/amazon-q-developer-cli-api-bindings";
+import { Platform } from "@kiro/api-bindings";
 
 export type PlatformInfo = Awaited<ReturnType<typeof Platform.getPlatformInfo>>;
 

@@ -2,8 +2,8 @@ import React from "react";
 import {
   Suggestion,
   SuggestionType,
-} from "@aws/amazon-q-developer-cli-shared/internal";
-import { localProtocol } from "@aws/amazon-q-developer-cli-shared/utils";
+} from "@kiro/shared/internal";
+import { localProtocol } from "@kiro/shared/utils";
 import { icons } from "../fig/icons";
 
 type SuggestionIconProps = {

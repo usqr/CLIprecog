@@ -1,6 +1,6 @@
 import { getVersionFromVersionedSpec } from "@fig/autocomplete-helpers";
-import { splitPath } from "@aws/amazon-q-developer-cli-shared/utils";
-import { SpecLocation } from "@aws/amazon-q-developer-cli-shared/internal";
+import { splitPath } from "@kiro/shared/utils";
+import { SpecLocation } from "@kiro/shared/internal";
 import { SpecFileImport, getVersionFromFullFile } from "./loadHelpers.js";
 import { WrongDiffVersionedSpecError } from "./errors.js";
 import { importSpecFromLocation } from "./loadSpec.js";

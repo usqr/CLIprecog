@@ -134,7 +134,26 @@ pub fn old_fig_data_dir() -> Result<PathBuf> {
         .join("codewhisperer"))
 }
 
-/// The q data directory
+/// The kiro data directory
+///
+/// - Linux: `$XDG_DATA_HOME/kiro` or `$HOME/.local/share/kiro`
+/// - MacOS: `$HOME/Library/Application Support/kiro`
+/// - Windows: `%LOCALAPPDATA%\Kiro`
+pub fn kiro_data_dir() -> Result<PathBuf> {
+    cfg_if::cfg_if! {
+        if #[cfg(unix)] {
+            Ok(dirs::data_local_dir()
+                .ok_or(DirectoryError::NoHomeDirectory)?
+                .join("kiro"))
+        } else if #[cfg(windows)] {
+            Ok(dirs::data_local_dir()
+            .ok_or(DirectoryError::NoHomeDirectory)?
+            .join("Kiro"))
+        }
+    }
+}
+
+/// The q data directory (legacy)
 ///
 /// - Linux: `$XDG_DATA_HOME/amazon-q` or `$HOME/.local/share/amazon-q`
 /// - MacOS: `$HOME/Library/Application Support/amazon-q`
@@ -548,6 +567,7 @@ pub fn local_webview_data_dir<Ctx: FsProvider + EnvProvider + PlatformProvider>(
 utf8_dir!(home_dir);
 #[cfg(unix)]
 utf8_dir!(home_local_bin);
+utf8_dir!(kiro_data_dir);
 utf8_dir!(fig_data_dir);
 utf8_dir!(sockets_dir);
 utf8_dir!(remote_socket_path);

@@ -1,3 +1,3 @@
-import { createErrorInstance } from "@aws/amazon-q-developer-cli-shared/errors";
+import { createErrorInstance } from "@kiro/shared/errors";
 
 export const MissingThemeError = createErrorInstance("MissingThemeError");

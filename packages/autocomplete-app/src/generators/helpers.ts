@@ -1,10 +1,10 @@
-import { Annotation } from "@aws/amazon-q-developer-cli-autocomplete-parser";
-import { Suggestion } from "@aws/amazon-q-developer-cli-shared/internal";
-import { getCWDForFilesAndFolders } from "@aws/amazon-q-developer-cli-shared/utils";
+import { Annotation } from "@kiro/autocomplete-parser";
+import { Suggestion } from "@kiro/shared/internal";
+import { getCWDForFilesAndFolders } from "@kiro/shared/utils";
 import {
   getSetting,
   SETTINGS,
-} from "@aws/amazon-q-developer-cli-api-bindings-wrappers";
+} from "@kiro/api-bindings-wrappers";
 import { Cache } from "./cache";
 
 export type GeneratorContext = Fig.ShellContext & {

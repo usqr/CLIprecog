@@ -5,7 +5,7 @@ import {
   Auth,
   Install,
   Platform,
-} from "@aws/amazon-q-developer-cli-api-bindings";
+} from "@kiro/api-bindings";
 import { PlatformInfo } from "@/types/preferences";
 
 type KV = Record<string, unknown>;

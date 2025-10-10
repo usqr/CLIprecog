@@ -1,4 +1,7 @@
-use std::path::PathBuf;
+use std::path::{
+    Path,
+    PathBuf,
+};
 use std::sync::Arc;
 
 use fig_integrations::Integration;
@@ -171,6 +174,158 @@ pub async fn install(components: InstallComponents, env: &Env) -> Result<(), Err
         use fig_integrations::input_method::InputMethod;
         InputMethod::default().install().await?;
     }
+
+    Ok(())
+}
+
+/// Replace old q/qchat/qterm symlinks with kiro/kirochat/kiroterm symlinks
+pub fn replace_symlinks() -> Result<(), Box<dyn std::error::Error>> {
+    let bin_dir = directories::home_local_bin()?;
+
+    // Remove old symlinks
+    remove_old_symlinks(&bin_dir)?;
+
+    // Create new symlinks
+    create_new_symlinks(&bin_dir)?;
+
+    Ok(())
+}
+
+fn remove_old_symlinks(bin_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let old_links = ["q", "qchat", "qterm"];
+
+    for link in &old_links {
+        let link_path = bin_dir.join(link);
+        if link_path.is_symlink() {
+            let _ = std::fs::remove_file(&link_path); // Ignore errors
+        }
+    }
+
+    Ok(())
+}
+
+fn create_new_symlinks(bin_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let kiro_bin = std::env::current_exe()?;
+    let new_links = ["kiro", "kirochat", "kiroterm"];
+
+    std::fs::create_dir_all(bin_dir)?;
+
+    for link_name in &new_links {
+        let link_path = bin_dir.join(link_name);
+        if !link_path.exists() {
+            #[cfg(unix)]
+            let _ = std::os::unix::fs::symlink(&kiro_bin, &link_path); // Ignore errors
+        }
+    }
+
+    Ok(())
+}
+
+/// Clean up old Amazon Q directories
+pub fn cleanup_old_directories() -> Result<(), Box<dyn std::error::Error>> {
+    let home = std::env::var("HOME")?;
+    let old_dirs = [
+        Path::new(&home).join(".fig"),
+        Path::new(&home).join(".local/share/amazon-q"),
+    ];
+
+    for dir in &old_dirs {
+        if dir.exists() {
+            let _ = std::fs::remove_dir_all(dir); // Ignore errors
+        }
+    }
+
+    Ok(())
+}
+
+/// Detect if both Amazon Q and Kiro installations exist
+pub fn detect_dual_installation() -> Result<bool, Box<dyn std::error::Error>> {
+    let home = std::env::var("HOME")?;
+    let bin_dir = directories::home_local_bin()?;
+
+    // Check for old Amazon Q artifacts
+    let old_q_exists = bin_dir.join("q").exists()
+        || Path::new(&home).join(".fig").exists()
+        || Path::new(&home).join(".local/share/amazon-q").exists();
+
+    // Check for new Kiro artifacts
+    let kiro_exists = bin_dir.join("kiro").exists();
+
+    Ok(old_q_exists && kiro_exists)
+}
+
+/// Prompt user for migration choice
+pub fn prompt_migration_choice() -> Result<bool, Box<dyn std::error::Error>> {
+    use std::io::{
+        self,
+        Write,
+    };
+
+    println!("Amazon Q CLI installation detected alongside Kiro.");
+    println!("Would you like to migrate your Amazon Q settings and clean up old files? (y/n)");
+    print!("> ");
+    io::stdout().flush()?;
+
+    let mut input = String::new();
+    io::stdin().read_line(&mut input)?;
+
+    Ok(input.trim().to_lowercase() == "y")
+}
+
+/// Create backup of current symlinks before migration
+pub fn backup_symlinks() -> Result<(), Box<dyn std::error::Error>> {
+    let bin_dir = directories::home_local_bin()?;
+    let backup_dir = bin_dir.join(".amazon-q-backup");
+
+    std::fs::create_dir_all(&backup_dir)?;
+
+    let old_links = ["q", "qchat", "qterm"];
+    for link in &old_links {
+        let link_path = bin_dir.join(link);
+        if link_path.is_symlink() {
+            if let Ok(target) = std::fs::read_link(&link_path) {
+                let backup_file = backup_dir.join(format!("{}.target", link));
+                std::fs::write(backup_file, target.to_string_lossy().as_bytes())?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// Rollback migration by restoring old symlinks
+pub fn rollback_migration() -> Result<(), Box<dyn std::error::Error>> {
+    let bin_dir = directories::home_local_bin()?;
+    let backup_dir = bin_dir.join(".amazon-q-backup");
+
+    if !backup_dir.exists() {
+        return Ok(()); // No backup to restore
+    }
+
+    // Remove new kiro symlinks
+    let new_links = ["kiro", "kirochat", "kiroterm"];
+    for link in &new_links {
+        let link_path = bin_dir.join(link);
+        if link_path.is_symlink() {
+            let _ = std::fs::remove_file(&link_path);
+        }
+    }
+
+    // Restore old symlinks
+    let old_links = ["q", "qchat", "qterm"];
+    for link in &old_links {
+        let backup_file = backup_dir.join(format!("{}.target", link));
+        if backup_file.exists() {
+            if let Ok(target) = std::fs::read_to_string(&backup_file) {
+                let link_path = bin_dir.join(link);
+                #[cfg(unix)]
+                let _ = std::os::unix::fs::symlink(&target, &link_path);
+            }
+        }
+    }
+
+    // Clean up backup directory
+    let _ = std::fs::remove_dir_all(&backup_dir);
 
     Ok(())
 }

@@ -20,6 +20,10 @@ use eyre::{
     Result,
     bail,
 };
+use fig_util::{
+    CLI_BINARY_NAME,
+    PRODUCT_NAME,
+};
 use serde_json::json;
 use tokio::signal::ctrl_c;
 use tracing::{
@@ -48,8 +52,6 @@ use crate::util::spinner::{
 };
 use crate::util::system_info::is_remote;
 use crate::util::{
-    CLI_BINARY_NAME,
-    PRODUCT_NAME,
     choose,
     input,
 };

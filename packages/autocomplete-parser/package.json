@@ -1,5 +1,5 @@
 {
-  "name": "@aws/amazon-q-developer-cli-autocomplete-parser",
+  "name": "@kiro/autocomplete-parser",
   "version": "0.2.0",
   "license": "MIT OR Apache-2.0",
   "author": "Amazon Web Services",
@@ -21,9 +21,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@aws/amazon-q-developer-cli-api-bindings-wrappers": "workspace:^",
-    "@aws/amazon-q-developer-cli-api-bindings": "workspace:^",
-    "@aws/amazon-q-developer-cli-shell-parser": "workspace:^",
+    "@kiro/api-bindings-wrappers": "workspace:^",
+    "@kiro/api-bindings": "workspace:^",
+    "@kiro/shell-parser": "workspace:^",
     "@fig/autocomplete-generators": "^2.4.0",
     "@fig/autocomplete-helpers": "^2.0.0",
     "@fig/autocomplete-shared": "^1.1.2",
@@ -32,10 +32,10 @@
     "zod": "^3.25.7"
   },
   "devDependencies": {
-    "@amzn/eslint-config": "workspace:^",
-    "@amzn/tsconfig": "workspace:^",
-    "@amzn/types": "workspace:^",
-    "@aws/amazon-q-developer-cli-shared": "workspace:^",
+    "@kiro/eslint-config": "workspace:^",
+    "@kiro/tsconfig": "workspace:^",
+    "@kiro/types": "workspace:^",
+    "@kiro/shared": "workspace:^",
     "@types/semver": "^7.7.0",
     "@withfig/autocomplete-types": "^1.31.0",
     "eslint": "^9.18.0",

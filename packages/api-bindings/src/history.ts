@@ -1,10 +1,10 @@
 import {
   HistoryQueryRequest_Param,
   HistoryQueryRequest_ParamSchema,
-} from "@aws/amazon-q-developer-cli-proto/fig";
+} from "@kiro/proto/fig";
 import { sendHistoryQueryRequest } from "./requests.js";
 import { create } from "@bufbuild/protobuf";
-import { EmptySchema } from "@aws/amazon-q-developer-cli-proto/fig_common";
+import { EmptySchema } from "@kiro/proto/fig_common";
 
 export type Param = string | number | Uint8Array | null;
 

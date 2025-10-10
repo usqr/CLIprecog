@@ -1468,7 +1468,7 @@ fn queue_failure_message(
     time: &str,
     output: &mut impl Write,
 ) -> eyre::Result<()> {
-    use crate::util::CHAT_BINARY_NAME;
+    use fig_util::CHAT_BINARY_NAME;
     Ok(queue!(
         output,
         style::SetForegroundColor(style::Color::Red),

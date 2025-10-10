@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useRef, useMemo } from "react";
-import { Suggestion, Arg } from "@aws/amazon-q-developer-cli-shared/internal";
+import { Suggestion, Arg } from "@kiro/shared/internal";
 import { getMaxHeight, POPOUT_WIDTH } from "../window";
 import { useAutocompleteStore } from "../state";
 import { AutocompleteAction } from "../actions";

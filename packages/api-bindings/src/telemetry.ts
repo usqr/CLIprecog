@@ -1,7 +1,7 @@
 import {
   TelemetryProperty,
   TelemetryPropertySchema,
-} from "@aws/amazon-q-developer-cli-proto/fig";
+} from "@kiro/proto/fig";
 import {
   sendTelemetryPageRequest,
   sendTelemetryTrackRequest,

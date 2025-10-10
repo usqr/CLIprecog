@@ -1,9 +1,9 @@
-import { makeArray } from "@aws/amazon-q-developer-cli-shared/utils";
-import { Suggestion } from "@aws/amazon-q-developer-cli-shared/internal";
+import { makeArray } from "@kiro/shared/utils";
+import { Suggestion } from "@kiro/shared/internal";
 import {
   SETTINGS,
   getSetting,
-} from "@aws/amazon-q-developer-cli-api-bindings-wrappers";
+} from "@kiro/api-bindings-wrappers";
 
 // { command: { commandParam: count/lastUsedDate } }
 // e.g. git: { add: 2, push: 4 }

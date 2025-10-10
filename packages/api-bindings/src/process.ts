@@ -3,7 +3,7 @@ import { sendRunProcessRequest } from "./requests.js";
 import {
   DurationSchema,
   EnvironmentVariableSchema,
-} from "@aws/amazon-q-developer-cli-proto/fig_common";
+} from "@kiro/proto/fig_common";
 
 export async function run({
   executable,

@@ -5,7 +5,7 @@ import {
   InstallResponse_InstallationStatus,
   NotificationType,
   Result_Result,
-} from "@aws/amazon-q-developer-cli-proto/fig";
+} from "@kiro/proto/fig";
 
 import { sendInstallRequest } from "./requests.js";
 import { NotificationResponse, _subscribe } from "./notifications.js";

@@ -99,7 +99,7 @@ import {
   WindowFocusRequestSchema,
   WriteFileRequest,
   WriteFileRequestSchema,
-} from "@aws/amazon-q-developer-cli-proto/fig";
+} from "@kiro/proto/fig";
 import { sendMessage } from "./core.js";
 import { create } from "@bufbuild/protobuf";
 

@@ -1,17 +1,17 @@
 import logger from "loglevel";
 import { StoreApi } from "zustand";
-import { Shell } from "@aws/amazon-q-developer-cli-api-bindings";
+import { Shell } from "@kiro/api-bindings";
 import { SpecLocationSource } from "@fig/autocomplete-shared";
 import {
   SpecLocation,
   Suggestion,
-} from "@aws/amazon-q-developer-cli-shared/internal";
+} from "@kiro/shared/internal";
 import {
   makeArray,
   longestCommonPrefix,
   ensureTrailingSlash,
-} from "@aws/amazon-q-developer-cli-shared/utils";
-import { SETTINGS } from "@aws/amazon-q-developer-cli-api-bindings-wrappers";
+} from "@kiro/shared/utils";
+import { SETTINGS } from "@kiro/api-bindings-wrappers";
 import { trackEvent } from "../telemetry";
 import { NamedSetState, AutocompleteState, Visibility } from "./types";
 import {

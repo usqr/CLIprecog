@@ -122,7 +122,7 @@ pub enum Processes {
     App,
 }
 
-/// The Amazon Q CLI
+/// Kiro
 #[deny(missing_docs)]
 #[derive(Debug, PartialEq, Subcommand)]
 pub enum CliRootCommands {
@@ -138,14 +138,14 @@ pub enum CliRootCommands {
     /// Setup cli components
     #[command(alias("install"))]
     Setup(internal::InstallArgs),
-    /// Uninstall Amazon Q
+    /// Uninstall Kiro
     #[command(hide = true)]
     Uninstall {
         /// Force uninstall
         #[arg(long, short = 'y')]
         no_confirm: bool,
     },
-    /// Update the Amazon Q application
+    /// Update the Kiro application
     #[command(alias("upgrade"))]
     Update(update::UpdateArgs),
     /// Run diagnostic tests
@@ -265,11 +265,11 @@ impl CliRootCommands {
 
 const HELP_TEXT: &str = color_print::cstr! {"
 
-<magenta,em>q</magenta,em> (Amazon Q CLI)
+<magenta,em>q</magenta,em> (Kiro CLI)
 
 <magenta,em>Popular Subcommands</magenta,em>              <black!><em>Usage:</em> q [subcommand]</black!>
 ╭────────────────────────────────────────────────────╮
-│ <em>chat</em>         <black!>Chat with Amazon Q</black!>                    │
+│ <em>chat</em>         <black!>Chat with Kiro</black!>                    │
 │ <em>translate</em>    <black!>Natural Language to Shell translation</black!> │
 │ <em>doctor</em>       <black!>Debug installation issues</black!>             │ 
 │ <em>settings</em>     <black!>Customize appearance & behavior</black!>       │

@@ -26,6 +26,9 @@ fn main() -> Result<ExitCode> {
     fig_telemetry::set_dispatch_mode(fig_telemetry::DispatchMode::On);
     fig_telemetry::init_global_telemetry_emitter();
 
+    // Handle migration with compatibility mode
+    handle_migration_compatibility();
+
     let mut args = std::env::args();
     let subcommand = args.nth(1);
     let multithread = matches!(
@@ -83,6 +86,54 @@ fn main() -> Result<ExitCode> {
                 eprintln!("{} {err}", "error:".bold().red());
             }
             Ok(ExitCode::FAILURE)
+        },
+    }
+}
+
+/// Handle migration with backward compatibility support
+fn handle_migration_compatibility() {
+    // Check for dual installation
+    if let Ok(true) = fig_install::detect_dual_installation() {
+        // Prompt user for migration choice
+        match fig_install::prompt_migration_choice() {
+            Ok(true) => {
+                // User chose to migrate
+                if let Err(_) = perform_migration_with_rollback() {
+                    eprintln!("Migration failed. Your original Amazon Q installation has been preserved.");
+                } else {
+                    println!("Migration completed successfully! You can now use 'kiro' commands.");
+                    // Clean up old directories after successful migration
+                    let _ = fig_install::cleanup_old_directories();
+                    let _ = fig_integrations::remove_old_shell_integrations();
+                }
+            },
+            Ok(false) => {
+                // User chose not to migrate - just do silent symlink replacement
+                let _ = fig_install::replace_symlinks();
+            },
+            Err(_) => {
+                // Error in prompting - fall back to silent replacement
+                let _ = fig_install::replace_symlinks();
+            },
+        }
+    } else {
+        // No dual installation detected - just do silent symlink replacement
+        let _ = fig_install::replace_symlinks();
+    }
+}
+
+/// Perform migration with automatic rollback on failure
+fn perform_migration_with_rollback() -> Result<(), Box<dyn std::error::Error>> {
+    // Create backup before migration
+    fig_install::backup_symlinks()?;
+
+    // Attempt migration
+    match fig_install::replace_symlinks() {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            // Migration failed - rollback
+            let _ = fig_install::rollback_migration();
+            Err(e)
         },
     }
 }

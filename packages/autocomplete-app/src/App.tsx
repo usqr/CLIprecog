@@ -1,8 +1,8 @@
 import {
   WindowPosition,
   Settings,
-} from "@aws/amazon-q-developer-cli-api-bindings";
-import { SETTINGS } from "@aws/amazon-q-developer-cli-api-bindings-wrappers";
+} from "@kiro/api-bindings";
+import { SETTINGS } from "@kiro/api-bindings-wrappers";
 import React, {
   useState,
   useEffect,
@@ -13,9 +13,9 @@ import React, {
 } from "react";
 
 import logger from "loglevel";
-import { getCWDForFilesAndFolders } from "@aws/amazon-q-developer-cli-shared/utils";
+import { getCWDForFilesAndFolders } from "@kiro/shared/utils";
 import * as jsxRuntime from "react/jsx-runtime";
-import * as figApiBindings from "@aws/amazon-q-developer-cli-api-bindings";
+import * as figApiBindings from "@kiro/api-bindings";
 import { getMaxHeight, getMaxWidth, POPOUT_WIDTH } from "./window";
 import { useParseArgumentsEffect } from "./parser/hooks";
 import { loadHistory } from "./history";

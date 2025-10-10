@@ -4,7 +4,7 @@ import {
   Auth,
   Internal,
   Native,
-} from "@aws/amazon-q-developer-cli-api-bindings";
+} from "@kiro/api-bindings";
 import { useEffect, useState } from "react";
 import Tab, { ProfileTab } from "./tabs";
 import { useLocalStateZodDefault } from "@/hooks/store/useState";

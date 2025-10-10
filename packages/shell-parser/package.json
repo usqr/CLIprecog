@@ -1,5 +1,5 @@
 {
-  "name": "@aws/amazon-q-developer-cli-shell-parser",
+  "name": "@kiro/shell-parser",
   "version": "0.1.0",
   "license": "MIT OR Apache-2.0",
   "author": "Amazon Web Services",
@@ -22,11 +22,11 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@aws/amazon-q-developer-cli-shared": "workspace:^"
+    "@kiro/shared": "workspace:^"
   },
   "devDependencies": {
-    "@amzn/eslint-config": "workspace:^",
-    "@amzn/tsconfig": "workspace:^",
+    "@kiro/eslint-config": "workspace:^",
+    "@kiro/tsconfig": "workspace:^",
     "@vitest/coverage-v8": "^3.0.8",
     "eslint": "^9.18.0",
     "prettier": "^3.4.2",

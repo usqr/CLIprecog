@@ -1,5 +1,5 @@
 // @ts-check
-import base from "@amzn/eslint-config/base";
+import base from "@kiro/eslint-config/base";
 export default base({
   tsconfigPath: "./tsconfig.eslint.json",
 });

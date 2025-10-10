@@ -1,11 +1,11 @@
-import { GetPlatformInfoResponse } from "@aws/amazon-q-developer-cli-proto/fig";
+import { GetPlatformInfoResponse } from "@kiro/proto/fig";
 import { sendGetPlatformInfoRequest } from "./requests.js";
 import {
   AppBundleType,
   DesktopEnvironment,
   DisplayServerProtocol,
   Os,
-} from "@aws/amazon-q-developer-cli-proto/fig";
+} from "@kiro/proto/fig";
 
 export { AppBundleType, DesktopEnvironment, DisplayServerProtocol, Os };
 

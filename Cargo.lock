@@ -1670,6 +1670,7 @@ dependencies = [
  "dirs 5.0.1",
  "eyre",
  "fd-lock",
+ "fig_util",
  "futures",
  "glob",
  "globset",

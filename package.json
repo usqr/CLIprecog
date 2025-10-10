@@ -1,5 +1,5 @@
 {
-  "name": "root",
+  "name": "@kiro/cli",
   "private": true,
   "author": "Amazon Web Services",
   "repository": "https://github.com/aws/amazon-q-developer-cli",

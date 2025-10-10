@@ -12,8 +12,8 @@ import { useLocalStateZodDefault } from "@/hooks/store/useState";
 import { z } from "zod";
 import { AMZN_START_URL } from "@/lib/constants";
 import { useEffect, useState, useCallback } from "react";
-import { Profile } from "@aws/amazon-q-developer-cli-api-bindings";
-import { State } from "@aws/amazon-q-developer-cli-api-bindings";
+import { Profile } from "@kiro/api-bindings";
+import { State } from "@kiro/api-bindings";
 
 function BuilderIdTab({
   handleLogin,

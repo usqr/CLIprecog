@@ -12,16 +12,16 @@ pub const APP_PROCESS_NAME: &str = "q_desktop.exe";
 /// The name configured under `"package.productName"` in the tauri.conf.json file.
 pub const TAURI_PRODUCT_NAME: &str = "q_desktop";
 
-pub const CLI_BINARY_NAME: &str = "q";
-pub const CLI_BINARY_NAME_MINIMAL: &str = "q-minimal";
-pub const CHAT_BINARY_NAME: &str = "qchat";
-pub const PTY_BINARY_NAME: &str = "qterm";
+pub const CLI_BINARY_NAME: &str = "kiro";
+pub const CLI_BINARY_NAME_MINIMAL: &str = "kiro-minimal";
+pub const CHAT_BINARY_NAME: &str = "kirochat";
+pub const PTY_BINARY_NAME: &str = "kiroterm";
 
 pub const CLI_CRATE_NAME: &str = "q_cli";
 
 pub const URL_SCHEMA: &str = "q";
 
-pub const PRODUCT_NAME: &str = "Amazon Q";
+pub const PRODUCT_NAME: &str = "Kiro";
 
 pub const RUNTIME_DIR_NAME: &str = "cwrun";
 

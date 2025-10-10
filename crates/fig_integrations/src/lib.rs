@@ -19,6 +19,7 @@ pub use error::{
     Result,
 };
 pub use file::FileIntegration;
+pub use shell::remove_old_shell_integrations;
 
 #[async_trait]
 pub trait Integration {

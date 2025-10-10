@@ -1,5 +1,5 @@
 {
-  "name": "@aws/amazon-q-developer-cli-api-bindings",
+  "name": "@kiro/api-bindings",
   "version": "0.2.0",
   "license": "MIT OR Apache-2.0",
   "author": "Amazon Web Services",
@@ -22,12 +22,12 @@
     "generate-requests": "tsx codegen/generate-requests.ts && prettier -w src/requests.ts"
   },
   "dependencies": {
-    "@aws/amazon-q-developer-cli-proto": "workspace:^",
+    "@kiro/proto": "workspace:^",
     "@bufbuild/protobuf": "2.4.0"
   },
   "devDependencies": {
-    "@amzn/eslint-config": "workspace:^",
-    "@amzn/tsconfig": "workspace:^",
+    "@kiro/eslint-config": "workspace:^",
+    "@kiro/tsconfig": "workspace:^",
     "@tsconfig/recommended": "^1.0.8",
     "@types/node": "^22.15.20",
     "@typescript/analyze-trace": "^0.10.1",

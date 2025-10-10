@@ -390,12 +390,12 @@ impl HookExecutor {
 #[derive(Debug, PartialEq, Args)]
 #[command(
     before_long_help = "Use context hooks to specify shell commands to run. The output from these 
-commands will be appended to the prompt to Amazon Q. Hooks can be defined 
+commands will be appended to the prompt to Kiro. Hooks can be defined 
 in global or local profiles.
 
 Notes:
 • Hooks are executed in parallel
-• 'conversation_start' hooks run on the first user prompt and are attached once to the conversation history sent to Amazon Q
+• 'conversation_start' hooks run on the first user prompt and are attached once to the conversation history sent to Kiro
 • 'per_prompt' hooks run on each user prompt and are attached to the prompt, but are not stored in conversation history"
 )]
 pub struct HooksArgs {

@@ -11,7 +11,6 @@ use clap::ValueEnum;
 use fig_os_shim::Env;
 use fig_util::{
     CLI_BINARY_NAME,
-    PRODUCT_NAME,
     Shell,
     directories,
 };
@@ -110,7 +109,7 @@ impl ShellExt for Shell {
             Shell::Fish | Shell::Nu => [].iter(),
         } {
             for when in &When::all() {
-                let path = directories::fig_data_dir()?
+                let path = directories::kiro_data_dir()?
                     .join("shell")
                     .join(integration_file_name(file, when, self));
 
@@ -171,12 +170,12 @@ impl ShellExt for Shell {
                     Box::new(ShellScriptShellIntegration {
                         when: When::Pre,
                         shell: *self,
-                        path: fish_config_dir.join("00_fig_pre.fish"),
+                        path: fish_config_dir.join("00_kiro_pre.fish"),
                     }),
                     Box::new(ShellScriptShellIntegration {
                         when: When::Post,
                         shell: *self,
-                        path: fish_config_dir.join("99_fig_post.fish"),
+                        path: fish_config_dir.join("99_kiro_post.fish"),
                     }),
                 ]
             },
@@ -390,6 +389,22 @@ impl DotfileShellIntegration {
         })
     }
 
+    fn fig_script_integration(&self, when: When) -> Result<ShellScriptShellIntegration> {
+        let integration_file_name = format!(
+            "{}.{}.{}",
+            Regex::new(r"^\.").unwrap().replace_all(self.dotfile_name, ""),
+            when,
+            self.shell
+        );
+        Ok(ShellScriptShellIntegration {
+            shell: self.shell,
+            when,
+            path: directories::fig_data_dir()?
+                .join("shell")
+                .join(integration_file_name),
+        })
+    }
+
     fn script_integration(&self, when: When) -> Result<ShellScriptShellIntegration> {
         let integration_file_name = format!(
             "{}.{}.{}",
@@ -400,15 +415,15 @@ impl DotfileShellIntegration {
         Ok(ShellScriptShellIntegration {
             shell: self.shell,
             when,
-            path: directories::fig_data_dir()?.join("shell").join(integration_file_name),
+            path: directories::kiro_data_dir()?.join("shell").join(integration_file_name),
         })
     }
 
     #[allow(clippy::unused_self)]
     fn description(&self, when: When) -> String {
         match when {
-            When::Pre => format!("# {PRODUCT_NAME} pre block. Keep at the top of this file."),
-            When::Post => format!("# {PRODUCT_NAME} post block. Keep at the bottom of this file."),
+            When::Pre => "# Kiro pre block. Keep at the top of this file.".to_string(),
+            When::Post => "# Kiro post block. Keep at the bottom of this file.".to_string(),
         }
     }
 
@@ -416,6 +431,14 @@ impl DotfileShellIntegration {
         match when {
             When::Pre => "# CodeWhisperer pre block. Keep at the top of this file.",
             When::Post => "# CodeWhisperer post block. Keep at the bottom of this file.",
+        }
+        .into()
+    }
+
+    fn fig_description(when: When) -> String {
+        match when {
+            When::Pre => "# Amazon Q pre block. Keep at the top of this file.",
+            When::Post => "# Amazon Q post block. Keep at the bottom of this file.",
         }
         .into()
     }
@@ -456,14 +479,30 @@ impl DotfileShellIntegration {
             regex::escape(&self.legacy_source_text_2(when)?),
         );
 
+        // Amazon Q (fig) patterns
+        let fig_source_regex_1 = format!(
+            r#"(?m)(?:{}\n)?^{}\n{{0,2}}"#,
+            regex::escape(&DotfileShellIntegration::fig_description(when)),
+            regex::escape(&self.fig_source_text_1(when)?),
+        );
+        let fig_source_regex_2 = format!(
+            r#"(?m)(?:{}\n)?^{}\n{{0,2}}"#,
+            regex::escape(&DotfileShellIntegration::fig_description(when)),
+            regex::escape(&self.fig_source_text_2(when)?),
+        );
+
         let old_brand_regex = self.old_brand_regex(when)?;
+        let fig_brand_regex = self.fig_brand_regex(when)?;
 
         Ok(RegexSet::new([
             old_file_regex,
             &old_eval_regex,
             &old_source_regex_1,
             &old_source_regex_2,
+            &fig_source_regex_1,
+            &fig_source_regex_2,
             &old_brand_regex,
+            &fig_brand_regex,
         ])?)
     }
 
@@ -488,6 +527,38 @@ impl DotfileShellIntegration {
     fn legacy_source_text_3(&self, when: When) -> Result<String> {
         let home = directories::home_dir()?;
         let integration_path = self.legacy_script_integration(when)?.path;
+        let path = regex::escape(&format!(
+            "\"${{HOME}}/{}\"",
+            integration_path.strip_prefix(home)?.display()
+        ));
+
+        match self.shell {
+            Shell::Fish => Ok(format!(r"test\s*\-f\s*{path};\s*and\s+builtin\s+source\s+{path}")),
+            _ => Ok(format!(r"\[\[\s*\-f\s*{path}\s*\]\]\s*&&\s*builtin\s+source\s*{path}")),
+        }
+    }
+
+    fn fig_source_text_1(&self, when: When) -> Result<String> {
+        let home = directories::home_dir()?;
+        let integration_path = self.fig_script_integration(when)?.path;
+        let path = integration_path.strip_prefix(home)?;
+        Ok(format!(". \"$HOME/{}\"", path.display()))
+    }
+
+    fn fig_source_text_2(&self, when: When) -> Result<String> {
+        let home = directories::home_dir()?;
+        let integration_path = self.fig_script_integration(when)?.path;
+        let path = format!("\"$HOME/{}\"", integration_path.strip_prefix(home)?.display());
+
+        match self.shell {
+            Shell::Fish => Ok(format!("if test -f {path}; . {path}; end")),
+            _ => Ok(format!("[[ -f {path} ]] && . {path}")),
+        }
+    }
+
+    fn fig_source_text_3(&self, when: When) -> Result<String> {
+        let home = directories::home_dir()?;
+        let integration_path = self.fig_script_integration(when)?.path;
         let path = regex::escape(&format!(
             "\"${{HOME}}/{}\"",
             integration_path.strip_prefix(home)?.display()
@@ -574,6 +645,14 @@ impl DotfileShellIntegration {
             r#"(?m)(?:\s*{}\s*\n)?^\s*{}\s*\n{{0,2}}"#,
             regex::escape(&DotfileShellIntegration::legacy_description(when)),
             self.legacy_source_text_3(when)?,
+        ))
+    }
+
+    fn fig_brand_regex(&self, when: When) -> Result<String> {
+        Ok(format!(
+            r#"(?m)(?:\s*{}\s*\n)?^\s*{}\s*\n{{0,2}}"#,
+            regex::escape(&DotfileShellIntegration::fig_description(when)),
+            self.fig_source_text_3(when)?,
         ))
     }
 
@@ -755,6 +834,47 @@ fn split_shebang(contents: &str) -> (&str, &str) {
     } else {
         ("", contents)
     }
+}
+
+/// Remove old Amazon Q shell integrations from user dotfiles
+pub fn remove_old_shell_integrations() -> Result<()> {
+    let shells = [
+        ("bash", ".bashrc"),
+        ("zsh", ".zshrc"),
+        ("fish", ".config/fish/config.fish"),
+    ];
+
+    let home = std::env::var("HOME").map_err(|_| {
+        Error::Io(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "HOME environment variable not found",
+        ))
+    })?;
+
+    for (_, rc_file) in &shells {
+        let rc_path = std::path::Path::new(&home).join(rc_file);
+        if rc_path.exists() {
+            let _ = clean_shell_file(&rc_path); // Ignore errors
+        }
+    }
+
+    Ok(())
+}
+
+fn clean_shell_file(rc_path: &std::path::Path) -> Result<()> {
+    let content = std::fs::read_to_string(rc_path).map_err(|e| Error::Io(e))?;
+
+    let new_content = content
+        .lines()
+        .filter(|line| !line.contains("Amazon Q pre block") && !line.contains("Amazon Q post block"))
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    if content != new_content {
+        std::fs::write(rc_path, new_content).map_err(|e| Error::Io(e))?;
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]

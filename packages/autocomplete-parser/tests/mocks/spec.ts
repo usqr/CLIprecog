@@ -1,4 +1,4 @@
-import { localProtocol } from "@aws/amazon-q-developer-cli-shared/utils";
+import { localProtocol } from "@kiro/shared/utils";
 
 const generateSpec = async (
   tokenArray: string[] | undefined,

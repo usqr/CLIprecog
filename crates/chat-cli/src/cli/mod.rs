@@ -29,6 +29,10 @@ use eyre::{
     bail,
 };
 use feed::Feed;
+use fig_util::{
+    CHAT_BINARY_NAME,
+    CLI_BINARY_NAME,
+};
 use serde::Serialize;
 use tracing::{
     Level,
@@ -46,11 +50,8 @@ use crate::logging::{
     initialize_logging,
 };
 use crate::os::Os;
+use crate::util::GOV_REGIONS;
 use crate::util::directories::logs_dir;
-use crate::util::{
-    CLI_BINARY_NAME,
-    GOV_REGIONS,
-};
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, ValueEnum)]
 pub enum OutputFormat {
@@ -79,15 +80,15 @@ impl OutputFormat {
     }
 }
 
-/// The Amazon Q CLI
+/// Kiro
 #[deny(missing_docs)]
 #[derive(Debug, PartialEq, Subcommand)]
 pub enum RootSubcommand {
     /// AI assistant in your terminal
     Chat(ChatArgs),
-    /// Log in to Amazon Q
+    /// Log in to Kiro
     Login(LoginArgs),
-    /// Log out of Amazon Q
+    /// Log out of Kiro
     Logout,
     /// Print info about the current login session
     Whoami(WhoamiArgs),
@@ -184,7 +185,7 @@ impl Display for RootSubcommand {
 }
 
 #[derive(Debug, Parser, PartialEq, Default)]
-#[command(version, about, name = crate::util::CHAT_BINARY_NAME)]
+#[command(version, about, name = CHAT_BINARY_NAME)]
 pub struct Cli {
     #[command(subcommand)]
     pub subcommand: Option<RootSubcommand>,

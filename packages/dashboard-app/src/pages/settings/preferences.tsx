@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/components/ui/link";
 import settings from "@/data/preferences";
 import { useAuth } from "@/hooks/store/useAuth";
-import { Native, User } from "@aws/amazon-q-developer-cli-api-bindings";
-import { State, Profile } from "@aws/amazon-q-developer-cli-api-bindings";
+import { Native, User } from "@kiro/api-bindings";
+import { State, Profile } from "@kiro/api-bindings";
 import { useEffect, useState } from "react";
 import {
   Select,

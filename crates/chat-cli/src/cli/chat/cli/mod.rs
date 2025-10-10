@@ -38,7 +38,7 @@ use crate::cli::chat::{
 use crate::cli::issue;
 use crate::os::Os;
 
-/// q (Amazon Q Chat)
+/// q (Kiro Chat)
 #[derive(Debug, PartialEq, Parser)]
 #[command(color = clap::ColorChoice::Always, term_width = 0, after_long_help = EXTRA_HELP)]
 pub enum SlashCommand {

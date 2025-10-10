@@ -12,7 +12,7 @@ import Keybindings from "./pages/settings/keybindings";
 import Licenses from "./pages/licenses";
 import { Suspense, useContext, useEffect, useRef } from "react";
 import Modal from "./components/modal";
-import { Telemetry, Event } from "@aws/amazon-q-developer-cli-api-bindings";
+import { Telemetry, Event } from "@kiro/api-bindings";
 import InstallModal from "./components/installs/modal";
 import LoginModal from "./components/installs/modal/login";
 import { getIconFromName } from "./lib/icons";
@@ -33,7 +33,7 @@ import WhatsNew from "./pages/whats-new";
 import notificationFeedItems from "../../../feed.json";
 import { useState } from "react";
 import { usePlatformInfo } from "./hooks/store/usePlatformInfo";
-import { Platform } from "@aws/amazon-q-developer-cli-api-bindings";
+import { Platform } from "@kiro/api-bindings";
 import { matchesPlatformRestrictions } from "./lib/platform";
 import { gnomeExtensionInstallCheck } from "./data/install";
 

@@ -1,8 +1,4 @@
-/// TODO(brandonskiser): revert back to "qchat" for prompting login after standalone releases.
-pub const CLI_BINARY_NAME: &str = "q";
-pub const CHAT_BINARY_NAME: &str = "qchat";
-
-pub const PRODUCT_NAME: &str = "Amazon Q";
+/// TODO(brandonskiser): revert back to "kirochat" for prompting login after standalone releases.
 
 pub const GITHUB_REPO_NAME: &str = "aws/amazon-q-developer-cli";
 

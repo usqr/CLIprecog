@@ -48,7 +48,13 @@ use windows as os;
 mod common;
 pub use common::{
     InstallComponents,
+    backup_symlinks,
+    cleanup_old_directories,
+    detect_dual_installation,
     install,
+    prompt_migration_choice,
+    replace_symlinks,
+    rollback_migration,
     uninstall,
 };
 
