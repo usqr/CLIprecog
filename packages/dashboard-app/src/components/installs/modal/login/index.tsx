@@ -15,8 +15,7 @@ import { useAuth, useAuthRequest, useRefreshAuth } from "@/hooks/store/useAuth";
 
 export default function LoginModal({ next }: { next: () => void }) {
   const midway = window?.fig?.constants?.midway ?? false;
-
-  const waitlistUrl: string | undefined = window?.fig?.constants?.waitlistUrl;
+  const isRemote = window?.fig?.constants?.isRemote ?? false;
 
   const [loginState, setLoginState] = useState<
     "not started" | "loading" | "logged in"
@@ -58,21 +57,36 @@ export default function LoginModal({ next }: { next: () => void }) {
   const auth = useAuth();
   const refreshAuth = useRefreshAuth();
 
-  // Social login specific states
-  const [socialAuthRequestId, setSocialAuthRequestId] = useState<string | null>(
-    null,
-  );
-  const [pendingProvider, setPendingProvider] = useState<
-    "Google" | "Github" | null
-  >(null);
-  const [needInvitation, setNeedInvitation] = useState(false);
-  const [invitationCode, setInvitationCode] = useState("");
-
   useEffect(() => {
     // Reset the auth request id so that we don't present the "OAuth cancelled" error
     // to the user.
     setAuthRequestId("");
   }, [loginMethod, setAuthRequestId]);
+
+  async function handleUnifiedPortalLogin() {
+    try {
+      setError(null);
+      setLoginState("loading");
+      const res = await Auth.startUnifiedPortal({});
+      // res.kind: "social" | "internal"
+      if (res.kind === "social") {
+        Internal.sendWindowFocusRequest({});
+        await refreshAuth();
+        setLoginState("logged in");
+        next();
+        return;
+      } else if (res.kind === "internal" && res.issuerUrl && res.idcRegion) {
+        await handlePkceAuth(res.issuerUrl, res.idcRegion);
+        return;
+      } else {
+        throw new Error("Unknown portal result");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setLoginState("not started");
+      setError(err?.message ?? String(err));
+    }
+  }
 
   async function handleLogin(startUrl?: string, region?: string) {
     if (loginMethod === "pkce") {
@@ -170,108 +184,6 @@ export default function LoginModal({ next }: { next: () => void }) {
       });
   }
 
-  function isSignUpBlocked(e: unknown) {
-    const msg = String((e as any)?.message ?? e ?? "");
-    return msg.includes("SIGN_IN_BLOCKED");
-  }
-
-  function normalizeAuthError(e: unknown) {
-    const raw = String((e as any)?.message ?? e ?? "");
-
-    const msg = raw.replace(/^OAuth error:\s*/i, "");
-
-    if (msg.includes("access_denied")) {
-      return "Authentication failed: The identity provider denied access to Kiro. Please ensure you grant all required permissions.";
-    }
-
-    return msg;
-  }
-
-  async function handleSocialLogin(provider: "Google" | "Github") {
-    setError(null);
-    setNeedInvitation(false);
-    setInvitationCode("");
-    setPendingProvider(provider);
-    setLoginState("loading");
-
-    try {
-      // 1) start social authorization
-      const init = await Auth.startSocialAuthorization({ provider });
-      setSocialAuthRequestId(init.authRequestId);
-
-      // 2) open browser to login
-      await Native.open(init.url);
-
-      // 3) first finish attempt (no invitation code)
-      await Auth.finishSocialAuthorization({
-        authRequestId: init.authRequestId,
-      })
-        .then(() => {
-          Internal.sendWindowFocusRequest({});
-          refreshAuth();
-          setLoginState("logged in");
-          next();
-        })
-        .catch((err: Error) => {
-          if (isSignUpBlocked(err)) {
-            setNeedInvitation(true);
-            setLoginState("not started");
-            setError(null);
-            setPendingProvider(provider);
-          } else {
-            setError(normalizeAuthError(err));
-            setLoginState("not started");
-          }
-        });
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
-      setLoginState("not started");
-    }
-  }
-
-  async function submitInvitationCode() {
-    if (!pendingProvider || !invitationCode) return;
-
-    setError(null);
-    setLoginState("loading");
-
-    try {
-      const init = await Auth.startSocialAuthorization({
-        provider: pendingProvider,
-      });
-      await Native.open(init.url);
-      await Auth.finishSocialAuthorization({
-        authRequestId: init.authRequestId,
-        invitationCode,
-      });
-
-      Internal.sendWindowFocusRequest({});
-      refreshAuth();
-      setLoginState("logged in");
-      setNeedInvitation(false);
-      setInvitationCode("");
-      setSocialAuthRequestId(null);
-      next();
-    } catch (e: any) {
-      console.log("[social login] validate error:", e, e?.message);
-      const msg = String(e?.message ?? e ?? "");
-      if (msg.includes("SIGN_IN_BLOCKED")) {
-        setError("Invalid access code. Please try again.");
-      } else {
-        setError(msg);
-      }
-      setLoginState("not started");
-    }
-  }
-
-  function resetInvitationFlow() {
-    setNeedInvitation(false);
-    setInvitationCode("");
-    setPendingProvider(null);
-    setSocialAuthRequestId(null);
-    setError(null);
-  }
-
   useEffect(() => {
     setLoginState(auth.authed ? "logged in" : "not started");
   }, [auth]);
@@ -281,93 +193,35 @@ export default function LoginModal({ next }: { next: () => void }) {
     next();
   }, [loginState, showProfileTab, next]);
 
-  if (needInvitation) {
+
+  if (!isRemote) {
     return (
-      <div className="relative -m-10 rounded-lg overflow-hidden text-white">
-        <div className="absolute inset-0 gradient-q-secondary-light" />
-
-        <div className="relative p-6 pt-10 flex flex-col items-center gap-6">
-          {/* Back */}
-          <div className="w-full max-w-md">
-            <Button
-              variant="ghost"
-              className="p-0 text-white/80 hover:text-white text-sm"
-              onClick={resetInvitationFlow}
-              aria-label="Go back"
-              title="Go back"
-            >
-              ← Back
-            </Button>
-          </div>
-
-          {/* Title */}
-          <div className="w-full max-w-md flex flex-col gap-2">
-            <h2 className="text-xl font-semibold leading-none font-ember tracking-tight">
-              Looks like you're new here...
+      <div className="flex flex-col items-center gap-8 gradient-q-secondary-light -m-10 pt-10 p-4 rounded-lg text-white">
+        <div className="flex flex-col items-center gap-8">
+          <Lockup />
+          {!completedOnboarding && (
+            <h2 className="text-xl text-white font-semibold select-none leading-none font-ember tracking-tight">
+              Sign in to get started
             </h2>
-            <p className="text-sm text-white/90">
-              Kiro CLI currently requires an access code to use. If you've
-              received a code via email, enter it below.
-            </p>
-          </div>
-
-          {/* Card */}
-          <div className="w-full max-w-md bg-white/10 border border-white/20 rounded-xl p-5">
-            <label className="text-sm font-medium block mb-3">
-              Kiro Access Code
-            </label>
-
-            <div className="flex items-center gap-2">
-              <input
-                className="flex-1 min-w-0 h-10 rounded-lg px-3 text-black placeholder:text-gray-500"
-                placeholder="KIRO-XXXX-XXXX"
-                value={invitationCode}
-                onChange={(e) => setInvitationCode(e.target.value)}
-                onKeyDown={(e) => {
-                  if (
-                    e.key === "Enter" &&
-                    invitationCode &&
-                    loginState !== "loading"
-                  ) {
-                    submitInvitationCode();
-                  }
-                }}
-              />
-              <Button
-                type="button"
-                variant="glass"
-                className="h-10 px-4 shrink-0 focus:outline-none focus:ring-2 focus:ring-white/30 focus-visible:ring-2 border border-white/40 rounded-lg hover:bg-white/10 transition-colors"
-                onClick={submitInvitationCode}
-                disabled={!invitationCode || loginState === "loading"}
-              >
-                {loginState === "loading" ? (
-                  <span className="text-sm">Validating...</span>
-                ) : (
-                  "Validate"
-                )}
-              </Button>
-            </div>
-
-            {waitlistUrl && (
-              <div className="mt-3 text-sm text-white/80">
-                If you don't have a code please {" "}
-                <Link
-                  href={waitlistUrl}
-                  rel="noreferrer"
-                  className="underline underline-offset-2 hover:text-white transition-colors"
-                >
-                  join our waitlist
-                </Link>
-                .
-              </div>
-            )}
-          </div>
-
-          {error && (
-            <div className="w-full max-w-md bg-red-500/20 backdrop-blur-sm border border-red-400/50 rounded-lg py-3 px-4">
-              <p className="text-white text-sm">{error}</p>
-            </div>
           )}
+        </div>
+
+        {error && (
+          <div className="flex flex-col items-center gap-2 w-full bg-red-200 border border-red-600 rounded py-2 px-2">
+            <p className="text-black dark:text-white font-semibold text-center">Failed to login</p>
+            <p className="text-black dark:text-white text-center">{error}</p>
+          </div>
+        )}
+
+        <div className="flex flex-col items-center gap-4 text-white text-sm">
+          <Button
+            variant="glass"
+            className="self-center w-40"
+            disabled={loginState === "loading"}
+            onClick={handleUnifiedPortalLogin}
+          >
+            {loginState === "loading" ? "Signing in..." : completedOnboarding ? "Log back in" : "Sign in"}
+          </Button>
         </div>
       </div>
     );
@@ -490,20 +344,16 @@ export default function LoginModal({ next }: { next: () => void }) {
             </Button>
           </>
         ) : (
-          // Default tabs. Hide when invitation code UI is active.
-          !needInvitation && (
-            <Tab
-              tab={tab}
-              handleLogin={handleLogin}
-              handleSocialLogin={handleSocialLogin as any}
-              toggleTab={
-                tab === "builderId"
-                  ? () => setTab("iam")
-                  : () => setTab("builderId")
-              }
-              signInText={completedOnboarding ? "Log back in" : "Sign in"}
-            />
-          )
+          <Tab
+            tab={tab}
+            handleLogin={handleLogin}
+            toggleTab={
+              tab === "builderId"
+                ? () => setTab("iam")
+                : () => setTab("builderId")
+            }
+            signInText={completedOnboarding ? "Log back in" : "Sign in"}
+          />
         )}
       </div>
     </div>

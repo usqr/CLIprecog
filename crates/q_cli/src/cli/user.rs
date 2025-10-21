@@ -29,12 +29,13 @@ use fig_auth::builder_id::{
     start_device_authorization,
 };
 use fig_auth::pkce::start_pkce_authorization;
-use fig_auth::secret_store::SecretStore;
-use fig_auth::social::{
-    SocialProvider,
-    finish_social_authorization,
-    start_social_authorization,
+use fig_auth::portal::{
+    PortalResult,
+    finish_unified_portal,
+    init_unified_portal,
 };
+use fig_auth::secret_store::SecretStore;
+use fig_auth::social::SocialProvider;
 use fig_ipc::local::{
     login_command,
     logout_command,
@@ -47,7 +48,6 @@ use fig_util::system_info::is_remote;
 use fig_util::{
     CLI_BINARY_NAME,
     PRODUCT_NAME,
-    open_url_async,
 };
 use serde_json::json;
 use tokio::signal::unix::{
@@ -57,7 +57,6 @@ use tokio::signal::unix::{
 use tracing::{
     error,
     info,
-    warn,
 };
 
 use super::OutputFormat;
@@ -105,10 +104,6 @@ pub struct LoginArgs {
     #[arg(long, value_enum)]
     pub social: Option<SocialProvider>,
 
-    /// Invitation code (for social login)
-    #[arg(long)]
-    pub invitation_code: Option<String>,
-
     /// Always use the OAuth device flow for authentication. Useful for instances where browser
     /// redirects cannot be handled.
     #[arg(long)]
@@ -127,10 +122,10 @@ pub enum LicenseType {
 enum AuthMethod {
     /// Builder ID (free)
     BuilderId,
-    /// Social login (free)
-    Social(SocialProvider),
     /// IdC (enterprise)
     IdentityCenter,
+    /// Social login
+    Social(SocialProvider),
 }
 
 impl Display for AuthMethod {
@@ -261,82 +256,51 @@ impl UserSubcommand {
 }
 
 pub async fn login_interactive(args: LoginArgs) -> Result<()> {
-    let login_method = if let Some(social_provider) = args.social {
-        // Direct social login via CLI flag
-        AuthMethod::Social(social_provider)
-    } else {
-        match args.license {
-            Some(LicenseType::Free) => {
-                // Show submenu for free options
-                let options = [
-                    AuthMethod::BuilderId,
-                    AuthMethod::Social(SocialProvider::Google),
-                    AuthMethod::Social(SocialProvider::Github),
-                ];
-                let i = match choose("Select login method", &options)? {
-                    Some(i) => i,
-                    None => bail!("No login method selected"),
-                };
-                options[i]
+    let is_remote_env = is_remote() || args.use_device_flow;
+    let login_method = if !is_remote_env {
+        // Non-remote: Use unified auth portal
+        let secret_store = SecretStore::new().await?;
+        info!("Using unified auth portal for login");
+
+        let mut pre_portal_spinner = Spinner::new(vec![
+            SpinnerComponent::Spinner,
+            SpinnerComponent::Text(" Opening auth portal and logging in...".into()),
+        ]);
+
+        // Try unified portal, fallback to device flow on any error
+        let init = match init_unified_portal().await {
+            Ok(v) => v,
+            Err(err) => {
+                pre_portal_spinner.stop();
+                error!(%err, "Unified portal init failed");
+                eprintln!("Failed to initialize auth portal.");
+                eprintln!("Please try again with: q login --use-device-flow");
+                bail!("Auth portal initialization failed");
             },
-            Some(LicenseType::Pro) => AuthMethod::IdentityCenter,
-            None => {
-                if args.identity_provider.is_some() && args.region.is_some() {
-                    // If license is specified and --identity-provider and --region are specified,
-                    // the license is determined to be pro
-                    AuthMethod::IdentityCenter
-                } else {
-                    // --license is not specified, prompt the user to choose
-                    let options = [
-                        AuthMethod::BuilderId,
-                        AuthMethod::Social(SocialProvider::Google),
-                        AuthMethod::Social(SocialProvider::Github),
-                        AuthMethod::IdentityCenter,
-                    ];
-                    let i = match choose("Select login method", &options)? {
-                        Some(i) => i,
-                        None => bail!("No login method selected"),
-                    };
-                    options[i]
-                }
-            },
+        };
+
+        if let Err(err) = fig_util::open_url_async(&init.auth_url).await {
+            pre_portal_spinner.stop();
+            error!(%err, "Failed to open portal URL");
+            eprintln!("Failed to open browser for authentication.");
+            eprintln!("Please try again with: q login --use-device-flow");
+            bail!("Failed to open auth portal URL");
         }
-    };
 
-    match login_method {
-        AuthMethod::Social(provider) => {
-            login_with_social(provider, args.invitation_code.clone()).await?;
-        },
-        AuthMethod::BuilderId | AuthMethod::IdentityCenter => {
-            let (start_url, region) = match login_method {
-                AuthMethod::BuilderId => (None, None),
-                AuthMethod::IdentityCenter => {
-                    let default_start_url = args
-                        .identity_provider
-                        .or_else(|| fig_settings::state::get_string("auth.idc.start-url").ok().flatten());
-                    let default_region = args
-                        .region
-                        .or_else(|| fig_settings::state::get_string("auth.idc.region").ok().flatten());
+        match finish_unified_portal(init, &secret_store).await {
+            Ok(PortalResult::Social(provider)) => {
+                pre_portal_spinner.stop_with_message(format!("Logged in with {}", provider));
+                fig_telemetry::send_user_logged_in().await;
+                if let Err(err) = login_command().await {
+                    error!(%err, "Failed to send login command.");
+                }
+                Some(AuthMethod::Social(provider))
+            },
+            Ok(PortalResult::Internal { issuer_uri, idc_region }) => {
+                pre_portal_spinner.stop();
 
-                    let start_url = input("Enter Start URL", default_start_url.as_deref())?;
-                    let region = input("Enter Region", default_region.as_deref())?;
-
-                    let _ = fig_settings::state::set_value("auth.idc.start-url", start_url.clone());
-                    let _ = fig_settings::state::set_value("auth.idc.region", region.clone());
-
-                    (Some(start_url), Some(region))
-                },
-                AuthMethod::Social(_) => unreachable!(),
-            };
-            // Existing BuilderId/IDC flow
-            let secret_store = SecretStore::new().await?;
-
-            // Remote machine won't be able to handle browser opening and redirects,
-            // hence always use device code flow.
-            if is_remote() || args.use_device_flow {
-                try_device_authorization(&secret_store, start_url.clone(), region.clone()).await?;
-            } else {
-                let (client, registration) = start_pkce_authorization(start_url.clone(), region.clone()).await?;
+                let (client, registration) =
+                    start_pkce_authorization(Some(issuer_uri.clone()), Some(idc_region.clone())).await?;
 
                 match fig_util::open_url_async(&registration.url).await {
                     // If it succeeded, finish PKCE.
@@ -362,74 +326,98 @@ pub async fn login_interactive(args: LoginArgs) -> Result<()> {
                         error!(%err, "Failed to open URL with browser, falling back to device code flow");
 
                         // Try device code flow.
-                        try_device_authorization(&secret_store, start_url.clone(), region.clone()).await?;
+                        try_device_authorization(&secret_store, Some(issuer_uri), Some(idc_region)).await?;
                     },
                 }
-            }
-        },
+
+                Some(AuthMethod::IdentityCenter)
+            },
+            Err(err) => {
+                pre_portal_spinner.stop();
+                error!(%err, "Unified portal failed, falling back to device code flow");
+                try_device_authorization(&secret_store, None, None).await?;
+                fig_telemetry::send_user_logged_in().await;
+                if let Err(err) = login_command().await {
+                    error!(%err, "Failed to send login command.");
+                }
+                eprintln!("Logged in successfully");
+                return Ok(());
+            },
+        }
+    } else {
+        // Remote environment: Use device flow only
+        info!("Remote environment detected - using device flow authentication");
+
+        if args.social.is_some() {
+            bail!(
+                "Social login is not supported in remote environments. Please use BuilderID or Identity Center authentication."
+            );
+        }
+
+        let method = match args.license {
+            Some(LicenseType::Free) => AuthMethod::BuilderId,
+            Some(LicenseType::Pro) => AuthMethod::IdentityCenter,
+            None => {
+                if args.identity_provider.is_some() && args.region.is_some() {
+                    // If license is specified and --identity-provider and --region are specified,
+                    // the license is determined to be pro
+                    AuthMethod::IdentityCenter
+                } else {
+                    // --license is not specified, prompt the user to choose
+                    let options = [AuthMethod::BuilderId, AuthMethod::IdentityCenter];
+                    let i = match choose("Select login method", &options)? {
+                        Some(i) => i,
+                        None => bail!("No login method selected"),
+                    };
+                    options[i]
+                }
+            },
+        };
+
+        let (start_url, region) = match method {
+            AuthMethod::BuilderId => (None, None),
+            AuthMethod::IdentityCenter => {
+                let default_start_url = args
+                    .identity_provider
+                    .or_else(|| fig_settings::state::get_string("auth.idc.start-url").ok().flatten());
+                let default_region = args
+                    .region
+                    .or_else(|| fig_settings::state::get_string("auth.idc.region").ok().flatten());
+
+                let start_url = input("Enter Start URL", default_start_url.as_deref())?;
+                let region = input("Enter Region", default_region.as_deref())?;
+
+                let _ = fig_settings::state::set_value("auth.idc.start-url", start_url.clone());
+                let _ = fig_settings::state::set_value("auth.idc.region", region.clone());
+
+                (Some(start_url), Some(region))
+            },
+            AuthMethod::Social(_) => {
+                // This shouldn't happen as we check args.social above
+                unreachable!("Social login in remote environment should have been rejected");
+            },
+        };
+        let secret_store = SecretStore::new().await?;
+
+        // Remote machine won't be able to handle browser opening and redirects,
+        // hence always use device code flow.
+        try_device_authorization(&secret_store, start_url, region).await?;
+
+        Some(method)
     };
 
     if let Err(err) = login_command().await {
         error!(%err, "Failed to send login command.");
     }
 
-    if login_method == AuthMethod::IdentityCenter {
+    if matches!(login_method, Some(AuthMethod::IdentityCenter)) {
         select_profile_interactive(true).await?;
     }
 
-    eprintln!("Logged in successfully");
-
+    if !matches!(login_method, Some(AuthMethod::Social(_))) {
+        eprintln!("Logged in successfully");
+    }
     Ok(())
-}
-
-async fn login_with_social(provider: SocialProvider, first_code: Option<String>) -> Result<()> {
-    let secret_store = SecretStore::new().await?;
-    let (auth_request_id, url) = start_social_authorization(provider, secret_store).await?;
-
-    if let Err(err) = open_url_async(&url).await {
-        warn!(%err, "Failed to open browser; please copy & open URL manually");
-        eprintln!("Open this URL to continue login:\n{}", url);
-    }
-
-    match finish_social_authorization(auth_request_id.clone(), first_code.clone(), &()).await {
-        Ok(_) => {
-            fig_telemetry::send_user_logged_in().await;
-            Ok(())
-        },
-        Err(e) => {
-            let msg = e.to_string();
-            if msg.contains("SIGN_IN_BLOCKED") {
-                let prompt =
-                    "\nKiro CLI requires an access code to use—please enter the code you received via email below.";
-                let code = match input(prompt, None) {
-                    Ok(response) if !response.trim().is_empty() => response.trim().to_string(),
-                    _ => {
-                        error!("No access code entered. Aborting social login.");
-                        bail!("No invitation code");
-                    },
-                };
-
-                let mut spinner2 = Spinner::new(vec![
-                    SpinnerComponent::Spinner,
-                    SpinnerComponent::Text(format!(" Validating access code and logging in with {}...", provider)),
-                ]);
-
-                match fig_auth::social::finish_social_authorization(auth_request_id, Some(code), &()).await {
-                    Ok(_) => {
-                        fig_telemetry::send_user_logged_in().await;
-                        spinner2.stop_with_message(format!("Logged in with {}", provider));
-                        Ok(())
-                    },
-                    Err(e2) => {
-                        spinner2.stop();
-                        Err(e2.into())
-                    },
-                }
-            } else {
-                bail!(msg);
-            }
-        },
-    }
 }
 
 async fn try_device_authorization(

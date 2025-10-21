@@ -7,6 +7,7 @@ use std::env::{
 use camino::Utf8PathBuf;
 use fig_os_shim::Context;
 use fig_util::directories::midway_cookie_path;
+use fig_util::system_info::is_remote;
 #[cfg(target_os = "linux")]
 use fig_util::system_info::linux::{
     DesktopEnvironment,
@@ -63,7 +64,7 @@ pub struct Constants {
     macos_version: String,
     #[cfg(target_os = "linux")]
     linux: LinuxConstants,
-    waitlist_url: &'static str,
+    is_remote: bool,
 }
 
 impl Constants {
@@ -123,7 +124,7 @@ impl Constants {
                 desktop_environment: get_desktop_environment(&fig_os_shim::Context::new()).ok(),
                 os_release: get_os_release(),
             },
-            waitlist_url: "https://kiro.dev/waitlist/",
+            is_remote: is_remote(),
         }
     }
 }

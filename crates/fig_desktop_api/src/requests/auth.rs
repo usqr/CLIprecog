@@ -13,11 +13,13 @@ use fig_auth::pkce::{
     PkceClient,
     PkceRegistration,
 };
-use fig_auth::secret_store::SecretStore;
-use fig_auth::social::{
-    self,
-    SocialProvider,
+use fig_auth::portal::{
+    PortalResult,
+    finish_unified_portal,
+    init_unified_portal,
 };
+use fig_auth::secret_store::SecretStore;
+use fig_auth::social::SocialProvider;
 use fig_proto::fig::auth_builder_id_poll_create_token_response::PollStatus;
 use fig_proto::fig::auth_status_response::AuthKind;
 use fig_proto::fig::server_originated_message::Submessage as ServerOriginatedSubMessage;
@@ -30,16 +32,15 @@ use fig_proto::fig::{
     AuthCancelPkceAuthorizationResponse,
     AuthFinishPkceAuthorizationRequest,
     AuthFinishPkceAuthorizationResponse,
-    AuthFinishSocialAuthorizationRequest,
-    AuthFinishSocialAuthorizationResponse,
     AuthStartPkceAuthorizationRequest,
     AuthStartPkceAuthorizationResponse,
-    AuthStartSocialAuthorizationRequest,
-    AuthStartSocialAuthorizationResponse,
+    AuthStartUnifiedPortalRequest,
+    AuthStartUnifiedPortalResponse,
     AuthStatusRequest,
     AuthStatusResponse,
-    auth_start_social_authorization_request,
 };
+use fig_util::open_url_async;
+use fig_util::system_info::is_mwinit_available;
 use tokio::sync::Mutex;
 use tokio::sync::mpsc::{
     Receiver,
@@ -378,48 +379,50 @@ pub async fn builder_id_poll_create_token(
     Ok(ServerOriginatedSubMessage::AuthBuilderIdPollCreateTokenResponse(response).into())
 }
 
-pub async fn start_social_authorization(
-    AuthStartSocialAuthorizationRequest { provider }: AuthStartSocialAuthorizationRequest,
-) -> RequestResult {
+pub async fn start_unified_portal(_req: AuthStartUnifiedPortalRequest) -> RequestResult {
+    // Step 1: init portal (bind callback port + compose auth URL)
+    let init = init_unified_portal()
+        .await
+        .map_err(|err| format!("Failed to init unified auth portal: {err}"))?;
+
+    // Step 2: open browser for the composed portal URL
+    // (Desktop backend takes responsibility to open; frontend just calls this API)
+    open_url_async(&init.auth_url)
+        .await
+        .map_err(|err| format!("Failed to open browser: {err}"))?;
+
+    // Step 3: wait for callback; do social exchange or return internal params
     let secret_store = SecretStore::new()
         .await
         .map_err(|err| format!("Failed to load secret store: {err}"))?;
 
-    let provider = match auth_start_social_authorization_request::Provider::from_i32(provider) {
-        Some(auth_start_social_authorization_request::Provider::Google) => SocialProvider::Google,
-        Some(auth_start_social_authorization_request::Provider::Github) => SocialProvider::Github,
-        None => return Err("unknown provider".into()),
+    let resp = match finish_unified_portal(init, &secret_store).await {
+        Ok(PortalResult::Social(provider)) => {
+            // Social flow is complete here (token saved). Fire telemetry like other flows.
+            fig_telemetry::send_user_logged_in().await;
+
+            AuthStartUnifiedPortalResponse {
+                kind: "social".to_string(),
+                provider: Some(provider.to_string()),
+                issuer_url: None,
+                idc_region: None,
+            }
+        },
+        Ok(PortalResult::Internal { issuer_uri, idc_region }) => {
+            // Return parameters for PKCE start+finish on the existing code path.
+            AuthStartUnifiedPortalResponse {
+                kind: "internal".to_string(),
+                provider: None,
+                issuer_url: Some(issuer_uri),
+                idc_region: Some(idc_region),
+            }
+        },
+        Err(err) => {
+            return Err(format!("Unified auth portal failed: {err}").into());
+        },
     };
 
-    let (auth_request_id, url) = social::start_social_authorization(provider, secret_store)
-        .await
-        .map_err(|e| e.to_string())?;
-
-    Ok(
-        ServerOriginatedSubMessage::AuthStartSocialAuthorizationResponse(AuthStartSocialAuthorizationResponse {
-            auth_request_id,
-            url,
-        })
-        .into(),
-    )
-}
-
-pub async fn finish_social_authorization(
-    AuthFinishSocialAuthorizationRequest {
-        auth_request_id,
-        invitation_code,
-    }: AuthFinishSocialAuthorizationRequest,
-    ctx: &impl KVStore,
-) -> RequestResult {
-    social::finish_social_authorization(auth_request_id, invitation_code, ctx)
-        .await
-        .map_err(|e| e.to_string())?;
-
-    fig_telemetry::send_user_logged_in().await;
-    Ok(
-        ServerOriginatedSubMessage::AuthFinishSocialAuthorizationResponse(AuthFinishSocialAuthorizationResponse {})
-            .into(),
-    )
+    Ok(ServerOriginatedSubMessage::AuthStartUnifiedPortalResponse(resp).into())
 }
 
 #[cfg(test)]

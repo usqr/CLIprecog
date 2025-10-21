@@ -19,15 +19,12 @@ import {
   AuthFinishPkceAuthorizationRequest,
   AuthFinishPkceAuthorizationRequestSchema,
   AuthFinishPkceAuthorizationResponse,
-  AuthFinishSocialAuthorizationRequest,
-  AuthFinishSocialAuthorizationRequestSchema,
-  AuthFinishSocialAuthorizationResponse,
   AuthStartPkceAuthorizationRequest,
   AuthStartPkceAuthorizationRequestSchema,
   AuthStartPkceAuthorizationResponse,
-  AuthStartSocialAuthorizationRequest,
-  AuthStartSocialAuthorizationRequestSchema,
-  AuthStartSocialAuthorizationResponse,
+  AuthStartUnifiedPortalRequest,
+  AuthStartUnifiedPortalRequestSchema,
+  AuthStartUnifiedPortalResponse,
   AuthStatusRequest,
   AuthStatusRequestSchema,
   AuthStatusResponse,
@@ -690,18 +687,18 @@ export async function sendListAvailableProfilesRequest(
   });
 }
 
-export async function sendAuthStartSocialAuthorizationRequest(
-  request: Omit<AuthStartSocialAuthorizationRequest, "$typeName" | "$unknown">,
-): Promise<AuthStartSocialAuthorizationResponse> {
+export async function sendAuthStartUnifiedPortalRequest(
+  request: Omit<AuthStartUnifiedPortalRequest, "$typeName" | "$unknown">,
+): Promise<AuthStartUnifiedPortalResponse> {
   return new Promise((resolve, reject) => {
     sendMessage(
       {
-        case: "authStartSocialAuthorizationRequest",
-        value: create(AuthStartSocialAuthorizationRequestSchema, request),
+        case: "authStartUnifiedPortalRequest",
+        value: create(AuthStartUnifiedPortalRequestSchema, request),
       },
       (response) => {
         switch (response?.case) {
-          case "authStartSocialAuthorizationResponse":
+          case "authStartUnifiedPortalResponse":
             resolve(response.value);
             break;
           case "error":
@@ -710,36 +707,7 @@ export async function sendAuthStartSocialAuthorizationRequest(
           default:
             reject(
               Error(
-                `Invalid response '${response?.case}' for 'AuthStartSocialAuthorizationRequest'`,
-              ),
-            );
-        }
-      },
-    );
-  });
-}
-
-export async function sendAuthFinishSocialAuthorizationRequest(
-  request: Omit<AuthFinishSocialAuthorizationRequest, "$typeName" | "$unknown">,
-): Promise<AuthFinishSocialAuthorizationResponse> {
-  return new Promise((resolve, reject) => {
-    sendMessage(
-      {
-        case: "authFinishSocialAuthorizationRequest",
-        value: create(AuthFinishSocialAuthorizationRequestSchema, request),
-      },
-      (response) => {
-        switch (response?.case) {
-          case "authFinishSocialAuthorizationResponse":
-            resolve(response.value);
-            break;
-          case "error":
-            reject(Error(response.value));
-            break;
-          default:
-            reject(
-              Error(
-                `Invalid response '${response?.case}' for 'AuthFinishSocialAuthorizationRequest'`,
+                `Invalid response '${response?.case}' for 'AuthStartUnifiedPortalRequest'`,
               ),
             );
         }

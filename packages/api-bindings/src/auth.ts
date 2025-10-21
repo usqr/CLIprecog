@@ -4,9 +4,8 @@ import {
   AuthStartPkceAuthorizationResponse,
   AuthStatusResponse_AuthKind,
   AuthBuilderIdPollCreateTokenResponse_PollStatus as PollStatus,
-  AuthStartSocialAuthorizationResponse,
-  AuthFinishSocialAuthorizationResponse,
-  AuthStartSocialAuthorizationRequest_Provider as ProviderEnum,
+  AuthStartUnifiedPortalRequest,
+  AuthStartUnifiedPortalResponse,
 } from "@aws/amazon-q-developer-cli-proto/fig";
 import {
   sendAuthBuilderIdStartDeviceAuthorizationRequest,
@@ -15,8 +14,7 @@ import {
   sendAuthStatusRequest,
   sendAuthStartPkceAuthorizationRequest,
   sendAuthCancelPkceAuthorizationRequest,
-  sendAuthStartSocialAuthorizationRequest,
-  sendAuthFinishSocialAuthorizationRequest,
+  sendAuthStartUnifiedPortalRequest,
 } from "./requests.js";
 import { AuthFinishPkceAuthorizationResponse } from "@aws/amazon-q-developer-cli-proto/fig";
 import { AuthFinishPkceAuthorizationRequest } from "@aws/amazon-q-developer-cli-proto/fig";
@@ -122,23 +120,8 @@ export async function builderIdPollCreateToken({
   }
 }
 
-export function startSocialAuthorization(params: {
-  provider: "Google" | "Github";
-}): Promise<AuthStartSocialAuthorizationResponse> {
-  const providerEnum: ProviderEnum =
-    params.provider === "Google" ? ProviderEnum.GOOGLE : ProviderEnum.GITHUB;
-
-  return sendAuthStartSocialAuthorizationRequest({
-    provider: providerEnum,
-  });
-}
-
-export function finishSocialAuthorization(params: {
-  authRequestId: string;
-  invitationCode?: string;
-}): Promise<AuthFinishSocialAuthorizationResponse> {
-  return sendAuthFinishSocialAuthorizationRequest({
-    authRequestId: params.authRequestId,
-    invitationCode: params.invitationCode,
-  });
+export function startUnifiedPortal(
+  _req: Omit<AuthStartUnifiedPortalRequest, "$typeName"> = {},
+): Promise<AuthStartUnifiedPortalResponse> {
+  return sendAuthStartUnifiedPortalRequest({});
 }

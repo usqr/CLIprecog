@@ -14,17 +14,13 @@ import { AMZN_START_URL } from "@/lib/constants";
 import { useEffect, useState, useCallback } from "react";
 import { Profile } from "@aws/amazon-q-developer-cli-api-bindings";
 import { State } from "@aws/amazon-q-developer-cli-api-bindings";
-import githubUrl from "@assets/images/github.svg";
-import googleUrl from "@assets/images/google.svg";
 
 function BuilderIdTab({
   handleLogin,
-  handleSocialLogin,
   toggleTab,
   signInText,
 }: {
   handleLogin: () => void;
-  handleSocialLogin: (provider: "Google" | "Github") => void;
   toggleTab: () => void;
   signInText: string;
 }) {
@@ -38,19 +34,13 @@ function BuilderIdTab({
         <AwsLogo />
         {signInText}
       </Button>
-      <div className="flex flex-col items-center gap-1">
-        <SmallLinkButton onClick={() => handleSocialLogin("Google")}>
-          <img src={googleUrl} width={14} height={14} alt="Google" />
-          Use with Google
-        </SmallLinkButton>
-        <SmallLinkButton onClick={() => handleSocialLogin("Github")}>
-          <img src={githubUrl} width={14} height={14} alt="Google" />
-          Use with GitHub
-        </SmallLinkButton>
-        <SmallLinkButton onClick={toggleTab}>
-          Use with Pro license
-        </SmallLinkButton>
-      </div>
+      <Button
+        className="h-auto p-1 px-2 hover:bg-white/20 hover:text-white"
+        variant={"ghost"}
+        onClick={toggleTab}
+      >
+        <span className="text-xs">Use with Pro license</span>
+      </Button>
     </div>
   );
 }
@@ -75,12 +65,10 @@ function IamInput({
 
 function IamTab({
   handleLogin,
-  handleSocialLogin,
   toggleTab,
   signInText,
 }: {
   handleLogin: (startUrl: string, region: string) => void;
-  handleSocialLogin: (provider: "Google" | "Github") => void;
   toggleTab: () => void;
   signInText: string;
 }) {
@@ -239,19 +227,13 @@ function IamTab({
           <AwsLogo />
           {signInText}
         </Button>
-        <div className="flex flex-col items-center gap-1">
-          <SmallLinkButton onClick={() => handleSocialLogin("Google")}>
-            <img src={googleUrl} width={14} height={14} alt="Google" />
-            Use with Google
-          </SmallLinkButton>
-          <SmallLinkButton onClick={() => handleSocialLogin("Github")}>
-            <img src={githubUrl} width={14} height={14} alt="Google" />
-            Use with GitHub
-          </SmallLinkButton>
-          <SmallLinkButton onClick={toggleTab}>
-            Use for Free with Builder ID
-          </SmallLinkButton>
-        </div>
+        <Button
+          className="h-auto p-1 px-2 hover:bg-white/20 hover:text-white"
+          variant={"ghost"}
+          onClick={toggleTab}
+        >
+          <span className="text-xs">Use for Free with Builder ID</span>
+        </Button>
       </div>
     </div>
   );
@@ -325,7 +307,7 @@ export function ProfileTab({
           setSelectedProfile(profile);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   // If there's only one profile, automatically select it and continue
@@ -363,11 +345,10 @@ export function ProfileTab({
               {profiles.map((profileItem) => (
                 <div
                   key={profileItem.arn}
-                  className={`p-3 mb-2 rounded-md cursor-pointer border ${
-                    selectedProfile && selectedProfile.arn === profileItem.arn
+                  className={`p-3 mb-2 rounded-md cursor-pointer border ${selectedProfile && selectedProfile.arn === profileItem.arn
                       ? "bg-white/20 border-white"
                       : "bg-white/5 border-transparent hover:bg-white/10"
-                  }`}
+                    }`}
                   onClick={() => {
                     if (!isSubmitting) {
                       setSelectedProfile(profileItem);
@@ -398,29 +379,14 @@ export function ProfileTab({
   );
 }
 
-function SmallLinkButton(props: React.ComponentProps<typeof Button>) {
-  return (
-    <Button
-      variant="ghost"
-      {...props}
-      className={[
-        "h-auto p-1 px-2 text-xs opacity-90 hover:opacity-100 hover:underline",
-        props.className ?? "",
-      ].join(" ")}
-    />
-  );
-}
-
 export default function Tab({
   tab,
   handleLogin,
-  handleSocialLogin,
   toggleTab,
   signInText,
 }: {
   tab: "builderId" | "iam" | "profile";
-  handleLogin: (() => void) | ((startUrl: string, region: string) => void);
-  handleSocialLogin: (provider: "Google" | "Github") => void;
+  handleLogin: () => void;
   toggleTab: () => void;
   signInText: string;
 }) {
@@ -428,8 +394,7 @@ export default function Tab({
     case "builderId":
       return (
         <BuilderIdTab
-          handleLogin={handleLogin as () => void}
-          handleSocialLogin={handleSocialLogin}
+          handleLogin={handleLogin}
           toggleTab={toggleTab}
           signInText={signInText}
         />
@@ -437,10 +402,7 @@ export default function Tab({
     case "iam":
       return (
         <IamTab
-          handleLogin={
-            handleLogin as (startUrl: string, region: string) => void
-          }
-          handleSocialLogin={handleSocialLogin}
+          handleLogin={handleLogin}
           toggleTab={toggleTab}
           signInText={signInText}
         />

@@ -1,7 +1,4 @@
-use std::collections::HashMap;
 use std::fmt;
-use std::sync::Mutex;
-use std::time::Duration;
 
 use aws_sdk_ssooidc::config::{
     ConfigBag,
@@ -13,8 +10,6 @@ use aws_smithy_runtime_api::client::identity::{
     IdentityFuture,
     ResolveIdentity,
 };
-use once_cell::sync::OnceCell;
-use rand::Rng;
 use reqwest::Client;
 use serde::{
     Deserialize,
@@ -22,20 +17,13 @@ use serde::{
 };
 use serde_json::json;
 use time::OffsetDateTime;
-use tokio::net::TcpListener;
 use tracing::{
     debug,
     error,
-    info,
     trace,
 };
 
 use crate::consts::SOCIAL_AUTH_SERVICE_ENDPOINT;
-use crate::pkce::{
-    PkceRegistration,
-    generate_code_challenge,
-    generate_code_verifier,
-};
 use crate::secret_store::{
     Secret,
     SecretStore,
@@ -45,9 +33,7 @@ use crate::{
     Result,
 };
 
-const CALLBACK_PORTS: &[u16] = &[49153, 50153, 51153, 52153, 53153, 4649, 6588, 9091, 8008, 3128];
-const DEFAULT_AUTHORIZATION_TIMEOUT: Duration = Duration::from_secs(300);
-const SIGN_UP_PAUSED_MESSAGE: &str = "New signups are temporarily paused.";
+pub const CALLBACK_PORTS: &[u16] = &[49153, 50153, 51153, 52153, 53153, 4649, 6588, 9091, 8008, 3128];
 const USER_AGENT: &str = "Kiro-Desktop";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, clap::ValueEnum)]
@@ -124,6 +110,20 @@ impl SocialToken {
         Ok(())
     }
 
+    pub async fn save_profile_if_any(&self) -> Result<()> {
+        if let Some(profile_arn) = &self.profile_arn {
+            let profile_value = json!({
+                "arn": profile_arn,
+                "profile_name": "Social_Default_Profile"
+            });
+
+            if let Err(err) = fig_settings::state::set_value("api.codewhisperer.profile", profile_value) {
+                error!(?err, profile_arn=%profile_arn, "failed to set profile from social token");
+            }
+        }
+        Ok(())
+    }
+
     pub async fn delete(&self, secret_store: &SecretStore) -> Result<()> {
         secret_store.delete(Self::SECRET_KEY).await?;
         Ok(())
@@ -183,182 +183,76 @@ struct TokenResponse {
     profile_arn: Option<String>,
 }
 
-#[derive(serde::Deserialize)]
-struct ErrBody {
-    message: Option<String>,
+#[derive(Deserialize)]
+struct TokenResp {
+    #[serde(rename = "accessToken")]
+    access_token: String,
+    #[serde(rename = "refreshToken")]
+    refresh_token: String,
+    #[serde(rename = "expiresIn")]
+    expires_in: u64,
+    #[serde(rename = "profileArn")]
+    profile_arn: Option<String>,
 }
 
-struct Pending {
-    listener: TcpListener,
-    state: String,
-    verifier: String,
-    redirect_uri: String,
+/// Exchange authorization code for social tokens via the shared auth service and persist them.
+/// - `store`: where to persist (SecretStore)
+/// - `provider`: Google / GitHub (for bookkeeping)
+/// - `code_verifier`: PKCE verifier used against the portal
+/// - `code`: authorization code returned from the portal
+/// - `redirect_uri`: exact redirect URI used by the local callback (must match the one sent to
+///   portal)
+pub async fn exchange_social_token(
+    store: &SecretStore,
     provider: SocialProvider,
-}
-
-static PENDING: OnceCell<Mutex<HashMap<String, Pending>>> = OnceCell::new();
-fn pending_map() -> &'static Mutex<HashMap<String, Pending>> {
-    PENDING.get_or_init(|| Mutex::new(HashMap::new()))
-}
-
-async fn bind_allowed_port(ports: &[u16]) -> Result<TcpListener> {
-    for port in ports {
-        match TcpListener::bind(("127.0.0.1", *port)).await {
-            Ok(listener) => return Ok(listener),
-            Err(e) => debug!("failed to bind to port {}: {}", port, e),
-        }
-    }
-    Err(std::io::Error::new(std::io::ErrorKind::AddrInUse, "Failed to bind to any port").into())
-}
-
-pub async fn start_social_authorization(
-    provider: SocialProvider,
-    _secret_store: SecretStore,
-) -> Result<(String, String)> {
-    info!("Starting social login with {}", provider);
-
-    // PKCE & state
-    let verifier = generate_code_verifier();
-    let challenge = generate_code_challenge(&verifier);
-    let state = rand::rng()
-        .sample_iter(rand::distr::Alphanumeric)
-        .take(10)
-        .collect::<Vec<_>>();
-    let state = String::from_utf8(state).unwrap_or_else(|_| "state".to_string());
-
-    let listener = bind_allowed_port(CALLBACK_PORTS).await?;
-    let port = listener.local_addr()?.port();
-    let redirect_uri = format!("http://localhost:{}/oauth/callback", port);
-    info!("OAuth callback server listening on {}", redirect_uri);
-
-    let idp = match provider {
-        SocialProvider::Google => "Google",
-        SocialProvider::Github => "Github",
-    };
-    let login_url = format!(
-        "{}/login?idp={}&redirect_uri={}&code_challenge={}&code_challenge_method=S256&state={}",
-        SOCIAL_AUTH_SERVICE_ENDPOINT,
-        idp,
-        urlencoding::encode(&redirect_uri),
-        challenge,
-        state
-    );
-
-    let auth_request_id = uuid::Uuid::new_v4().to_string();
-    pending_map()
-        .lock()
-        .expect("pending map poisoned")
-        .insert(auth_request_id.clone(), Pending {
-            listener,
-            state,
-            verifier,
-            redirect_uri,
-            provider,
-        });
-
-    Ok((auth_request_id, login_url))
-}
-
-/// finish authorization：wait for code → exchange token → save the token
-/// If backend pause sign up: return Error::OAuthCustomError("SIGN_IN_BLOCKED")
-pub async fn finish_social_authorization(
-    auth_request_id: String,
-    invitation_code: Option<String>,
-    _ctx: &impl ?Sized,
+    code_verifier: &str,
+    code: &str,
+    redirect_uri: &str,
 ) -> Result<()> {
-    let pending = pending_map()
-        .lock()
-        .expect("pending map poisoned")
-        .remove(&auth_request_id)
-        .ok_or(Error::OAuthCustomError("Invalid auth request id".into()))?;
-
-    // wait for code
-    let code_fut = PkceRegistration::recv_code_with_extra_accepts(pending.listener, pending.state.clone(), 2);
-    let code = tokio::time::timeout(DEFAULT_AUTHORIZATION_TIMEOUT, code_fut)
-        .await
-        .map_err(|_| Error::OAuthTimeout)??;
-
-    debug!("Received authorization code");
-
-    // exchange token
     let client = Client::new();
-    let mut token_request = serde_json::json!({
+    let url = format!("{}/oauth/token", SOCIAL_AUTH_SERVICE_ENDPOINT);
+
+    // Build JSON body that the shared auth service expects
+    let req_body = serde_json::json!({
         "code": code,
-        "code_verifier": pending.verifier,
-        "redirect_uri": pending.redirect_uri,
+        "code_verifier": code_verifier,
+        "redirect_uri": redirect_uri,
     });
 
-    let had_invitation_code = invitation_code.is_some();
-    if let Some(inv) = invitation_code {
-        token_request["invitationCode"] = serde_json::Value::String(inv);
-        debug!("Including invitationCode in token exchange");
-    }
-
-    let response = client
-        .post(format!("{}/oauth/token", SOCIAL_AUTH_SERVICE_ENDPOINT))
+    let resp = client
+        .post(url)
         .header("Content-Type", "application/json")
         .header("User-Agent", USER_AGENT)
-        .json(&token_request)
+        .json(&req_body)
         .send()
         .await?;
 
-    if response.status().is_success() {
-        let token_response: TokenResponse = response.json().await?;
-        let token = SocialToken {
-            access_token: Secret(token_response.access_token),
-            expires_at: OffsetDateTime::now_utc() + time::Duration::seconds(token_response.expires_in as i64),
-            refresh_token: Some(Secret(token_response.refresh_token)),
-            provider: pending.provider,
-            profile_arn: token_response.profile_arn,
-        };
-
-        let secret_store = SecretStore::new().await?;
-        token.save(&secret_store).await?;
-        info!("Successfully logged in with {}", token.provider);
-
-        if let Some(arn) = token.profile_arn.as_deref() {
-            let profile_value = json!({
-                "arn": arn,
-                "profile_name": "Social_Default_Profile"
-            });
-
-            if let Err(err) = fig_settings::state::set_value("api.codewhisperer.profile", profile_value) {
-                error!(?err, profile_arn=%arn, "failed to set profile from social token");
-            }
-        }
-
-        let _ = fig_settings::state::remove_value("api.selectedCustomization");
-
-        tokio::time::sleep(Duration::from_millis(200)).await;
-        Ok(())
-    } else {
-        let status = response.status();
-        let body = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
-
-        let error_text = serde_json::from_str::<ErrBody>(&body)
-            .ok()
-            .and_then(|e| e.message)
-            .unwrap_or_else(|| body.clone());
-
-        let signups_paused = error_text == SIGN_UP_PAUSED_MESSAGE;
-
-        if (status.as_u16() == 401 || status.as_u16() == 403) && signups_paused && !had_invitation_code {
-            // provide frontend with invitation code
-            return Err(Error::OAuthCustomError("SIGN_IN_BLOCKED".into()));
-        }
-
-        if status.as_u16() == 401 && signups_paused && had_invitation_code {
-            return Err(Error::OAuthCustomError("Invalid invitation code".into()));
-        }
-
-        error!("Failed to exchange code for token: {} - {}", status, error_text);
-        Err(Error::OAuthCustomError(format!(
-            "Token exchange failed: {}",
-            error_text
-        )))
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body = resp.text().await.unwrap_or_else(|_| "Unknown error".to_string());
+        error!("token exchange failed: {} - {}", status, body);
+        return Err(Error::OAuthCustomError(format!(
+            "Token exchange failed: HTTP {} - {}",
+            status, body
+        )));
     }
-}
 
+    let tr: TokenResp = resp.json().await?;
+
+    // Persist using your existing `SocialToken` shape (Secret-wrapped fields)
+    let token = SocialToken {
+        access_token: Secret(tr.access_token),
+        expires_at: OffsetDateTime::now_utc() + time::Duration::seconds(tr.expires_in as i64),
+        refresh_token: Some(Secret(tr.refresh_token)),
+        provider,
+        profile_arn: tr.profile_arn,
+    };
+
+    token.save(store).await?;
+    token.save_profile_if_any().await?;
+    let _ = fig_settings::state::remove_value("api.selectedCustomization");
+    Ok(())
+}
 #[derive(Debug, Clone)]
 pub struct SocialBearerResolver;
 

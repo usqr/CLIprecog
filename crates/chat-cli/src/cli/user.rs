@@ -29,7 +29,6 @@ use tracing::{
 
 use super::OutputFormat;
 use crate::api_client::list_available_profiles;
-use crate::auth::AuthError;
 use crate::auth::builder_id::{
     BuilderIdToken,
     PollCreateToken,
@@ -38,10 +37,12 @@ use crate::auth::builder_id::{
     start_device_authorization,
 };
 use crate::auth::pkce::start_pkce_authorization;
-use crate::auth::social::{
-    SocialProvider,
-    start_social_login,
+use crate::auth::portal::{
+    PortalResult,
+    start_unified_auth,
 };
+use crate::auth::social::SocialProvider;
+use crate::database::Database;
 use crate::os::Os;
 use crate::telemetry::{
     QProfileSwitchIntent,
@@ -77,10 +78,6 @@ pub struct LoginArgs {
     #[arg(long, value_enum)]
     pub social: Option<SocialProvider>,
 
-    /// Invitation code (for social login)
-    #[arg(long)]
-    pub invitation_code: Option<String>,
-
     /// Always use the OAuth device flow for authentication. Useful for instances where browser
     /// redirects cannot be handled.
     #[arg(long)]
@@ -89,141 +86,34 @@ pub struct LoginArgs {
 
 impl LoginArgs {
     pub async fn execute(self, os: &mut Os) -> Result<ExitCode> {
-        if crate::auth::is_logged_in(&mut os.database).await
-            || crate::auth::social::is_social_logged_in(&os.database).await
-        {
+        if is_logged_in(&mut os.database).await {
             eyre::bail!(
                 "Already logged in, please logout with {} first",
                 format!("{CLI_BINARY_NAME} logout").magenta()
             );
         }
 
-        let login_method = if let Some(social_provider) = self.social {
-            // Direct social login via CLI flag
-            AuthMethod::Social(social_provider)
-        } else {
-            match self.license {
-                Some(LicenseType::Free) => {
-                    // Show submenu for free options
-                    let options = [
-                        AuthMethod::BuilderId,
-                        AuthMethod::Social(SocialProvider::Google),
-                        AuthMethod::Social(SocialProvider::Github),
-                    ];
-                    let i = match choose("Select login method", &options)? {
-                        Some(i) => i,
-                        None => bail!("No login method selected"),
-                    };
-                    options[i]
+        let is_remote_env = is_remote() || self.use_device_flow;
+
+        if !is_remote_env {
+            // LOCAL ENVIRONMENT: Ignore all CLI flags and always use unified auth portal
+            info!("Using unified auth portal for login");
+
+            let mut pre_portal_spinner = Spinner::new(vec![
+                SpinnerComponent::Spinner,
+                SpinnerComponent::Text(" Opening auth portal and logging in...".into()),
+            ]);
+            match start_unified_auth(&mut os.database).await? {
+                PortalResult::Social(provider) => {
+                    pre_portal_spinner.stop_with_message(format!("Logged in with {}", provider));
+                    os.telemetry.send_user_logged_in(None, None, Some(provider)).ok();
+                    return Ok(ExitCode::SUCCESS);
                 },
-                Some(LicenseType::Pro) => AuthMethod::IdentityCenter,
-                None => {
-                    if self.identity_provider.is_some() && self.region.is_some() {
-                        AuthMethod::IdentityCenter
-                    } else {
-                        // Show main menu
-                        let options = [
-                            AuthMethod::BuilderId,
-                            AuthMethod::Social(SocialProvider::Google),
-                            AuthMethod::Social(SocialProvider::Github),
-                            AuthMethod::IdentityCenter,
-                        ];
-                        let i = match choose("Select login method", &options)? {
-                            Some(i) => i,
-                            None => bail!("No login method selected"),
-                        };
-                        options[i]
-                    }
-                },
-            }
-        };
-
-        match login_method {
-            AuthMethod::Social(provider) => {
-                let first_code = self.invitation_code.clone();
-
-                let mut spinner = Spinner::new(vec![
-                    SpinnerComponent::Spinner,
-                    SpinnerComponent::Text(format!(" Logging in with {}...", provider)),
-                ]);
-
-                match start_social_login(os, provider, first_code).await {
-                    Ok(_) => {
-                        let _ = os.telemetry.send_user_logged_in(&os.database, Some(provider)).await;
-                        spinner.stop_with_message(format!("Logged in with {}", provider));
-                    },
-                    Err(err) => {
-                        spinner.stop();
-                        // Auth service needs invitation code
-                        if let Some(AuthError::OAuthCustomError(s)) = err.downcast_ref::<AuthError>() {
-                            if s == "SIGN_IN_BLOCKED" {
-                                let prompt = "\nKiro CLI requires an access code to use—please enter the code you received via email below.";
-                                let code = match input(prompt, None) {
-                                    Ok(response) if !response.trim().is_empty() => response.trim().to_string(),
-                                    _ => {
-                                        error!("No access code entered. Aborting social login.");
-                                        return Err(AuthError::OAuthCustomError("No invitation code".into()).into());
-                                    },
-                                };
-
-                                let mut spinner2 = Spinner::new(vec![
-                                    SpinnerComponent::Spinner,
-                                    SpinnerComponent::Text(format!(
-                                        " Validating access code and logging in with {}...",
-                                        provider
-                                    )),
-                                ]);
-
-                                match start_social_login(os, provider, Some(code)).await {
-                                    Ok(_) => {
-                                        let _ = os.telemetry.send_user_logged_in(&os.database, Some(provider)).await;
-                                        spinner2.stop_with_message(format!("Logged in with {}", provider));
-                                    },
-                                    Err(e2) => {
-                                        spinner2.stop();
-                                        return Err(e2);
-                                    },
-                                }
-                            } else {
-                                return Err(err);
-                            }
-                        } else {
-                            return Err(err);
-                        }
-                    },
-                }
-            },
-            AuthMethod::BuilderId | AuthMethod::IdentityCenter => {
-                let (start_url, region) = match login_method {
-                    AuthMethod::BuilderId => (None, None),
-                    AuthMethod::IdentityCenter => {
-                        let default_start_url = match self.identity_provider {
-                            Some(start_url) => Some(start_url),
-                            None => os.database.get_start_url()?,
-                        };
-                        let default_region = match self.region {
-                            Some(region) => Some(region),
-                            None => os.database.get_idc_region()?,
-                        };
-
-                        let start_url = input("Enter Start URL", default_start_url.as_deref())?;
-                        let region = input("Enter Region", default_region.as_deref())?.trim().to_string();
-
-                        let _ = os.database.set_start_url(start_url.clone());
-                        let _ = os.database.set_idc_region(region.clone());
-
-                        (Some(start_url), Some(region))
-                    },
-                    AuthMethod::Social(_) => unreachable!(),
-                };
-
-                // Existing BuilderId/IDC flow
-                // Remote machine won't be able to handle browser opening and redirects,
-                // hence always use device code flow.
-                if is_remote() || self.use_device_flow {
-                    try_device_authorization(os, start_url.clone(), region.clone()).await?;
-                } else {
-                    let (client, registration) = start_pkce_authorization(start_url.clone(), region.clone()).await?;
+                PortalResult::Internal { issuer_uri, idc_region } => {
+                    pre_portal_spinner.stop();
+                    // EXACTLY same with original PKCE path: this registers client + completes auth.
+                    let (client, registration) =
+                        start_pkce_authorization(Some(issuer_uri.clone()), Some(idc_region.clone())).await?;
 
                     match crate::util::open::open_url_async(&registration.url).await {
                         // If it succeeded, finish PKCE.
@@ -232,6 +122,8 @@ impl LoginArgs {
                                 SpinnerComponent::Spinner,
                                 SpinnerComponent::Text(" Logging in...".into()),
                             ]);
+                            let issuer_url = registration.issuer_url().to_string();
+                            let region = registration.region().to_string();
                             let ctrl_c_stream = ctrl_c();
                             tokio::select! {
                                 res = registration.finish(&client, Some(&mut os.database)) => res?,
@@ -240,24 +132,87 @@ impl LoginArgs {
                                     exit(1);
                                 },
                             }
-                            let _ = os.telemetry.send_user_logged_in(&os.database, None).await;
+                            os.telemetry
+                                .send_user_logged_in(Some(issuer_url), Some(region), None)
+                                .ok();
                             spinner.stop_with_message("Logged in".into());
                         },
                         // If we are unable to open the link with the browser, then fallback to
                         // the device code flow.
                         Err(err) => {
-                            error!(%err, "Failed to open URL with browser, falling back to device code flow");
-
                             // Try device code flow.
-                            try_device_authorization(os, start_url.clone(), region.clone()).await?;
+                            error!(%err, "Failed to open URL with browser, falling back to device code flow");
+                            try_device_authorization(os, Some(issuer_uri.clone()), Some(idc_region.clone())).await?;
                         },
                     }
-                }
-            },
-        };
+                },
+            }
+        } else {
+            // REMOTE ENVIRONMENT: Use existing device flow for BuilderID/IdC only
+            info!("Remote environment detected - using device flow authentication");
 
-        if login_method == AuthMethod::IdentityCenter {
-            select_profile_interactive(os, true).await?;
+            // Social login is not supported in remote environments
+            if self.social.is_some() {
+                bail!(
+                    "Social login is not supported in remote environments. Please use BuilderID or Identity Center authentication."
+                );
+            }
+
+            // Show menu for BuilderID or IdC only
+            let login_method = match self.license {
+                Some(LicenseType::Free) => AuthMethod::BuilderId,
+                Some(LicenseType::Pro) => AuthMethod::IdentityCenter,
+                None => {
+                    if self.identity_provider.is_some() && self.region.is_some() {
+                        // If license is specified and --identity-provider and --region are specified,
+                        // the license is determined to be pro
+                        AuthMethod::IdentityCenter
+                    } else {
+                        // --license is not specified, prompt the user to choose for remote
+                        let options = [AuthMethod::BuilderId, AuthMethod::IdentityCenter];
+                        let prompt = "Select login method (Social login not available in remote environment)";
+                        let i = match choose(prompt, &options)? {
+                            Some(i) => i,
+                            None => bail!("No login method selected"),
+                        };
+                        options[i]
+                    }
+                },
+            };
+
+            match login_method {
+                AuthMethod::BuilderId | AuthMethod::IdentityCenter => {
+                    let (start_url, region) = match login_method {
+                        AuthMethod::BuilderId => (None, None),
+                        AuthMethod::IdentityCenter => {
+                            let default_start_url = match self.identity_provider {
+                                Some(start_url) => Some(start_url),
+                                None => os.database.get_start_url()?,
+                            };
+                            let default_region = match self.region {
+                                Some(region) => Some(region),
+                                None => os.database.get_idc_region()?,
+                            };
+
+                            let start_url = input("Enter Start URL", default_start_url.as_deref())?;
+                            let region = input("Enter Region", default_region.as_deref())?.trim().to_string();
+
+                            let _ = os.database.set_start_url(start_url.clone());
+                            let _ = os.database.set_idc_region(region.clone());
+
+                            (Some(start_url), Some(region))
+                        },
+                    };
+
+                    // Remote machine won't be able to handle browser opening and redirects,
+                    // hence always use device code flow.
+                    try_device_authorization(os, start_url.clone(), region.clone()).await?;
+
+                    if login_method == AuthMethod::IdentityCenter {
+                        select_profile_interactive(os, true).await?;
+                    }
+                },
+            }
         }
 
         Ok(ExitCode::SUCCESS)
@@ -277,6 +232,12 @@ pub async fn logout(os: &mut Os) -> Result<ExitCode> {
     Ok(ExitCode::SUCCESS)
 }
 
+pub async fn is_logged_in(db: &mut Database) -> bool {
+    if crate::auth::is_builder_id_logged_in(db).await {
+        return true;
+    }
+    crate::auth::social::is_social_logged_in(&*db).await
+}
 #[derive(Args, Debug, PartialEq, Eq, Clone, Default)]
 pub struct WhoamiArgs {
     /// Output format to use
@@ -286,7 +247,40 @@ pub struct WhoamiArgs {
 
 impl WhoamiArgs {
     pub async fn execute(self, os: &mut Os) -> Result<ExitCode> {
-        // Check for social login token first
+        // Check for BuilderId/IDC token
+        if let Ok(Some(token)) = BuilderIdToken::load(&os.database).await {
+            self.format.print(
+                || match token.token_type() {
+                    TokenType::BuilderId => "Logged in with Builder ID".into(),
+                    TokenType::IamIdentityCenter => {
+                        format!(
+                            "Logged in with IAM Identity Center ({})",
+                            token.start_url.as_ref().unwrap()
+                        )
+                    },
+                },
+                || {
+                    json!({
+                        "accountType": match token.token_type() {
+                            TokenType::BuilderId => "BuilderId",
+                            TokenType::IamIdentityCenter => "IamIdentityCenter",
+                        },
+                        "startUrl": token.start_url,
+                        "region": token.region,
+                    })
+                },
+            );
+
+            if matches!(token.token_type(), TokenType::IamIdentityCenter) {
+                if let Ok(Some(profile)) = os.database.get_auth_profile() {
+                    color_print::cprintln!("\n<em>Profile:</em>\n{}\n{}\n", profile.profile_name, profile.arn);
+                }
+            }
+
+            return Ok(ExitCode::SUCCESS);
+        }
+
+        // Check for social login token
         if let Ok(Some(social_token)) = crate::auth::social::SocialToken::load(&os.database).await {
             self.format.print(
                 || format!("Logged in with {}", social_token.provider),
@@ -300,52 +294,14 @@ impl WhoamiArgs {
             return Ok(ExitCode::SUCCESS);
         }
 
-        // Check for BuilderId/IDC token
-        let builder_id = BuilderIdToken::load(&os.database).await;
-
-        match builder_id {
-            Ok(Some(token)) => {
-                self.format.print(
-                    || match token.token_type() {
-                        TokenType::BuilderId => "Logged in with Builder ID".into(),
-                        TokenType::IamIdentityCenter => {
-                            format!(
-                                "Logged in with IAM Identity Center ({})",
-                                token.start_url.as_ref().unwrap()
-                            )
-                        },
-                    },
-                    || {
-                        json!({
-                            "accountType": match token.token_type() {
-                                TokenType::BuilderId => "BuilderId",
-                                TokenType::IamIdentityCenter => "IamIdentityCenter",
-                            },
-                            "startUrl": token.start_url,
-                            "region": token.region,
-                        })
-                    },
-                );
-
-                if matches!(token.token_type(), TokenType::IamIdentityCenter) {
-                    if let Ok(Some(profile)) = os.database.get_auth_profile() {
-                        color_print::cprintln!("\n<em>Profile:</em>\n{}\n{}\n", profile.profile_name, profile.arn);
-                    }
-                }
-
-                Ok(ExitCode::SUCCESS)
-            },
-            _ => {
-                self.format.print(|| "Not logged in", || json!({ "account": null }));
-                Ok(ExitCode::FAILURE)
-            },
-        }
+        self.format.print(|| "Not logged in", || json!({ "account": null }));
+        Ok(ExitCode::FAILURE)
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
 pub enum LicenseType {
-    /// Free license (Builder ID or Social login)
+    /// Free license (Builder ID)
     Free,
     /// Pro license with Identity Center
     Pro,
@@ -367,8 +323,6 @@ pub async fn profile(os: &mut Os) -> Result<ExitCode> {
 enum AuthMethod {
     /// Builder ID (free)
     BuilderId,
-    /// Social login (free)
-    Social(SocialProvider),
     /// IdC (enterprise)
     IdentityCenter,
 }
@@ -377,8 +331,6 @@ impl Display for AuthMethod {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             AuthMethod::BuilderId => write!(f, "Use for Free with Builder ID"),
-            AuthMethod::Social(SocialProvider::Google) => write!(f, "Use with Google"),
-            AuthMethod::Social(SocialProvider::Github) => write!(f, "Use with GitHub"),
             AuthMethod::IdentityCenter => write!(f, "Use with Pro license"),
         }
     }
@@ -430,7 +382,7 @@ async fn try_device_authorization(os: &mut Os, start_url: Option<String>, region
         {
             PollCreateToken::Pending => {},
             PollCreateToken::Complete => {
-                let _ = os.telemetry.send_user_logged_in(&os.database, None).await;
+                os.telemetry.send_user_logged_in(start_url, region, None).ok();
                 spinner.stop_with_message("Logged in".into());
                 break;
             },
