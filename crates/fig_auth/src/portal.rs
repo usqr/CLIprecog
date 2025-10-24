@@ -20,7 +20,9 @@ use rand::Rng;
 use tokio::net::TcpListener;
 use tracing::{
     debug,
+    error,
     info,
+    warn,
 };
 
 use crate::pkce::{
@@ -38,13 +40,36 @@ use crate::{
     Result,
 };
 
-const AUTH_PORTAL_URL: &str = "https://gamma.app.kiro.aws.dev/signin";
+const AUTH_PORTAL_URL: &str = "https://app.kiro.dev/signin";
 const DEFAULT_AUTHORIZATION_TIMEOUT: Duration = Duration::from_secs(600);
 
-/// Final outcome of portal flow.
+#[derive(Debug, Clone)]
+struct AuthPortalCallback {
+    login_option: String,
+    code: Option<String>,
+    issuer_url: Option<String>,
+    sso_region: Option<String>,
+    state: String,
+    path: String,
+    error: Option<String>,
+    error_description: Option<String>,
+}
+
 pub enum PortalResult {
     Social(SocialProvider),
-    Internal { issuer_uri: String, idc_region: String },
+    BuilderId {
+        issuer_url: String,
+        idc_region: String,
+    },
+    AwsIdc {
+        issuer_url: String,
+        idc_region: String,
+    },
+    /// Internal amazon user
+    Internal {
+        issuer_url: String,
+        idc_region: String,
+    },
 }
 
 /// Handle returned by init; caller opens the URL, then calls `finish_unified_portal`.
@@ -58,7 +83,6 @@ pub struct PortalInit {
 
 /// Step 1: prepare URL + bind a loopback callback port from the allowlist.
 pub async fn init_unified_portal() -> Result<PortalInit> {
-    let is_internal = is_mwinit_available();
     // PKCE params for the portal & social exchange
     let verifier = generate_code_verifier();
     let challenge = generate_code_challenge(&verifier);
@@ -75,16 +99,7 @@ pub async fn init_unified_portal() -> Result<PortalInit> {
     let redirect_base = format!("http://localhost:{port}");
     info!(%port, %redirect_base, "Unified auth portal listening for callback");
 
-    // Compose the portal URL (whether to include internal hint is decided by caller)
-    let internal = if is_internal { "&from_amazon_internal=true" } else { "" };
-    let auth_url = format!(
-        "{base}?state={state}&code_challenge={challenge}&code_challenge_method=S256&redirect_uri={redirect}{internal}&redirect_from=kirocli",
-        base = AUTH_PORTAL_URL,
-        state = state,
-        challenge = challenge,
-        redirect = urlencoding::encode(&redirect_base),
-        internal = internal,
-    );
+    let auth_url = build_auth_url(&redirect_base, &state, &challenge);
 
     Ok(PortalInit {
         auth_url,
@@ -98,6 +113,13 @@ pub async fn init_unified_portal() -> Result<PortalInit> {
 /// Step 2: wait for a single callback, then either exchange social tokens or return PKCE params.
 pub async fn finish_unified_portal(init: PortalInit, secret_store: &SecretStore) -> Result<PortalResult> {
     let callback = wait_for_auth_callback(init.listener, init.state).await?;
+
+    if let Some(error) = &callback.error {
+        let friendly_msg =
+            format_user_friendly_error(error, callback.error_description.as_deref(), &callback.login_option);
+        warn!("OAuth error: {} - {}", error, friendly_msg);
+        return Err(Error::OAuthCustomError(friendly_msg));
+    }
 
     match callback.login_option.as_str() {
         "google" | "github" => {
@@ -124,56 +146,117 @@ pub async fn finish_unified_portal(init: PortalInit, secret_store: &SecretStore)
             Ok(PortalResult::Social(provider))
         },
         "internal" => {
-            // Internal (IdC): pass issuer_uri + idc_region to caller for PKCE start+finish
-            let issuer_uri = match callback.issuer_uri {
-                Some(v) => v,
-                None => {
-                    return Err(Error::OAuthCustomError(
-                        "Missing issuer_uri for internal auth".to_string(),
-                    ));
-                },
-            };
-            let idc_region = match callback.sso_region {
-                Some(v) => v,
-                None => {
-                    return Err(Error::OAuthCustomError(
-                        "Missing idc_region for internal auth".to_string(),
-                    ));
-                },
-            };
-            Ok(PortalResult::Internal { issuer_uri, idc_region })
+            let (issuer_url, sso_region) = extract_sso_params(&callback, "internal")?;
+            Ok(PortalResult::Internal {
+                issuer_url,
+                idc_region: sso_region,
+            })
+        },
+        "awsidc" => {
+            let (issuer_url, sso_region) = extract_sso_params(&callback, "awsIdc")?;
+            Ok(PortalResult::AwsIdc {
+                issuer_url,
+                idc_region: sso_region,
+            })
+        },
+        "builderid" => {
+            let (issuer_url, sso_region) = extract_sso_params(&callback, "builderId")?;
+            Ok(PortalResult::BuilderId {
+                issuer_url,
+                idc_region: sso_region,
+            })
         },
         other => Err(Error::OAuthCustomError(format!("Unknown login_option: {other}"))),
     }
 }
 
-async fn bind_allowed_port(ports: &[u16]) -> Result<TcpListener> {
-    for port in ports {
-        match TcpListener::bind(("127.0.0.1", *port)).await {
-            Ok(l) => return Ok(l),
-            Err(e) => debug!("Failed to bind to port {port}: {e}"),
-        }
+fn format_user_friendly_error(error_code: &str, description: Option<&str>, provider: &str) -> String {
+    let cleaned_description = description.map(|d| {
+        let first_part = d.split(';').next().unwrap_or(d);
+        // Replace + with spaces (URL encoding)
+        first_part.replace('+', " ").trim().to_string()
+    });
+
+    match error_code {
+        "access_denied" => {
+            format!(
+                "{} denied access to Kiro. Please ensure you grant all required permissions.",
+                provider
+            )
+        },
+        "invalid_request" => "Authentication failed due to an invalid request. Please try again.".to_string(),
+        "unauthorized_client" => "The application is not authorized. Please contact support.".to_string(),
+        "server_error" => {
+            format!("{} login is temporarily unavailable. Please try again later.", provider)
+        },
+        "invalid_scope" => "The requested permissions are invalid. Please contact support.".to_string(),
+        _ => {
+            // For unknown errors, use cleaned description or a generic message
+            cleaned_description.unwrap_or_else(|| format!("Authentication failed: {}. Please try again.", error_code))
+        },
     }
-    Err(std::io::Error::new(std::io::ErrorKind::AddrInUse, "Failed to bind to any port").into())
 }
 
-struct AuthPortalCallback {
-    login_option: String,
-    code: Option<String>,
-    issuer_uri: Option<String>,
-    sso_region: Option<String>,
-    state: String,
-    path: String,
+/// Build the authorization URL with all required parameters
+fn build_auth_url(redirect_base: &str, state: &str, challenge: &str) -> String {
+    let is_internal = is_mwinit_available();
+    let internal_param = if is_internal { "&from_amazon_internal=true" } else { "" };
+
+    format!(
+        "{}?state={}&code_challenge={}&code_challenge_method=S256&redirect_uri={}{}&redirect_from=kirocli",
+        AUTH_PORTAL_URL,
+        state,
+        challenge,
+        urlencoding::encode(redirect_base),
+        internal_param
+    )
+}
+
+/// Extract issuer_url and sso_region from callback
+fn extract_sso_params(callback: &AuthPortalCallback, auth_type: &str) -> Result<(String, String)> {
+    let issuer_url = callback
+        .issuer_url
+        .clone()
+        .ok_or_else(|| Error::OAuthCustomError(format!("Missing issuer_url for {} auth", auth_type)))?;
+
+    let idc_region = callback
+        .sso_region
+        .clone()
+        .ok_or_else(|| Error::OAuthCustomError(format!("Missing idc_region for {} auth", auth_type)))?;
+
+    Ok((issuer_url, idc_region))
 }
 
 async fn wait_for_auth_callback(listener: TcpListener, expected_state: String) -> Result<AuthPortalCallback> {
     let (tx, mut rx) = tokio::sync::mpsc::channel::<AuthPortalCallback>(1);
 
     let server_handle = tokio::spawn(async move {
-        if let Ok((stream, _)) = listener.accept().await {
-            let io = TokioIo::new(stream);
-            let svc = AuthCallbackService { tx: tx.clone() };
-            let _ = http1::Builder::new().serve_connection(io, svc).await;
+        const MAX_CONNECTIONS: usize = 3;
+        let mut count = 0;
+
+        loop {
+            if count >= MAX_CONNECTIONS {
+                warn!("Reached max connections ({})", MAX_CONNECTIONS);
+                break;
+            }
+
+            match listener.accept().await {
+                Ok((stream, _)) => {
+                    count += 1;
+                    debug!("Connection {}/{}", count, MAX_CONNECTIONS);
+
+                    let io = TokioIo::new(stream);
+                    let service = AuthCallbackService { tx: tx.clone() };
+
+                    tokio::spawn(async move {
+                        let _ = http1::Builder::new().serve_connection(io, service).await;
+                    });
+                },
+                Err(e) => {
+                    error!("Accept failed: {}", e);
+                    break;
+                },
+            }
         }
     });
 
@@ -211,40 +294,91 @@ impl Service<Request<Incoming>> for AuthCallbackService {
             let path = uri.path();
 
             if path == "/oauth/callback" || path == "/signin/callback" {
-                let params: HashMap<String, String> = uri
-                    .query()
-                    .map(|q| {
-                        q.split('&')
-                            .filter_map(|kv| kv.split_once('='))
-                            .map(|(k, v)| (k.to_string(), urlencoding::decode(v).unwrap_or_default().to_string()))
-                            .collect()
-                    })
-                    .unwrap_or_default();
-
-                let cb = AuthPortalCallback {
-                    login_option: params.get("login_option").cloned().unwrap_or_default(),
-                    code: params.get("code").cloned(),
-                    issuer_uri: params.get("issuer_uri").cloned(),
-                    sso_region: params.get("idc_region").cloned(),
-                    state: params.get("state").cloned().unwrap_or_default(),
-                    path: path.to_string(),
-                };
-                let _ = tx.send(cb).await;
-
-                let resp = Response::builder()
-                    .status(302)
-                    .header("Location", AUTH_PORTAL_URL)
-                    .header("Cache-Control", "no-store")
-                    .body(Full::new(Bytes::from_static(b"")))
-                    .map_err(|e| Error::OAuthCustomError(e.to_string()))?;
-                Ok(resp)
+                handle_valid_callback(uri, path, tx).await
             } else {
-                let resp = Response::builder()
-                    .status(404)
-                    .body(Full::new(Bytes::from_static(b"")))
-                    .map_err(|e| Error::OAuthCustomError(e.to_string()))?;
-                Ok(resp)
+                handle_invalid_callback(path).await
             }
         })
     }
+}
+
+/// Handle valid callback paths
+async fn handle_valid_callback(
+    uri: &hyper::Uri,
+    path: &str,
+    tx: tokio::sync::mpsc::Sender<AuthPortalCallback>,
+) -> Result<Response<Full<Bytes>>> {
+    let params: HashMap<String, String> = uri
+        .query()
+        .map(|q| {
+            q.split('&')
+                .filter_map(|kv| kv.split_once('='))
+                .map(|(k, v)| (k.to_string(), urlencoding::decode(v).unwrap_or_default().to_string()))
+                .collect()
+        })
+        .unwrap_or_default();
+
+    let callback = AuthPortalCallback {
+        login_option: params.get("login_option").cloned().unwrap_or_default(),
+        code: params.get("code").cloned(),
+        issuer_url: params.get("issuer_url").cloned(),
+        sso_region: params.get("idc_region").cloned(),
+        state: params.get("state").cloned().unwrap_or_default(),
+        path: path.to_string(),
+        error: params.get("error").cloned(),
+        error_description: params.get("error_description").cloned(),
+    };
+
+    let _ = tx.send(callback.clone()).await;
+
+    // Determine redirect status based on error presence
+    let redirect_url = if callback.error.is_some() {
+        let error_msg = callback
+            .error_description
+            .as_deref()
+            .unwrap_or(callback.error.as_deref().unwrap_or("Authentication failed"));
+        format!(
+            "{}?auth_status=error&redirect_from=kirocli&error_message={}",
+            AUTH_PORTAL_URL,
+            urlencoding::encode(error_msg)
+        )
+    } else {
+        format!("{}?auth_status=success&redirect_from=kirocli", AUTH_PORTAL_URL)
+    };
+
+    Response::builder()
+        .status(302)
+        .header("Location", redirect_url)
+        .header("Cache-Control", "no-store")
+        .body(Full::new(Bytes::from("")))
+        .map_err(|e| Error::OAuthCustomError(e.to_string()))
+}
+
+async fn handle_invalid_callback(path: &str) -> Result<Response<Full<Bytes>>> {
+    debug!("Invalid callback path: {}", path);
+
+    let redirect_url = format!(
+        "{}?auth_status=error&redirect_from=kirocli&error_message={}",
+        AUTH_PORTAL_URL,
+        urlencoding::encode("Invalid callback path")
+    );
+
+    Response::builder()
+        .status(302)
+        .header("Location", redirect_url)
+        .header("Cache-Control", "no-store")
+        .body(Full::new(Bytes::from("")))
+        .map_err(|e| Error::OAuthCustomError(e.to_string()))
+}
+
+async fn bind_allowed_port(ports: &[u16]) -> Result<TcpListener> {
+    for port in ports {
+        match TcpListener::bind(("127.0.0.1", *port)).await {
+            Ok(l) => return Ok(l),
+            Err(e) => debug!("Failed to bind to port {port}: {e}"),
+        }
+    }
+    Err(Error::OAuthCustomError(
+        "All callback ports are in use. Please close some applications and try again.".to_string(),
+    ))
 }

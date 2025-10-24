@@ -40,7 +40,6 @@ use fig_proto::fig::{
     AuthStatusResponse,
 };
 use fig_util::open_url_async;
-use fig_util::system_info::is_mwinit_available;
 use tokio::sync::Mutex;
 use tokio::sync::mpsc::{
     Receiver,
@@ -397,25 +396,29 @@ pub async fn start_unified_portal(_req: AuthStartUnifiedPortalRequest) -> Reques
         .map_err(|err| format!("Failed to load secret store: {err}"))?;
 
     let resp = match finish_unified_portal(init, &secret_store).await {
-        Ok(PortalResult::Social(provider)) => {
-            // Social flow is complete here (token saved). Fire telemetry like other flows.
-            fig_telemetry::send_user_logged_in().await;
-
-            AuthStartUnifiedPortalResponse {
-                kind: "social".to_string(),
-                provider: Some(provider.to_string()),
-                issuer_url: None,
-                idc_region: None,
-            }
+        Ok(PortalResult::Social(provider)) => AuthStartUnifiedPortalResponse {
+            kind: "social".to_string(),
+            provider: Some(provider.to_string()),
+            issuer_url: None,
+            idc_region: None,
         },
-        Ok(PortalResult::Internal { issuer_uri, idc_region }) => {
-            // Return parameters for PKCE start+finish on the existing code path.
-            AuthStartUnifiedPortalResponse {
-                kind: "internal".to_string(),
-                provider: None,
-                issuer_url: Some(issuer_uri),
-                idc_region: Some(idc_region),
-            }
+        Ok(PortalResult::Internal { issuer_url, idc_region }) => AuthStartUnifiedPortalResponse {
+            kind: "internal".to_string(),
+            provider: None,
+            issuer_url: Some(issuer_url),
+            idc_region: Some(idc_region),
+        },
+        Ok(PortalResult::AwsIdc { issuer_url, idc_region }) => AuthStartUnifiedPortalResponse {
+            kind: "awsidc".to_string(),
+            provider: None,
+            issuer_url: Some(issuer_url),
+            idc_region: Some(idc_region),
+        },
+        Ok(PortalResult::BuilderId { issuer_url, idc_region }) => AuthStartUnifiedPortalResponse {
+            kind: "builderid".to_string(),
+            provider: None,
+            issuer_url: Some(issuer_url),
+            idc_region: Some(idc_region),
         },
         Err(err) => {
             return Err(format!("Unified auth portal failed: {err}").into());

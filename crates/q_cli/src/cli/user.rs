@@ -296,11 +296,15 @@ pub async fn login_interactive(args: LoginArgs) -> Result<()> {
                 }
                 Some(AuthMethod::Social(provider))
             },
-            Ok(PortalResult::Internal { issuer_uri, idc_region }) => {
+            Ok(
+                PortalResult::Internal { issuer_url, idc_region }
+                | PortalResult::BuilderId { issuer_url, idc_region }
+                | PortalResult::AwsIdc { issuer_url, idc_region },
+            ) => {
                 pre_portal_spinner.stop();
 
                 let (client, registration) =
-                    start_pkce_authorization(Some(issuer_uri.clone()), Some(idc_region.clone())).await?;
+                    start_pkce_authorization(Some(issuer_url.clone()), Some(idc_region.clone())).await?;
 
                 match fig_util::open_url_async(&registration.url).await {
                     // If it succeeded, finish PKCE.
@@ -326,7 +330,7 @@ pub async fn login_interactive(args: LoginArgs) -> Result<()> {
                         error!(%err, "Failed to open URL with browser, falling back to device code flow");
 
                         // Try device code flow.
-                        try_device_authorization(&secret_store, Some(issuer_uri), Some(idc_region)).await?;
+                        try_device_authorization(&secret_store, Some(issuer_url), Some(idc_region)).await?;
                     },
                 }
 

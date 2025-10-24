@@ -49,7 +49,6 @@ use crate::api_client::{
     ApiClientError,
 };
 use crate::auth::builder_id::get_start_url_and_region;
-use crate::auth::social::SocialProvider;
 use crate::aws_common::app_name;
 use crate::cli::RootSubcommand;
 use crate::database::settings::Setting;
@@ -224,23 +223,8 @@ impl TelemetryThread {
         Ok(())
     }
 
-    pub fn send_user_logged_in(
-        &self,
-        start_url: Option<String>,
-        sso_region: Option<String>,
-        provider: Option<SocialProvider>,
-    ) -> Result<(), TelemetryError> {
-        let mut telemetry_event = Event::new(EventType::UserLoggedIn {
-            social_provider: provider.map(|p| p.to_string()),
-        });
-        if let Some(url) = start_url {
-            telemetry_event.set_start_url(url);
-        }
-        if let Some(region) = sso_region {
-            telemetry_event.set_sso_region(region);
-        }
-
-        Ok(self.tx.send(telemetry_event)?)
+    pub fn send_user_logged_in(&self) -> Result<(), TelemetryError> {
+        Ok(self.tx.send(Event::new(EventType::UserLoggedIn {}))?)
     }
 
     pub async fn send_cli_subcommand_executed(

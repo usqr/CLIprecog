@@ -624,13 +624,13 @@ message AuthStatusResponse {
 message AuthStartUnifiedPortalRequest {}
 
 message AuthStartUnifiedPortalResponse {
-  // "social" or "internal"
+  // "social" | "idc" | "builderId"
   string kind = 1;
 
   // when kind == "social"
   optional string provider = 2; // "Google" | "GitHub"
 
-  // when kind == "internal"
+  // when kind == "idc" | "builderId"
   optional string issuer_url = 3;
   optional string idc_region = 4;
 }

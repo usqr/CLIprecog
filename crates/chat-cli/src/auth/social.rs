@@ -20,6 +20,7 @@ use time::OffsetDateTime;
 use tracing::{
     debug,
     error,
+    info,
     trace,
 };
 
@@ -36,7 +37,8 @@ use crate::database::{
 // - Bind only on loopback (127.0.0.1); never expose externally.
 // - If all ports are in use, show a clear error.
 // IMPORTANT: Do not change without auth service coordination.
-pub const CALLBACK_PORTS: &[u16] = &[49153, 50153, 51153, 52153, 53153, 4649, 6588, 9091, 8008, 3128];
+pub const CALLBACK_PORTS: &[u16] = &[3128, 4649, 6588, 8008, 9091, 49153, 50153, 51153, 52153, 53153];
+const USER_AGENT: &str = "Kiro-CLI";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, clap::ValueEnum)]
 pub enum SocialProvider {
@@ -139,46 +141,102 @@ impl SocialToken {
     }
 
     pub async fn refresh_token(&self, database: &Database) -> Result<Self, AuthError> {
-        let Some(refresh_token) = &self.refresh_token else {
-            error!("no refresh token was found for social login");
-            self.delete(database).await?;
-            return Err(AuthError::NoToken);
-        };
+        let refresh_token = self.refresh_token.as_ref().ok_or_else(|| {
+            error!("No refresh token available for social login");
+            AuthError::NoToken
+        })?;
 
-        debug!("Refreshing social access token");
+        debug!("Refreshing social access token for provider: {}", self.provider);
 
         let client = Client::new();
         let response = client
             .post(format!("{}/refreshToken", SOCIAL_AUTH_SERVICE_ENDPOINT))
+            .header("Content-Type", "application/json")
+            .header("User-Agent", USER_AGENT)
             .json(&serde_json::json!({
                 "refreshToken": refresh_token.0
             }))
             .send()
             .await?;
 
-        if response.status().is_success() {
-            let token_response: TokenResponse = response.json().await?;
-            let new_token = Self {
-                access_token: Secret(token_response.access_token),
-                expires_at: OffsetDateTime::now_utc() + time::Duration::seconds(token_response.expires_in as i64),
-                refresh_token: Some(Secret(token_response.refresh_token)),
-                provider: self.provider,
-                profile_arn: token_response.profile_arn.or(self.profile_arn.clone()),
-            };
-
-            new_token.save(database).await?;
-            Ok(new_token)
-        } else {
+        if !response.status().is_success() {
             let status = response.status();
-            error!("Failed to refresh social token: {}", response.status());
+            error!("Failed to refresh social token: {}", status);
+
+            // Clean up invalid token
             self.delete(database).await?;
-            Err(AuthError::HttpStatus(status))
+
+            return Err(AuthError::HttpStatus(status));
         }
+
+        let token_response: TokenResponse = response.json().await?;
+        let new_token = Self {
+            access_token: Secret(token_response.access_token),
+            expires_at: OffsetDateTime::now_utc() + time::Duration::seconds(token_response.expires_in as i64),
+            refresh_token: Some(Secret(token_response.refresh_token)),
+            provider: self.provider,
+            profile_arn: token_response.profile_arn.or_else(|| self.profile_arn.clone()),
+        };
+
+        new_token.save(database).await?;
+        debug!("Successfully refreshed social token");
+
+        Ok(new_token)
+    }
+
+    pub async fn exchange_social_token(
+        database: &mut Database,
+        provider: SocialProvider,
+        code_verifier: &str,
+        code: &str,
+        redirect_uri: &str,
+    ) -> Result<(), AuthError> {
+        debug!("Exchanging authorization code for {} token", provider);
+
+        let client = Client::new();
+        let token_request = serde_json::json!({
+            "code": code,
+            "code_verifier": code_verifier,
+            "redirect_uri": redirect_uri,
+        });
+
+        let response = client
+            .post(format!("{}/oauth/token", SOCIAL_AUTH_SERVICE_ENDPOINT))
+            .header("Content-Type", "application/json")
+            .header("User-Agent", USER_AGENT)
+            .json(&token_request)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let body = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
+
+            error!("Token exchange failed: {} - {}", status, body);
+            return Err(AuthError::SocialAuthProviderFailure(format!(
+                "Token exchange failed: {}",
+                body
+            )));
+        }
+        let token_response: TokenResponse = response.json().await?;
+        let token = Self {
+            access_token: Secret(token_response.access_token),
+            expires_at: OffsetDateTime::now_utc() + time::Duration::seconds(token_response.expires_in as i64),
+            refresh_token: Some(Secret(token_response.refresh_token)),
+            provider,
+            profile_arn: token_response.profile_arn,
+        };
+
+        token.save(database).await?;
+        token.save_profile_if_any(database).await?;
+
+        info!("Successfully obtained and saved {} access token", provider);
+        Ok(())
     }
 }
 
 #[derive(Debug, Deserialize)]
-struct TokenResponse {
+pub struct TokenResponse {
     #[serde(rename = "accessToken")]
     access_token: String,
     #[serde(rename = "refreshToken")]

@@ -114,9 +114,3 @@ impl ResolveIdentity for UnifiedBearerResolver {
         }))
     }
 }
-
-#[ignore = "not in ci"]
-#[tokio::test]
-async fn logout_test() {
-    logout().await.unwrap();
-}
