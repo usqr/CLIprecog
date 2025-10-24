@@ -7,6 +7,7 @@ set -o errexit
 set -o nounset
 
 SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+BINARY_NAME="kiro-cli"
 
 log_error() {
     printf '\e[31m[ERROR]\e[0m %s\n' "$1" >&2
@@ -136,22 +137,22 @@ if is_target_triple_gnu && ! check_glibc_version; then
 fi
 
 if [ -n "${Q_INSTALL_GLOBAL:-}" ]; then
-    install -m 755 "$SCRIPT_DIR/bin/q" /usr/local/bin/
-    install -m 755 "$SCRIPT_DIR/bin/qchat" /usr/local/bin/
-    install -m 755 "$SCRIPT_DIR/bin/qterm" /usr/local/bin/
+    install -m 755 "$SCRIPT_DIR/bin/$BINARY_NAME" "/usr/local/bin/$BINARY_NAME"
+    install -m 755 "$SCRIPT_DIR/bin/${BINARY_NAME}-chat" "/usr/local/bin/${BINARY_NAME}-chat"
+    install -m 755 "$SCRIPT_DIR/bin/${BINARY_NAME}-term" "/usr/local/bin/${BINARY_NAME}-term"
 
     if [ -z "${Q_SKIP_SETUP:-}" ]; then
-        /usr/local/bin/q integrations install dotfiles
-        /usr/local/bin/q setup --global "$@"
+        "/usr/local/bin/$BINARY_NAME" integrations install dotfiles
+        "/usr/local/bin/$BINARY_NAME" setup --global "$@"
     fi
 else
     mkdir -p "$HOME/.local/bin"
 
-    install -m 755 "$SCRIPT_DIR/bin/q" "$HOME/.local/bin/"
-    install -m 755 "$SCRIPT_DIR/bin/qchat" "$HOME/.local/bin/"
-    install -m 755 "$SCRIPT_DIR/bin/qterm" "$HOME/.local/bin/"
+    install -m 755 "$SCRIPT_DIR/bin/$BINARY_NAME" "$HOME/.local/bin/$BINARY_NAME"
+    install -m 755 "$SCRIPT_DIR/bin/${BINARY_NAME}-chat" "$HOME/.local/bin/${BINARY_NAME}-chat"
+    install -m 755 "$SCRIPT_DIR/bin/${BINARY_NAME}-term" "$HOME/.local/bin/${BINARY_NAME}-term"
 
     if [ -z "${Q_SKIP_SETUP:-}" ]; then
-        "$HOME/.local/bin/q" setup "$@"
+        "$HOME/.local/bin/$BINARY_NAME" setup "$@"
     fi
 fi

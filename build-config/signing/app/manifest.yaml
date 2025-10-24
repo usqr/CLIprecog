@@ -1,9 +1,9 @@
 type: :app # no need to change this for .pkg, .dmg and executables
 os: :osx
-name: Amazon Q.app
+name: Kiro-Cli.app
 outputs:
   - label: macos
-    path: Amazon Q.app
+    path: Kiro-Cli.app
 app:
   :identifier: com.amazon.codewhisperer # this has to be same as Bundle identifier value in info.plist
   signing_requirements:

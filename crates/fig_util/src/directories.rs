@@ -144,11 +144,11 @@ pub fn kiro_data_dir() -> Result<PathBuf> {
         if #[cfg(unix)] {
             Ok(dirs::data_local_dir()
                 .ok_or(DirectoryError::NoHomeDirectory)?
-                .join("kiro"))
+                .join("kiro-cli"))
         } else if #[cfg(windows)] {
             Ok(dirs::data_local_dir()
             .ok_or(DirectoryError::NoHomeDirectory)?
-            .join("Kiro"))
+            .join("Kiro-Cli"))
         }
     }
 }
@@ -416,7 +416,7 @@ pub fn figterm_socket_path(session_id: impl Display) -> Result<PathBuf> {
 
 /// The path to the resources directory
 ///
-/// - MacOS: "/Applications/Amazon Q.app/Contents/Resources"
+/// - MacOS: "/Applications/Kiro-Cli.app/Contents/Resources"
 /// - Linux: "/usr/share/fig"
 /// - Windows: "%LOCALAPPDATA%\AmazonQ\resources"
 pub fn resources_path() -> Result<PathBuf> {
@@ -452,7 +452,7 @@ pub fn resources_path_ctx<Ctx: EnvProvider + PlatformProvider>(ctx: &Ctx) -> Res
 
 /// The path to the fig install manifest
 ///
-/// - MacOS: "/Applications/Amazon Q.app/Contents/Resources/manifest.json"
+/// - MacOS: "/Applications/Kiro-Cli.app/Contents/Resources/manifest.json"
 /// - Linux: "/usr/share/fig/manifest.json"
 /// - Windows: "%LOCALAPPDATA%\AmazonQ\resources\bin\manifest.json"
 pub fn manifest_path() -> Result<PathBuf> {
@@ -734,7 +734,7 @@ mod tests {
     #[test]
     fn snapshot_themes_dir() {
         linux!(themes_dir(&Context::new()), @"/usr/share/fig/themes");
-        macos!(themes_dir(&Context::new()), @"/Applications/Amazon Q.app/Contents/Resources/themes");
+        macos!(themes_dir(&Context::new()), @"/Applications/Kiro-Cli.app/Contents/Resources/themes");
         windows!(themes_dir(&Context::new()), @r"C:\Users\$USER\AppData\Local\AmazonQ\resources\themes");
     }
 

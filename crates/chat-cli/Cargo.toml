@@ -6,10 +6,10 @@ homepage.workspace = true
 publish.workspace = true
 version.workspace = true
 license.workspace = true
-default-run = "kirochat"
+default-run = "kiro-cli-chat"
 
 [[bin]]
-name = "kirochat"
+name = "kiro-cli-chat"
 path = "src/main.rs"
 
 [lints]

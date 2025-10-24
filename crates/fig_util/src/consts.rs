@@ -1,10 +1,10 @@
 pub const APP_BUNDLE_ID: &str = "com.amazon.codewhisperer";
-pub const APP_BUNDLE_NAME: &str = "Amazon Q.app";
+pub const APP_BUNDLE_NAME: &str = "Kiro-Cli.app";
 
 #[cfg(target_os = "macos")]
-pub const APP_PROCESS_NAME: &str = "q_desktop";
+pub const APP_PROCESS_NAME: &str = "kiro-cli-desktop";
 #[cfg(target_os = "linux")]
-pub const APP_PROCESS_NAME: &str = "q-desktop";
+pub const APP_PROCESS_NAME: &str = "kiro-cli-desktop";
 
 #[cfg(windows)]
 pub const APP_PROCESS_NAME: &str = "q_desktop.exe";
@@ -12,16 +12,17 @@ pub const APP_PROCESS_NAME: &str = "q_desktop.exe";
 /// The name configured under `"package.productName"` in the tauri.conf.json file.
 pub const TAURI_PRODUCT_NAME: &str = "q_desktop";
 
-pub const CLI_BINARY_NAME: &str = "kiro";
+pub const CLI_BINARY_NAME: &str = "kiro-cli";
+pub const CLI_BINARY_NAME_UNDERSCORE: &str = "kiro_cli";
 pub const CLI_BINARY_NAME_MINIMAL: &str = "kiro-minimal";
-pub const CHAT_BINARY_NAME: &str = "kirochat";
-pub const PTY_BINARY_NAME: &str = "kiroterm";
+pub const CHAT_BINARY_NAME: &str = "kiro-cli-chat";
+pub const PTY_BINARY_NAME: &str = "kiro-cli-term";
 
-pub const CLI_CRATE_NAME: &str = "q_cli";
+pub const CLI_CRATE_NAME: &str = "kiro-cli";
 
-pub const URL_SCHEMA: &str = "q";
+pub const URL_SCHEMA: &str = "kiro-cli";
 
-pub const PRODUCT_NAME: &str = "Kiro";
+pub const PRODUCT_NAME: &str = "Kiro Cli";
 
 pub const RUNTIME_DIR_NAME: &str = "cwrun";
 

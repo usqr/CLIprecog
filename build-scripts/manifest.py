@@ -52,7 +52,7 @@ def manifest(
 
 def app_manifest():
     return manifest(
-        name="Amazon Q.app",
+        name="Kiro-Cli.app",
         identifier="com.amazon.codewhisperer",
         entitlements=True,
         embedded_requirements=[

@@ -1,5 +1,7 @@
-/// TODO(brandonskiser): revert back to "kirochat" for prompting login after standalone releases.
+#[allow(dead_code)]
+pub const CHAT_BINARY_NAME: &str = "kiro-cli-chat";
 
+/// releases.
 pub const GITHUB_REPO_NAME: &str = "aws/amazon-q-developer-cli";
 
 pub const GOV_REGIONS: &[&str] = &["us-gov-east-1", "us-gov-west-1"];

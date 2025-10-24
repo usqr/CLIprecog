@@ -882,17 +882,9 @@ impl ChatSession {
 
                     return Ok(());
                 },
-                _ => (
-                    "Kiro is having trouble responding right now",
-                    Report::from(err),
-                    true,
-                ),
+                _ => ("Kiro is having trouble responding right now", Report::from(err), true),
             },
-            _ => (
-                "Kiro is having trouble responding right now",
-                Report::from(err),
-                true,
-            ),
+            _ => ("Kiro is having trouble responding right now", Report::from(err), true),
         };
 
         if display_err_message {

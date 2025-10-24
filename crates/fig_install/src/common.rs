@@ -178,7 +178,7 @@ pub async fn install(components: InstallComponents, env: &Env) -> Result<(), Err
     Ok(())
 }
 
-/// Replace old q/qchat/qterm symlinks with kiro/kirochat/kiroterm symlinks
+/// Replace old q/qchat/qterm symlinks with kiro/kiro-cli-chat/kiro-cli-term symlinks
 pub fn replace_symlinks() -> Result<(), Box<dyn std::error::Error>> {
     let bin_dir = directories::home_local_bin()?;
 
@@ -206,7 +206,7 @@ fn remove_old_symlinks(bin_dir: &Path) -> Result<(), Box<dyn std::error::Error>>
 
 fn create_new_symlinks(bin_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let kiro_bin = std::env::current_exe()?;
-    let new_links = ["kiro", "kirochat", "kiroterm"];
+    let new_links = ["kiro", "kiro-cli-chat", "kiro-cli-term"];
 
     std::fs::create_dir_all(bin_dir)?;
 
@@ -303,7 +303,7 @@ pub fn rollback_migration() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Remove new kiro symlinks
-    let new_links = ["kiro", "kirochat", "kiroterm"];
+    let new_links = ["kiro", "kiro-cli-chat", "kiro-cli-term"];
     for link in &new_links {
         let link_path = bin_dir.join(link);
         if link_path.is_symlink() {

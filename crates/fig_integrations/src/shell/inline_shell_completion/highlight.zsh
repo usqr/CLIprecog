@@ -4,7 +4,7 @@
 #--------------------------------------------------------------------#
 
 # If there was a highlight, remove it
-_q_autosuggest_highlight_reset() {
+_{{CLI_BINARY_NAME_UNDERSCORE}}_autosuggest_highlight_reset() {
 	typeset -g _Q_AUTOSUGGEST_LAST_HIGHLIGHT
 
 	if [[ -n "$_Q_AUTOSUGGEST_LAST_HIGHLIGHT" ]]; then
@@ -14,7 +14,7 @@ _q_autosuggest_highlight_reset() {
 }
 
 # If there's a suggestion, highlight it
-_q_autosuggest_highlight_apply() {
+_{{CLI_BINARY_NAME_UNDERSCORE}}_autosuggest_highlight_apply() {
 	typeset -g _Q_AUTOSUGGEST_LAST_HIGHLIGHT
 
 	if (( $#POSTDISPLAY )); then

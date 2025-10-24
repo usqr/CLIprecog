@@ -3,7 +3,7 @@
 # Async                                                              #
 #--------------------------------------------------------------------#
 
-_q_autosuggest_async_request() {
+_{{CLI_BINARY_NAME_UNDERSCORE}}_autosuggest_async_request() {
 	zmodload zsh/system 2>/dev/null # For `$sysparams`
 
 	typeset -g _Q_AUTOSUGGEST_ASYNC_FD _Q_AUTOSUGGEST_CHILD_PID
@@ -38,7 +38,7 @@ _q_autosuggest_async_request() {
 
 		# Fetch and print the suggestion
 		local suggestion
-		_q_autosuggest_fetch_suggestion "$1"
+		_{{CLI_BINARY_NAME_UNDERSCORE}}_autosuggest_fetch_suggestion "$1"
 		echo -nE "$suggestion"
 	)
 
@@ -51,13 +51,13 @@ _q_autosuggest_async_request() {
 	read _Q_AUTOSUGGEST_CHILD_PID <&$_Q_AUTOSUGGEST_ASYNC_FD
 
 	# When the fd is readable, call the response handler
-	zle -F "$_Q_AUTOSUGGEST_ASYNC_FD" _q_autosuggest_async_response
+	zle -F "$_Q_AUTOSUGGEST_ASYNC_FD" _{{CLI_BINARY_NAME_UNDERSCORE}}_autosuggest_async_response
 }
 
 # Called when new data is ready to be read from the pipe
 # First arg will be fd ready for reading
 # Second arg will be passed in case of error
-_q_autosuggest_async_response() {
+_{{CLI_BINARY_NAME_UNDERSCORE}}_autosuggest_async_response() {
 	emulate -L zsh
 
 	local suggestion

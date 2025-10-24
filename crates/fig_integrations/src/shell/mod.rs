@@ -43,7 +43,7 @@ pub mod inline_shell_completion_plugin {
 
     #[cfg(test)]
     mod tests {
-        use fig_util::CLI_BINARY_NAME;
+        use fig_util::CLI_BINARY_NAME_UNDERSCORE;
 
         use super::*;
 
@@ -52,13 +52,15 @@ pub mod inline_shell_completion_plugin {
             // Ensure script has license
             assert!(ZSH_SCRIPT.contains("Copyright"));
 
-            // Ensure script has _q_autosuggest_strategy_inline_shell_completion()
+            // Ensure script has _{CLI_BINARY_NAME_UNDERSCORE}_autosuggest_strategy_inline_shell_completion()
             assert!(ZSH_SCRIPT.contains(&format!(
-                "_{CLI_BINARY_NAME}_autosuggest_strategy_inline_shell_completion()"
+                "_{CLI_BINARY_NAME_UNDERSCORE}_autosuggest_strategy_inline_shell_completion()"
             )));
 
             // Ensure script adds precmd hook
-            assert!(ZSH_SCRIPT.contains(&format!("add-zsh-hook precmd _{CLI_BINARY_NAME}_autosuggest_start")));
+            assert!(ZSH_SCRIPT.contains(&format!(
+                "add-zsh-hook precmd _{CLI_BINARY_NAME_UNDERSCORE}_autosuggest_start"
+            )));
         }
     }
 }
@@ -296,9 +298,9 @@ impl ShellScriptShellIntegration {
             } else {
                 let add_to_path_line = match self.shell {
                     Shell::Bash | Shell::Zsh => indoc::indoc! {r#"
-                        _Q_LOCAL_BIN="$HOME/.local/bin"
-                        [[ ":$PATH:" != *":$_Q_LOCAL_BIN:"* ]] && PATH="${PATH:+"$PATH:"}$_Q_LOCAL_BIN"
-                        unset _Q_LOCAL_BIN
+                        _KIRO_CLI_LOCAL_BIN="$HOME/.local/bin"
+                        [[ ":$PATH:" != *":$_KIRO_CLI_LOCAL_BIN:"* ]] && PATH="${PATH:+"$PATH:"}$_KIRO_CLI_LOCAL_BIN"
+                        unset _KIRO_CLI_LOCAL_BIN
                     "#},
                     Shell::Fish => "contains $HOME/.local/bin $PATH; or set -a PATH $HOME/.local/bin",
                     Shell::Nu => "",
@@ -399,9 +401,7 @@ impl DotfileShellIntegration {
         Ok(ShellScriptShellIntegration {
             shell: self.shell,
             when,
-            path: directories::fig_data_dir()?
-                .join("shell")
-                .join(integration_file_name),
+            path: directories::fig_data_dir()?.join("shell").join(integration_file_name),
         })
     }
 
@@ -844,7 +844,7 @@ pub fn remove_old_shell_integrations() -> Result<()> {
         ("fish", ".config/fish/config.fish"),
     ];
 
-    let home = std::env::var("HOME").map_err(|_| {
+    let home = std::env::var("HOME").map_err(|_e| {
         Error::Io(std::io::Error::new(
             std::io::ErrorKind::NotFound,
             "HOME environment variable not found",
@@ -862,7 +862,7 @@ pub fn remove_old_shell_integrations() -> Result<()> {
 }
 
 fn clean_shell_file(rc_path: &std::path::Path) -> Result<()> {
-    let content = std::fs::read_to_string(rc_path).map_err(|e| Error::Io(e))?;
+    let content = std::fs::read_to_string(rc_path).map_err(Error::Io)?;
 
     let new_content = content
         .lines()
@@ -871,7 +871,7 @@ fn clean_shell_file(rc_path: &std::path::Path) -> Result<()> {
         .join("\n");
 
     if content != new_content {
-        std::fs::write(rc_path, new_content).map_err(|e| Error::Io(e))?;
+        std::fs::write(rc_path, new_content).map_err(Error::Io)?;
     }
 
     Ok(())

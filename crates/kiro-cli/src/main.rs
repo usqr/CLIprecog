@@ -98,7 +98,7 @@ fn handle_migration_compatibility() {
         match fig_install::prompt_migration_choice() {
             Ok(true) => {
                 // User chose to migrate
-                if let Err(_) = perform_migration_with_rollback() {
+                if perform_migration_with_rollback().is_err() {
                     eprintln!("Migration failed. Your original Amazon Q installation has been preserved.");
                 } else {
                     println!("Migration completed successfully! You can now use 'kiro' commands.");

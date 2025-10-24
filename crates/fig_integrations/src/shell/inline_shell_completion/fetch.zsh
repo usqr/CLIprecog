@@ -6,7 +6,7 @@
 # from the first strategy to provide one.
 #
 
-_q_autosuggest_fetch_suggestion() {
+_{{CLI_BINARY_NAME_UNDERSCORE}}_autosuggest_fetch_suggestion() {
 	typeset -g suggestion
 	local -a strategies
 	local strategy
@@ -16,7 +16,7 @@ _q_autosuggest_fetch_suggestion() {
 
 	for strategy in $strategies; do
 		# Try to get a suggestion from this strategy
-		_q_autosuggest_strategy_$strategy "$1"
+		_{{CLI_BINARY_NAME_UNDERSCORE}}_autosuggest_strategy_$strategy "$1"
 
 		# Ensure the suggestion matches the prefix
 		[[ "$suggestion" != "$1"* ]] && unset suggestion

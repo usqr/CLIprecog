@@ -1,5 +1,5 @@
 [package]
-name = "q_cli"
+name = "kiro-cli"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true

@@ -179,7 +179,7 @@ def fetch_chat_bin(chat_build_bucket_name: str | None, chat_download_role_arn: s
         warn("missing required chat arguments, creating dummy binary")
         dummy_dir = BUILD_DIR / "dummy_chat"
         dummy_dir.mkdir(exist_ok=True)
-        dummy_path = dummy_dir / f"qchat-{get_target_triple()}"
+        dummy_path = dummy_dir / f"kiro-cli-chat-{get_target_triple()}"
         dummy_path.write_text("#!/usr/bin/env sh\n\necho dummy chat binary\n")
         set_executable(dummy_path)
         return dummy_path
@@ -193,7 +193,7 @@ def fetch_chat_bin(chat_build_bucket_name: str | None, chat_download_role_arn: s
         sts = boto3.client("sts")
 
     # Assume the cross-account role
-    response = sts.assume_role(RoleArn=chat_download_role_arn, RoleSessionName="QChatBuildBucketS3Access")
+    response = sts.assume_role(RoleArn=chat_download_role_arn, RoleSessionName="kiro-cli-chatBuildBucketS3Access")
     creds = response["Credentials"]
 
     # Return S3 client with assumed role credentials
@@ -205,21 +205,21 @@ def fetch_chat_bin(chat_build_bucket_name: str | None, chat_download_role_arn: s
     )
 
     # The path to the download should be:
-    # BUILD_BUCKET/prod/latest/{target}/qchat.zip
+    # BUILD_BUCKET/prod/latest/{target}/kiro-cli-chat.zip
     target = get_target_triple()
-    chat_bucket_path = f"prod/latest/{target}/qchat.zip"
+    chat_bucket_path = f"qv2/latest/{target}/kiro-cli-chat.zip"
     chat_dl_dir = BUILD_DIR / "chat_download"
     chat_dl_dir.mkdir(exist_ok=True)
-    chat_dl_path = chat_dl_dir / "qchat.zip"
-    info(f"Downloading qchat zip from bucket: {chat_bucket_path} and path: {chat_bucket_path}")
+    chat_dl_path = chat_dl_dir / "kiro-cli-chat.zip"
+    info(f"Downloading kiro-cli-chat zip from bucket: {chat_bucket_path} and path: {chat_bucket_path}")
     s3.download_file(chat_build_bucket_name, chat_bucket_path, chat_dl_path)
 
     # unzip and return the path to the contained binary
     run_cmd(["unzip", "-o", chat_dl_path, "-d", chat_dl_dir])
 
     # Append target triple, as expected by tauri cli.
-    chat_path = chat_dl_dir / f"qchat-{target}"
-    (chat_dl_dir / "qchat").rename(chat_path)
+    chat_path = chat_dl_dir / f"kiro-cli-chat-{target}"
+    (chat_dl_dir / "kiro-cli-chat").rename(chat_path)
     return chat_path
 
 
@@ -466,9 +466,9 @@ def build_linux_minimal(cli_path: pathlib.Path, pty_path: pathlib.Path, chat_pat
     Creates tar.gz, tar.xz, tar.zst, and zip archives under `BUILD_DIR`.
 
     Each archive has the following structure:
-    - archive/bin/q
-    - archive/bin/qterm
-    - archive/bin/qchat
+    - archive/bin/kiro-cli
+    - archive/bin/kiro-cli-term
+    - archive/bin/kiro-cli-chat
     - archive/install.sh
     - archive/README
     - archive/BUILD-INFO
@@ -879,7 +879,7 @@ def build(
     else:
         signing_data = None
 
-    cargo_features: Mapping[str, Sequence[str]] = {"q_cli": ["wayland"]}
+    cargo_features: Mapping[str, Sequence[str]] = {"kiro-cli": ["wayland"]}
 
     match stage_name:
         case "prod" | None:

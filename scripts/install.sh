@@ -7,9 +7,9 @@ set -eu
 # =============================================================================
 
 # Configuration
-BINARY_NAME="q"
-CLI_NAME="Q CLI"
-COMMAND_NAME="q"
+BINARY_NAME="kiro-cli"
+CLI_NAME="Kiro CLI"
+COMMAND_NAME="kiro-cli"
 BASE_URL="https://desktop-release.q.us-east-1.amazonaws.com"
 MANIFEST_URL="${BASE_URL}/latest/manifest.json"
 
@@ -358,9 +358,9 @@ install_macos() {
     mkdir -p "$HOME/.local/bin"
     local macos_bin="$MACOS_APP_DIR/$app_name/Contents/MacOS"
 
-    create_symlink "$macos_bin/q" "$HOME/.local/bin/q"
-    create_symlink "$macos_bin/qchat" "$HOME/.local/bin/qchat"
-    create_symlink "$macos_bin/qterm" "$HOME/.local/bin/qterm"
+    create_symlink "$macos_bin/q" "$HOME/.local/bin/$BINARY_NAME"
+    create_symlink "$macos_bin/qchat" "$HOME/.local/bin/${BINARY_NAME}-chat"
+    create_symlink "$macos_bin/qterm" "$HOME/.local/bin/${BINARY_NAME}-term"
 }
 
 # Install on Linux
@@ -442,9 +442,9 @@ main() {
     else
         # Linux
         if [[ "$use_musl" == "true" ]]; then
-            filename="q-${arch}-linux-musl.zip"
+            filename="${BINARY_NAME}-${arch}-linux-musl.zip"
         else
-            filename="q-${arch}-linux.zip"
+            filename="${BINARY_NAME}-${arch}-linux.zip"
         fi
         download_url="${BASE_URL}/latest/$filename"
     fi

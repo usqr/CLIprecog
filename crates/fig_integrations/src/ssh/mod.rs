@@ -290,9 +290,9 @@ mod tests {
         let all_count = all_re.find_iter(&replaced_config_text).count();
         assert_eq!(all_count, 2);
 
-        // count the number of "Amazon" to ensure match is replaced
-        let amazon_re = Regex::new(r"# Amazon").unwrap();
-        let amazon_count = amazon_re.find_iter(&replaced_config_text).count();
-        assert_eq!(amazon_count, 1);
+        // count the number of "Kiro" to ensure match is replaced
+        let kiro_re = Regex::new(r"# Kiro").unwrap();
+        let kiro_count = kiro_re.find_iter(&replaced_config_text).count();
+        assert_eq!(kiro_count, 1);
     }
 }
