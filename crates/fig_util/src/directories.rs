@@ -699,8 +699,8 @@ mod tests {
 
     #[test]
     fn snapshot_fig_data_dir() {
-        linux!(fig_data_dir(), @"$HOME/.local/share/kiro-cli");
-        macos!(fig_data_dir(), @"$HOME/Library/Application Support/kiro-cli");
+        linux!(fig_data_dir(), @"$HOME/.local/share/amazon-q");
+        macos!(fig_data_dir(), @"$HOME/Library/Application Support/amazon-q");
         windows!(fig_data_dir(), @r"C:\Users\$USER\AppData\Local\AmazonQ");
     }
 
