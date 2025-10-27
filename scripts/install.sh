@@ -358,9 +358,7 @@ install_macos() {
     mkdir -p "$HOME/.local/bin"
     local macos_bin="$MACOS_APP_DIR/$app_name/Contents/MacOS"
 
-    create_symlink "$macos_bin/q" "$HOME/.local/bin/$BINARY_NAME"
-    create_symlink "$macos_bin/qchat" "$HOME/.local/bin/${BINARY_NAME}-chat"
-    create_symlink "$macos_bin/qterm" "$HOME/.local/bin/${BINARY_NAME}-term"
+    "$macos_bin/kiro-cli-desktop" --no-dashboard > /dev/null 2>&1 &
 }
 
 # Install on Linux
