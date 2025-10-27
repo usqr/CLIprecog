@@ -104,7 +104,16 @@ const VALID_TOOL_NAME: &str = "^[a-zA-Z][a-zA-Z0-9_]*$";
 const SPINNER_CHARS: [char; 10] = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
 pub fn workspace_mcp_config_path(os: &Os) -> eyre::Result<PathBuf> {
-    Ok(os.env.current_dir()?.join(".amazonq").join("mcp.json"))
+    let current_dir = os.env.current_dir()?;
+    
+    // Check for .kiro first (new format)
+    let kiro_path = current_dir.join(".kiro").join("mcp.json");
+    if kiro_path.exists() {
+        Ok(kiro_path)
+    } else {
+        // Fallback to .amazonq (legacy format)
+        Ok(current_dir.join(".amazonq").join("mcp.json"))
+    }
 }
 
 pub fn global_mcp_config_path(os: &Os) -> eyre::Result<PathBuf> {
@@ -158,12 +167,19 @@ pub struct McpServerConfig {
 
 impl McpServerConfig {
     pub async fn load_config(stderr: &mut impl Write) -> eyre::Result<Self> {
-        let mut cwd = std::env::current_dir()?;
-        cwd.push(".amazonq/mcp.json");
+        let current_dir = std::env::current_dir()?;
+        
+        // Check for .kiro first, fallback to .amazonq
+        let workspace_path = if current_dir.join(".kiro").join("mcp.json").exists() {
+            current_dir.join(".kiro").join("mcp.json")
+        } else {
+            current_dir.join(".amazonq").join("mcp.json")
+        };
+        
         let expanded_path = shellexpand::tilde("~/.aws/amazonq/mcp.json");
         let global_path = PathBuf::from(expanded_path.as_ref() as &str);
         let global_buf = tokio::fs::read(global_path).await.ok();
-        let local_buf = tokio::fs::read(cwd).await.ok();
+        let local_buf = tokio::fs::read(workspace_path).await.ok();
         let conf = match (global_buf, local_buf) {
             (Some(global_buf), Some(local_buf)) => {
                 let mut global_conf = Self::from_slice(&global_buf, stderr, "global")?;

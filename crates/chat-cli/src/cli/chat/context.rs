@@ -615,6 +615,33 @@ pub fn profile_context_path(os: &Os, profile_name: &str) -> Result<PathBuf> {
         .join("context.json"))
 }
 
+/// Get default project paths with fallback from .kiro to .amazonq
+fn get_default_project_paths() -> Vec<String> {
+    let mut paths = vec![];
+    
+    // Check for .kiro first (new format)
+    if std::path::Path::new(".kiro").exists() {
+        paths.extend(vec![
+            ".kiro/rules/**/*.md".to_string(),
+            ".kiro/prompts/**/*.md".to_string(),
+        ]);
+    } else {
+        // Fallback to .amazonq (legacy format)
+        paths.extend(vec![
+            ".amazonq/rules/**/*.md".to_string(),
+            ".amazonq/prompts/**/*.md".to_string(),
+        ]);
+    }
+    
+    // Always include common files
+    paths.extend(vec![
+        "README.md".to_string(),
+        AMAZONQ_FILENAME.to_string(),
+    ]);
+    
+    paths
+}
+
 /// Load the global context configuration.
 ///
 /// If the global configuration file doesn't exist, returns a default configuration.
@@ -629,11 +656,7 @@ async fn load_global_config(os: &Os) -> Result<ContextConfig> {
     } else {
         // Return default global configuration with predefined paths
         Ok(ContextConfig {
-            paths: vec![
-                ".amazonq/rules/**/*.md".to_string(),
-                "README.md".to_string(),
-                AMAZONQ_FILENAME.to_string(),
-            ],
+            paths: get_default_project_paths(),
             hooks: HashMap::new(),
         })
     }
