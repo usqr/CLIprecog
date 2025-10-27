@@ -12,6 +12,8 @@ CLI_NAME="Q CLI"
 COMMAND_NAME="q"
 BASE_URL="https://desktop-release.q.us-east-1.amazonaws.com"
 MANIFEST_URL="${BASE_URL}/latest/manifest.json"
+MACOS_FILENAME="Amazon Q.dmg"
+MACOS_FILENAME_ESCAPED="Amazon%20Q.dmg"
 
 # Installation directories
 MACOS_APP_DIR="/Applications"
@@ -358,9 +360,7 @@ install_macos() {
     mkdir -p "$HOME/.local/bin"
     local macos_bin="$MACOS_APP_DIR/$app_name/Contents/MacOS"
 
-    create_symlink "$macos_bin/q" "$HOME/.local/bin/q"
-    create_symlink "$macos_bin/qchat" "$HOME/.local/bin/qchat"
-    create_symlink "$macos_bin/qterm" "$HOME/.local/bin/qterm"
+    "$macos_bin/q_desktop" --no-dashboard > /dev/null 2>&1 &
 }
 
 # Install on Linux
@@ -437,8 +437,8 @@ main() {
     # Get download information
     local download_url filename
     if [[ "$os" == "darwin" ]]; then
-        filename="Amazon Q.dmg"
-        download_url="${BASE_URL}/latest/Amazon%20Q.dmg"
+        filename="$MACOS_FILENAME"
+        download_url="${BASE_URL}/latest/${MACOS_FILENAME_ESCAPED}"
     else
         # Linux
         if [[ "$use_musl" == "true" ]]; then
