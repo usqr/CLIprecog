@@ -1,8 +1,8 @@
 {
-  "extends": ["@amzn/tsconfig/base.json", "@amzn/tsconfig/dom.json"],
+  "extends": ["@kiro/tsconfig/base.json", "@kiro/tsconfig/dom.json"],
   "compilerOptions": {
     "outDir": "dist",
-    "types": ["@amzn/types", "@withfig/autocomplete-types"]
+    "types": ["@kiro/types", "@withfig/autocomplete-types"]
   },
   "include": ["src"]
 }

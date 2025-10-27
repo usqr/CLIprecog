@@ -1,7 +1,4 @@
-import {
-  WindowPosition,
-  Settings,
-} from "@kiro/api-bindings";
+import { WindowPosition, Settings } from "@kiro/api-bindings";
 import { SETTINGS } from "@kiro/api-bindings-wrappers";
 import React, {
   useState,

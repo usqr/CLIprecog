@@ -321,8 +321,9 @@ impl Cli {
 
 #[cfg(test)]
 mod test {
+    use fig_util::CHAT_BINARY_NAME;
+
     use super::*;
-    use crate::util::CHAT_BINARY_NAME;
     use crate::util::test::assert_parse;
 
     #[test]

@@ -1,10 +1,7 @@
 import { Annotation } from "@kiro/autocomplete-parser";
 import { Suggestion } from "@kiro/shared/internal";
 import { getCWDForFilesAndFolders } from "@kiro/shared/utils";
-import {
-  getSetting,
-  SETTINGS,
-} from "@kiro/api-bindings-wrappers";
+import { getSetting, SETTINGS } from "@kiro/api-bindings-wrappers";
 import { Cache } from "./cache";
 
 export type GeneratorContext = Fig.ShellContext & {

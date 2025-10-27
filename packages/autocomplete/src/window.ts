@@ -1,7 +1,4 @@
-import {
-  getSetting,
-  SETTINGS,
-} from "@kiro/api-bindings-wrappers";
+import { getSetting, SETTINGS } from "@kiro/api-bindings-wrappers";
 
 // Default settings values.
 export const MAX_WIDTH = 320;

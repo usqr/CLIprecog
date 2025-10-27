@@ -27,7 +27,7 @@
       "@/*": ["./src/*"],
       "@assets/*": ["./assets/*"]
     },
-    "types": ["@amzn/types"]
+    "types": ["@kiro/types"]
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]

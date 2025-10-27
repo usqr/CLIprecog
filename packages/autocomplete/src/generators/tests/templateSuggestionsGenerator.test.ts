@@ -1,7 +1,4 @@
-import {
-  Annotation,
-  TokenType,
-} from "@kiro/autocomplete-parser";
+import { Annotation, TokenType } from "@kiro/autocomplete-parser";
 import { Subcommand } from "@kiro/shared/internal";
 import { describe, expect, it } from "vitest";
 import { getTemplateSuggestions } from "../templateSuggestionsGenerator";

@@ -1,8 +1,5 @@
 import React from "react";
-import {
-  Suggestion,
-  SuggestionType,
-} from "@kiro/shared/internal";
+import { Suggestion, SuggestionType } from "@kiro/shared/internal";
 import { localProtocol } from "@kiro/shared/utils";
 import { icons } from "../fig/icons";
 

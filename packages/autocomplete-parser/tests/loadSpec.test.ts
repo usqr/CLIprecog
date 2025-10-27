@@ -1,8 +1,5 @@
 import logger from "loglevel";
-import {
-  SETTINGS,
-  updateSettings,
-} from "@kiro/api-bindings-wrappers";
+import { SETTINGS, updateSettings } from "@kiro/api-bindings-wrappers";
 import { SpecLocationSource } from "@kiro/shared/utils";
 import {
   getSpecPath,
@@ -32,9 +29,7 @@ vi.mock("../src/loadHelpers", () => ({
 }));
 
 vi.mock("@kiro/api-bindings-wrappers", async () => ({
-  ...(await vi.importActual(
-    "@kiro/api-bindings-wrappers",
-  )),
+  ...(await vi.importActual("@kiro/api-bindings-wrappers")),
   executeCommand: vi.fn(),
 }));
 

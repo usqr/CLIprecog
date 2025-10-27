@@ -1,7 +1,4 @@
-import {
-  SettingsChangedNotification,
-  NotificationType,
-} from "@kiro/proto/fig";
+import { SettingsChangedNotification, NotificationType } from "@kiro/proto/fig";
 import { _subscribe, NotificationResponse } from "./notifications.js";
 
 import {

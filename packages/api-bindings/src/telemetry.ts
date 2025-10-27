@@ -1,7 +1,4 @@
-import {
-  TelemetryProperty,
-  TelemetryPropertySchema,
-} from "@kiro/proto/fig";
+import { TelemetryProperty, TelemetryPropertySchema } from "@kiro/proto/fig";
 import {
   sendTelemetryPageRequest,
   sendTelemetryTrackRequest,

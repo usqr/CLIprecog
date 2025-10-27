@@ -2,10 +2,7 @@ import logger from "loglevel";
 import { StoreApi } from "zustand";
 import { sleep } from "@kiro/shared/utils";
 import { ArgumentParserResult } from "@kiro/autocomplete-parser";
-import {
-  SETTINGS,
-  getSetting,
-} from "@kiro/api-bindings-wrappers";
+import { SETTINGS, getSetting } from "@kiro/api-bindings-wrappers";
 import { runPipingConsoleMethods } from "../utils";
 import { getTemplateSuggestions } from "../generators/templateSuggestionsGenerator";
 import { getScriptSuggestions } from "../generators/scriptSuggestionsGenerator";

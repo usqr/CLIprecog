@@ -8,10 +8,7 @@ import {
   Types,
 } from "@kiro/api-bindings";
 import { AliasMap } from "@kiro/shell-parser";
-import {
-  SettingsMap,
-  updateSettings,
-} from "@kiro/api-bindings-wrappers";
+import { SettingsMap, updateSettings } from "@kiro/api-bindings-wrappers";
 import { clearSpecIndex } from "@kiro/autocomplete-parser";
 import { updateSelectSuggestionKeybindings } from "../actions";
 import { generatorCache } from "../generators/helpers";

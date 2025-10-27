@@ -17,10 +17,7 @@ import {
   isInDevMode,
   SETTINGS,
 } from "@kiro/api-bindings-wrappers";
-import {
-  Command,
-  substituteAlias,
-} from "@kiro/shell-parser";
+import { Command, substituteAlias } from "@kiro/shell-parser";
 import {
   getSpecPath,
   loadSubcommandCached,

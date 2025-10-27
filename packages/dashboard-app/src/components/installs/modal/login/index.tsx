@@ -1,10 +1,6 @@
 import Lockup from "@/components/svg/logo";
 import { Button } from "@/components/ui/button";
-import {
-  Auth,
-  Internal,
-  Native,
-} from "@kiro/api-bindings";
+import { Auth, Internal, Native } from "@kiro/api-bindings";
 import { useEffect, useState } from "react";
 import Tab, { ProfileTab } from "./tabs";
 import { useLocalStateZodDefault } from "@/hooks/store/useState";

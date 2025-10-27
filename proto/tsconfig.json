@@ -1,5 +1,5 @@
 {
-  "extends": "@amzn/tsconfig/base.json",
+  "extends": "@kiro/tsconfig/base.json",
   "compilerOptions": {
     "outDir": "dist"
   }

@@ -10,11 +10,7 @@ import {
   loadSubcommandCached,
   serializeSpecLocation,
 } from "@kiro/autocomplete-parser";
-import {
-  getAllCommandsWithAlias,
-  AliasMap,
-  Command,
-} from "@kiro/shell-parser";
+import { getAllCommandsWithAlias, AliasMap, Command } from "@kiro/shell-parser";
 import { SpecLocationSource } from "@kiro/shared/utils";
 import { Suggestion } from "@kiro/shared/internal";
 import {

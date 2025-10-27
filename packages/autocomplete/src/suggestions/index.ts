@@ -21,11 +21,7 @@ import {
   Annotation,
   TokenType,
 } from "@kiro/autocomplete-parser";
-import {
-  getSetting,
-  SETTINGS,
-  SettingsMap,
-} from "@kiro/api-bindings-wrappers";
+import { getSetting, SETTINGS, SettingsMap } from "@kiro/api-bindings-wrappers";
 import { GeneratorState } from "../generators/helpers";
 
 import {

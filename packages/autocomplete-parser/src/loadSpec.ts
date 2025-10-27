@@ -7,10 +7,7 @@ import {
   splitPath,
   ensureTrailingSlash,
 } from "@kiro/shared/utils";
-import {
-  Subcommand,
-  SpecLocation,
-} from "@kiro/shared/internal";
+import { Subcommand, SpecLocation } from "@kiro/shared/internal";
 import {
   SETTINGS,
   getSetting,

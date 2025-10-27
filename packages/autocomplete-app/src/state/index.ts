@@ -4,21 +4,13 @@ import { Mutate, StateCreator, StoreApi } from "zustand";
 import { createWithEqualityFn } from "zustand/traditional";
 
 import { Suggestion } from "@kiro/shared/internal";
-import {
-  fieldsAreEqual,
-  makeArray,
-  memoizeOne,
-} from "@kiro/shared/utils";
+import { fieldsAreEqual, makeArray, memoizeOne } from "@kiro/shared/utils";
 import { AliasMap, getCommand } from "@kiro/shell-parser";
 import {
   ArgumentParserResult,
   initialParserState,
 } from "@kiro/autocomplete-parser";
-import {
-  getSetting,
-  SETTINGS,
-  SettingsMap,
-} from "@kiro/api-bindings-wrappers";
+import { getSetting, SETTINGS, SettingsMap } from "@kiro/api-bindings-wrappers";
 import { type Types } from "@kiro/api-bindings";
 import { detailedDiff } from "deep-object-diff";
 import { trackEvent } from "../telemetry.js";

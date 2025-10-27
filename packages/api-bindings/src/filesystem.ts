@@ -7,10 +7,7 @@ import {
   sendAppendToFileRequest,
   sendCreateDirectoryRequest,
 } from "./requests.js";
-import {
-  type FilePath,
-  FilePathSchema,
-} from "@kiro/proto/fig";
+import { type FilePath, FilePathSchema } from "@kiro/proto/fig";
 
 function filePath(options: Omit<FilePath, "$typeName">) {
   return create(FilePathSchema, options);

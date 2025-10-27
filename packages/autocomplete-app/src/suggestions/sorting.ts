@@ -1,9 +1,6 @@
 import { makeArray } from "@kiro/shared/utils";
 import { Suggestion } from "@kiro/shared/internal";
-import {
-  SETTINGS,
-  getSetting,
-} from "@kiro/api-bindings-wrappers";
+import { SETTINGS, getSetting } from "@kiro/api-bindings-wrappers";
 
 // { command: { commandParam: count/lastUsedDate } }
 // e.g. git: { add: 2, push: 4 }
