@@ -140,10 +140,8 @@ if [ -n "${Q_INSTALL_GLOBAL:-}" ]; then
     install -m 755 "$SCRIPT_DIR/bin/qchat" /usr/local/bin/
     install -m 755 "$SCRIPT_DIR/bin/qterm" /usr/local/bin/
 
-    if [ -z "${Q_SKIP_SETUP:-}" ]; then
-        /usr/local/bin/q integrations install dotfiles
-        /usr/local/bin/q setup --global "$@"
-    fi
+    /usr/local/bin/q integrations install dotfiles
+    /usr/local/bin/q setup --global "$@"
 else
     mkdir -p "$HOME/.local/bin"
 
@@ -151,7 +149,5 @@ else
     install -m 755 "$SCRIPT_DIR/bin/qchat" "$HOME/.local/bin/"
     install -m 755 "$SCRIPT_DIR/bin/qterm" "$HOME/.local/bin/"
 
-    if [ -z "${Q_SKIP_SETUP:-}" ]; then
-        "$HOME/.local/bin/q" setup "$@"
-    fi
+    "$HOME/.local/bin/q" setup "$@"
 fi
