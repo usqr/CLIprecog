@@ -131,10 +131,10 @@ export default function LoginModal({ next }: { next: () => void }) {
       }
 
       throw new Error("Unknown portal result");
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
       setLoginState("not started");
-      setError(err?.message ?? String(err));
+      setError(err instanceof Error ? err.message : String(err));
     }
   }
 

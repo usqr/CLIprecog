@@ -307,7 +307,7 @@ export function ProfileTab({
           setSelectedProfile(profile);
         }
       })
-      .catch(() => { });
+      .catch(() => {});
   }, []);
 
   // If there's only one profile, automatically select it and continue
@@ -345,10 +345,11 @@ export function ProfileTab({
               {profiles.map((profileItem) => (
                 <div
                   key={profileItem.arn}
-                  className={`p-3 mb-2 rounded-md cursor-pointer border ${selectedProfile && selectedProfile.arn === profileItem.arn
+                  className={`p-3 mb-2 rounded-md cursor-pointer border ${
+                    selectedProfile && selectedProfile.arn === profileItem.arn
                       ? "bg-white/20 border-white"
                       : "bg-white/5 border-transparent hover:bg-white/10"
-                    }`}
+                  }`}
                   onClick={() => {
                     if (!isSubmitting) {
                       setSelectedProfile(profileItem);
