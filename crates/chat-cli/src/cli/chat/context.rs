@@ -618,7 +618,7 @@ pub fn profile_context_path(os: &Os, profile_name: &str) -> Result<PathBuf> {
 /// Get default project paths with fallback from .kiro to .amazonq
 fn get_default_project_paths() -> Vec<String> {
     let mut paths = vec![];
-    
+
     // Check for .kiro first (new format)
     if std::path::Path::new(".kiro").exists() {
         paths.extend(vec![
@@ -632,13 +632,10 @@ fn get_default_project_paths() -> Vec<String> {
             ".amazonq/prompts/**/*.md".to_string(),
         ]);
     }
-    
+
     // Always include common files
-    paths.extend(vec![
-        "README.md".to_string(),
-        AMAZONQ_FILENAME.to_string(),
-    ]);
-    
+    paths.extend(vec!["README.md".to_string(), AMAZONQ_FILENAME.to_string()]);
+
     paths
 }
 
@@ -879,6 +876,26 @@ mod tests {
         assert!(!profile_context_path(&os, "test_profile")?.exists());
         assert!(manager.delete_profile(&os, "test_profile").await.is_err());
         assert!(manager.delete_profile(&os, "default").await.is_err());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_get_default_project_paths_fallback() -> Result<()> {
+        // Test that function returns expected paths (fallback to .amazonq when .kiro doesn't exist)
+        let paths = get_default_project_paths();
+
+        // Should contain either .kiro or .amazonq paths depending on filesystem state
+        let has_kiro_paths = paths.contains(&".kiro/rules/**/*.md".to_string());
+        let has_amazonq_paths = paths.contains(&".amazonq/rules/**/*.md".to_string());
+
+        // Should have exactly one of the two formats
+        assert!(has_kiro_paths || has_amazonq_paths);
+        assert!(!(has_kiro_paths && has_amazonq_paths));
+
+        // Should always contain common files
+        assert!(paths.contains(&"README.md".to_string()));
+        assert!(paths.contains(&AMAZONQ_FILENAME.to_string()));
 
         Ok(())
     }

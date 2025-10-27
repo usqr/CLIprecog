@@ -105,7 +105,7 @@ const SPINNER_CHARS: [char; 10] = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '�
 
 pub fn workspace_mcp_config_path(os: &Os) -> eyre::Result<PathBuf> {
     let current_dir = os.env.current_dir()?;
-    
+
     // Check for .kiro first (new format)
     let kiro_path = current_dir.join(".kiro").join("mcp.json");
     if kiro_path.exists() {
@@ -168,14 +168,14 @@ pub struct McpServerConfig {
 impl McpServerConfig {
     pub async fn load_config(stderr: &mut impl Write) -> eyre::Result<Self> {
         let current_dir = std::env::current_dir()?;
-        
+
         // Check for .kiro first, fallback to .amazonq
         let workspace_path = if current_dir.join(".kiro").join("mcp.json").exists() {
             current_dir.join(".kiro").join("mcp.json")
         } else {
             current_dir.join(".amazonq").join("mcp.json")
         };
-        
+
         let expanded_path = shellexpand::tilde("~/.aws/amazonq/mcp.json");
         let global_path = PathBuf::from(expanded_path.as_ref() as &str);
         let global_buf = tokio::fs::read(global_path).await.ok();
@@ -1586,5 +1586,21 @@ mod tests {
         let with_delim = format!("a{}b{}c", NAMESPACE_DELIMITER, NAMESPACE_DELIMITER);
         let sanitized = sanitize_name(with_delim, &regex, &mut hasher);
         assert_eq!(sanitized, "abc");
+    }
+
+    #[tokio::test]
+    async fn test_workspace_mcp_config_path_fallback() -> eyre::Result<()> {
+        use crate::os::Os;
+
+        let os = Os::new().await.unwrap();
+
+        // Test that function returns a valid path (either .kiro or .amazonq)
+        let path = workspace_mcp_config_path(&os)?;
+        let path_str = path.to_string_lossy();
+
+        // Should end with either .kiro/mcp.json or .amazonq/mcp.json
+        assert!(path_str.ends_with(".kiro/mcp.json") || path_str.ends_with(".amazonq/mcp.json"));
+
+        Ok(())
     }
 }
