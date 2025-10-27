@@ -3,6 +3,7 @@
 // params).
 
 use std::collections::HashMap;
+use std::env;
 use std::time::Duration;
 
 use bytes::Bytes;
@@ -40,7 +41,7 @@ use crate::{
     Result,
 };
 
-const AUTH_PORTAL_URL: &str = "https://app.kiro.dev/signin";
+const DEFAULT_AUTH_PORTAL_URL: &str = "https://app.kiro.dev";
 const DEFAULT_AUTHORIZATION_TIMEOUT: Duration = Duration::from_secs(600);
 
 #[derive(Debug, Clone)]
@@ -201,10 +202,11 @@ fn format_user_friendly_error(error_code: &str, description: Option<&str>, provi
 fn build_auth_url(redirect_base: &str, state: &str, challenge: &str) -> String {
     let is_internal = is_mwinit_available();
     let internal_param = if is_internal { "&from_amazon_internal=true" } else { "" };
+    let auth_portal_url = get_auth_portal_url();
 
     format!(
-        "{}?state={}&code_challenge={}&code_challenge_method=S256&redirect_uri={}{}&redirect_from=kirocli",
-        AUTH_PORTAL_URL,
+        "{}/signin?state={}&code_challenge={}&code_challenge_method=S256&redirect_uri={}{}&redirect_from=kirocli",
+        auth_portal_url,
         state,
         challenge,
         urlencoding::encode(redirect_base),
@@ -330,6 +332,7 @@ async fn handle_valid_callback(
     };
 
     let _ = tx.send(callback.clone()).await;
+    let auth_portal_url = get_auth_portal_url();
 
     // Determine redirect status based on error presence
     let redirect_url = if callback.error.is_some() {
@@ -338,12 +341,12 @@ async fn handle_valid_callback(
             .as_deref()
             .unwrap_or(callback.error.as_deref().unwrap_or("Authentication failed"));
         format!(
-            "{}?auth_status=error&redirect_from=kirocli&error_message={}",
-            AUTH_PORTAL_URL,
+            "{}/signin?auth_status=error&redirect_from=kirocli&error_message={}",
+            auth_portal_url,
             urlencoding::encode(error_msg)
         )
     } else {
-        format!("{}?auth_status=success&redirect_from=kirocli", AUTH_PORTAL_URL)
+        format!("{}?auth_status=success&redirect_from=kirocli", auth_portal_url)
     };
 
     Response::builder()
@@ -356,10 +359,11 @@ async fn handle_valid_callback(
 
 async fn handle_invalid_callback(path: &str) -> Result<Response<Full<Bytes>>> {
     debug!("Invalid callback path: {}", path);
+    let auth_portal_url = get_auth_portal_url();
 
     let redirect_url = format!(
-        "{}?auth_status=error&redirect_from=kirocli&error_message={}",
-        AUTH_PORTAL_URL,
+        "{}/signin?auth_status=error&redirect_from=kirocli&error_message={}",
+        auth_portal_url,
         urlencoding::encode("Invalid callback path")
     );
 
@@ -381,4 +385,8 @@ async fn bind_allowed_port(ports: &[u16]) -> Result<TcpListener> {
     Err(Error::OAuthCustomError(
         "All callback ports are in use. Please close some applications and try again.".to_string(),
     ))
+}
+
+fn get_auth_portal_url() -> String {
+    env::var("KIRO_AUTH_PORTAL_URL").unwrap_or_else(|_| DEFAULT_AUTH_PORTAL_URL.to_string())
 }
