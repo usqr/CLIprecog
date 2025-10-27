@@ -53,6 +53,7 @@ from const import (
     PTY_BINARY_NAME,
     PTY_PACKAGE_NAME,
     URL_SCHEMA,
+    CHAT_BINARY_BRANCH,
 )
 
 BUILD_DIR_RELATIVE = pathlib.Path(os.environ.get("BUILD_DIR") or "build")
@@ -208,7 +209,7 @@ def fetch_chat_bin(chat_build_bucket_name: str | None, chat_download_role_arn: s
     # The path to the download should be:
     # BUILD_BUCKET/prod/latest/{target}/kiro-cli-chat.zip
     target = get_target_triple()
-    chat_bucket_path = f"prod/latest/{target}/{CHAT_BINARY_NAME}.zip"
+    chat_bucket_path = f"{CHAT_BINARY_BRANCH}/latest/{target}/{CHAT_BINARY_NAME}.zip"
     chat_dl_dir = BUILD_DIR / "chat_download"
     chat_dl_dir.mkdir(exist_ok=True)
     chat_dl_path = chat_dl_dir / f"{CHAT_BINARY_NAME}.zip"
