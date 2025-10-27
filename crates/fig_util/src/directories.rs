@@ -699,8 +699,8 @@ mod tests {
 
     #[test]
     fn snapshot_fig_data_dir() {
-        linux!(fig_data_dir(), @"$HOME/.local/share/amazon-q");
-        macos!(fig_data_dir(), @"$HOME/Library/Application Support/amazon-q");
+        linux!(fig_data_dir(), @"$HOME/.local/share/kiro-cli");
+        macos!(fig_data_dir(), @"$HOME/Library/Application Support/kiro-cli");
         windows!(fig_data_dir(), @r"C:\Users\$USER\AppData\Local\AmazonQ");
     }
 
@@ -714,7 +714,7 @@ mod tests {
     #[test]
     fn snapshot_themes_dir() {
         linux!(themes_dir(&Context::new()), @"/usr/share/fig/themes");
-        macos!(themes_dir(&Context::new()), @"/Applications/Amazon Q.app/Contents/Resources/themes");
+        macos!(themes_dir(&Context::new()), @"/Applications/Kiro-Cli.app/Contents/Resources/themes");
         windows!(themes_dir(&Context::new()), @r"C:\Users\$USER\AppData\Local\AmazonQ\resources\themes");
     }
 

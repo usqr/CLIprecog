@@ -42,6 +42,7 @@ from const import (
     CLI_PACKAGE_NAME,
     DESKTOP_BINARY_NAME,
     DESKTOP_PACKAGE_NAME,
+    TAURI_PRODUCT_NAME,
     DESKTOP_PACKAGE_PATH,
     DMG_NAME,
     LINUX_ARCHIVE_NAME,
@@ -179,7 +180,7 @@ def fetch_chat_bin(chat_build_bucket_name: str | None, chat_download_role_arn: s
         warn("missing required chat arguments, creating dummy binary")
         dummy_dir = BUILD_DIR / "dummy_chat"
         dummy_dir.mkdir(exist_ok=True)
-        dummy_path = dummy_dir / f"qchat-{get_target_triple()}"
+        dummy_path = dummy_dir / f"{CHAT_BINARY_NAME}-{get_target_triple()}"
         dummy_path.write_text("#!/usr/bin/env sh\n\necho dummy chat binary\n")
         set_executable(dummy_path)
         return dummy_path
@@ -205,21 +206,21 @@ def fetch_chat_bin(chat_build_bucket_name: str | None, chat_download_role_arn: s
     )
 
     # The path to the download should be:
-    # BUILD_BUCKET/prod/latest/{target}/qchat.zip
+    # BUILD_BUCKET/prod/latest/{target}/kiro-cli-chat.zip
     target = get_target_triple()
-    chat_bucket_path = f"prod/latest/{target}/qchat.zip"
+    chat_bucket_path = f"prod/latest/{target}/{CHAT_BINARY_NAME}.zip"
     chat_dl_dir = BUILD_DIR / "chat_download"
     chat_dl_dir.mkdir(exist_ok=True)
-    chat_dl_path = chat_dl_dir / "qchat.zip"
-    info(f"Downloading qchat zip from bucket: {chat_bucket_path} and path: {chat_bucket_path}")
+    chat_dl_path = chat_dl_dir / f"{CHAT_BINARY_NAME}.zip"
+    info(f"Downloading {CHAT_BINARY_NAME} zip from bucket: {chat_bucket_path} and path: {chat_bucket_path}")
     s3.download_file(chat_build_bucket_name, chat_bucket_path, chat_dl_path)
 
     # unzip and return the path to the contained binary
     run_cmd(["unzip", "-o", chat_dl_path, "-d", chat_dl_dir])
 
     # Append target triple, as expected by tauri cli.
-    chat_path = chat_dl_dir / f"qchat-{target}"
-    (chat_dl_dir / "qchat").rename(chat_path)
+    chat_path = chat_dl_dir / f"{CHAT_BINARY_NAME}-{target}"
+    (chat_dl_dir / f"{CHAT_BINARY_NAME}").rename(chat_path)
     return chat_path
 
 
@@ -341,7 +342,7 @@ def build_macos_desktop_app(
     manifest_path.unlink(missing_ok=True)
     tauri_config_path.unlink(missing_ok=True)
 
-    target_bundle = pathlib.Path(f"target/{target}/release/bundle/macos/q_desktop.app")
+    target_bundle = pathlib.Path(f"target/{target}/release/bundle/macos/{TAURI_PRODUCT_NAME}.app")
     app_path = BUILD_DIR / f"{APP_NAME}.app"
     shutil.rmtree(app_path, ignore_errors=True)
     shutil.copytree(target_bundle, app_path)
@@ -466,9 +467,9 @@ def build_linux_minimal(cli_path: pathlib.Path, pty_path: pathlib.Path, chat_pat
     Creates tar.gz, tar.xz, tar.zst, and zip archives under `BUILD_DIR`.
 
     Each archive has the following structure:
-    - archive/bin/q
-    - archive/bin/qterm
-    - archive/bin/qchat
+    - archive/bin/{cli_binary}
+    - archive/bin/{pty_binary}
+    - archive/bin/{chat_binary}
     - archive/install.sh
     - archive/README
     - archive/BUILD-INFO
