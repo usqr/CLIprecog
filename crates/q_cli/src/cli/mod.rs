@@ -25,6 +25,7 @@ use std::io::{
     Write as _,
     stdout,
 };
+use std::path::PathBuf;
 use std::process::ExitCode;
 
 use anstream::{
@@ -60,6 +61,7 @@ use fig_log::{
 };
 use fig_proto::local::UiElement;
 use fig_settings::sqlite::database;
+use fig_util::directories::home_local_bin;
 use fig_util::{
     CLI_BINARY_NAME,
     PRODUCT_NAME,
@@ -86,7 +88,6 @@ use crate::util::desktop::{
 use crate::util::{
     CliContext,
     assert_logged_in,
-    qchat_path,
 };
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, ValueEnum)]
@@ -405,6 +406,7 @@ impl Cli {
         let secret_store = SecretStore::new().await.ok();
         if let Some(secret_store) = secret_store {
             if let Ok(database) = database().map_err(|err| error!(?err, "failed to open database")) {
+                // check builderid token flow
                 if let Ok(token) = BuilderIdToken::load(&secret_store, false).await {
                     // Save the device registration. This is required for token refresh to succeed.
                     if let Some(token) = token.as_ref() {
@@ -435,6 +437,34 @@ impl Cli {
                             .map_err(|err| error!(?err, "failed to write credentials to auth db"))
                             .ok();
                     }
+                }
+
+                // check social token flow
+                match fig_auth::social::SocialToken::load(&secret_store, false).await {
+                    Ok(Some(social)) => {
+                        if let Ok(social_json) = serde_json::to_string(&social) {
+                            database
+                                .set_auth_value("codewhisperer:social:token", social_json)
+                                .map_err(|err| error!(?err, "failed to write social token to auth db"))
+                                .ok();
+                        }
+
+                        if let Some(profile_arn) = social.profile_arn.clone() {
+                            let _ = fig_settings::state::set_value(
+                                "api.codewhisperer.profile",
+                                serde_json::json!({
+                                    "profileName": "Social_Default_Profile",
+                                    "arn": profile_arn,
+                                }),
+                            );
+                        }
+                    },
+                    Ok(None) => {
+                        warn!("no social token found");
+                    },
+                    Err(err) => {
+                        error!(?err, "failed to load social token from SecretStore");
+                    },
                 }
             }
         }
@@ -596,6 +626,37 @@ async fn launch_dashboard(help_fallback: bool) -> Result<ExitCode> {
         .context("Failed to open dashboard")?;
 
     Ok(ExitCode::SUCCESS)
+}
+
+#[cfg(target_os = "linux")]
+fn qchat_path() -> Result<PathBuf> {
+    use fig_os_shim::Context;
+    use fig_util::consts::CHAT_BINARY_NAME;
+
+    let ctx = Context::new();
+    if let Some(path) = ctx.process_info().current_pid().exe() {
+        // This is required for deb installations.
+        if path.starts_with("/usr/bin") {
+            return Ok(PathBuf::from("/usr/bin").join(CHAT_BINARY_NAME));
+        }
+    }
+
+    if let Ok(local_bin_path) = home_local_bin() {
+        let local_bin_path = local_bin_path.join(CHAT_BINARY_NAME);
+        if local_bin_path.exists() {
+            return Ok(local_bin_path);
+        }
+    }
+
+    Ok(PathBuf::from(CHAT_BINARY_NAME))
+}
+
+#[cfg(target_os = "macos")]
+fn qchat_path() -> Result<PathBuf> {
+    use fig_util::consts::CHAT_BINARY_NAME;
+    use macos_utils::bundle::get_bundle_path_for_executable;
+
+    Ok(get_bundle_path_for_executable(CHAT_BINARY_NAME).unwrap_or(home_local_bin()?.join(CHAT_BINARY_NAME)))
 }
 
 #[cfg(test)]
