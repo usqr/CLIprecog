@@ -145,7 +145,7 @@ impl ToolsArgs {
 #[deny(missing_docs)]
 #[derive(Debug, PartialEq, Subcommand)]
 #[command(
-    before_long_help = "By default, Amazon Q will ask for your permission to use certain tools. You can control which tools you
+    before_long_help = "By default, Kiro will ask for your permission to use certain tools. You can control which tools you
 trust so that no confirmation is required. These settings will last only for this session."
 )]
 pub enum ToolsSubcommand {

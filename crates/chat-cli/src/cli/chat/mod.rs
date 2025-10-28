@@ -147,7 +147,7 @@ const LIMIT_REACHED_TEXT: &str = color_print::cstr! { "You've used all your free
 
 pub const EXTRA_HELP: &str = color_print::cstr! {"
 <cyan,em>MCP:</cyan,em>
-<black!>You can now configure the Amazon Q CLI to use MCP servers. \nLearn how: https://docs.aws.amazon.com/en_us/amazonq/latest/qdeveloper-ug/command-line-mcp.html</black!>
+<black!>You can now configure the Kiro CLI to use MCP servers. \nLearn how: https://docs.aws.amazon.com/en_us/amazonq/latest/qdeveloper-ug/command-line-mcp.html</black!>
 
 <cyan,em>Tips:</cyan,em>
 <em>!{command}</em>          <black!>Quickly execute a command in your current session</black!>
@@ -340,19 +340,19 @@ const WELCOME_TEXT: &str = color_print::cstr! {"<cyan!>
  ⠚⠛⠋⠀⠀⠀⠀⠘⠛⠛⠀⠘⠛⠛⠀⠀⠀⠛⠛⠀⠀⠀⠛⠛⠀⠀⠙⠻⠿⠟⠋⠛⠛⠀⠘⠛⠛⠛⠛⠛⠛⠃⠀⠈⠛⠿⠿⠿⠛⠁⠀⠀⠘⠛⠃⠀⠀⠘⠛⠛⠀⠀⠀⠀⠀⠀⠀⠀⠙⠛⠿⢿⣿⣿⣋⠀⠀
  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠛⠿⢿⡧</cyan!>"};
 
-const SMALL_SCREEN_WELCOME_TEXT: &str = color_print::cstr! {"<em>Welcome to <cyan!>Amazon Q</cyan!>!</em>"};
+const SMALL_SCREEN_WELCOME_TEXT: &str = color_print::cstr! {"<em>Welcome to <cyan!>Kiro</cyan!>!</em>"};
 const RESUME_TEXT: &str = color_print::cstr! {"<em>Picking up where we left off...</em>"};
 
 // Only show the model-related tip for now to make users aware of this feature.
 const ROTATING_TIPS: [&str; 16] = [
     color_print::cstr! {"You can resume the last conversation from your current directory by launching with
     <green!>q chat --resume</green!>"},
-    color_print::cstr! {"Get notified whenever Q CLI finishes responding.
+    color_print::cstr! {"Get notified whenever Kiro CLI finishes responding.
     Just run <green!>q settings chat.enableNotifications true</green!>"},
     color_print::cstr! {"You can use
     <green!>/editor</green!> to edit your prompt with a vim-like experience"},
     color_print::cstr! {"<green!>/usage</green!> shows you a visual breakdown of your current context window usage"},
-    color_print::cstr! {"Get notified whenever Q CLI finishes responding. Just run <green!>q settings
+    color_print::cstr! {"Get notified whenever Kiro CLI finishes responding. Just run <green!>q settings
     chat.enableNotifications true</green!>"},
     color_print::cstr! {"You can execute bash commands by typing
     <green!>!</green!> followed by the command"},
@@ -364,7 +364,7 @@ const ROTATING_TIPS: [&str; 16] = [
     color_print::cstr! {"You can use <green!>/compact</green!> to replace the conversation
     history with its summary to free up the context space"},
     color_print::cstr! {"If you want to file an issue
-    to the Q CLI team, just tell me, or run <green!>q issue</green!>"},
+    to the Kiro CLI team, just tell me, or run <green!>q issue</green!>"},
     color_print::cstr! {"You can enable
     custom tools with <green!>MCP servers</green!>. Learn more with /help"},
     color_print::cstr! {"You can
@@ -387,7 +387,7 @@ const SMALL_SCREEN_POPULAR_SHORTCUTS: &str = color_print::cstr! {"<black!><green
 </black!>"};
 
 const RESPONSE_TIMEOUT_CONTENT: &str = "Response timed out - message took too long to generate";
-const TRUST_ALL_TEXT: &str = color_print::cstr! {"<green!>All tools are now trusted (<red!>!</red!>). Amazon Q will execute tools <bold>without</bold> asking for confirmation.\
+const TRUST_ALL_TEXT: &str = color_print::cstr! {"<green!>All tools are now trusted (<red!>!</red!>). Kiro will execute tools <bold>without</bold> asking for confirmation.\
 \nAgents can sometimes do unexpected things so understand the risks.</green!>
 \nLearn more at https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/command-line-chat-security.html#command-line-chat-trustall-safety"};
 
@@ -820,12 +820,12 @@ impl ChatSession {
                         self.stderr,
                         style::SetAttribute(Attribute::Bold),
                         style::SetForegroundColor(Color::Red),
-                        style::Print("Amazon Q is having trouble responding right now:\n"),
+                        style::Print("Kiro is having trouble responding right now:\n"),
                         style::Print(format!("    {}\n", err.clone())),
                         style::SetAttribute(Attribute::Reset),
                         style::SetForegroundColor(Color::Reset),
                     )?;
-                    ("Amazon Q is having trouble responding right now", eyre!(err), false)
+                    ("Kiro is having trouble responding right now", eyre!(err), false)
                 },
                 ApiClientError::MonthlyLimitReached { .. } => {
                     let subscription_status = get_subscription_status(os).await;
@@ -882,17 +882,9 @@ impl ChatSession {
 
                     return Ok(());
                 },
-                _ => (
-                    "Amazon Q is having trouble responding right now",
-                    Report::from(err),
-                    true,
-                ),
+                _ => ("Kiro is having trouble responding right now", Report::from(err), true),
             },
-            _ => (
-                "Amazon Q is having trouble responding right now",
-                Report::from(err),
-                true,
-            ),
+            _ => ("Kiro is having trouble responding right now", Report::from(err), true),
         };
 
         if display_err_message {

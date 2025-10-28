@@ -28,8 +28,8 @@ use crate::os::Os;
 #[deny(missing_docs)]
 #[derive(Debug, PartialEq, Subcommand)]
 #[command(
-    before_long_help = "Context rules determine which files are included in your Amazon Q session. 
-The files matched by these rules provide Amazon Q with additional information 
+    before_long_help = "Context rules determine which files are included in your Kiro session. 
+The files matched by these rules provide Kiro with additional information 
 about your project or environment. Adding relevant files helps Q generate 
 more accurate and helpful responses.
 
