@@ -36,6 +36,7 @@ phases:
       # TODO(grant): change bucket name to env var
       - aws s3 cp --recursive s3://fig-io-desktop-build-output-$AWS_ACCOUNT-$AWS_REGION/staging .
       - aws s3 rm --recursive s3://fig-io-desktop-build-output-$AWS_ACCOUNT-$AWS_REGION/staging
+      - ls -la
 
 artifacts:
   files:
