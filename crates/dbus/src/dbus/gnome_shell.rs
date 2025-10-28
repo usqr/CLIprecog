@@ -43,10 +43,10 @@ use crate::CrateError;
 pub const GNOME_SHELL_PROCESS_NAME: &str = "gnome-shell";
 
 /// Extension uuid for GNOME Shell v44 and prior.
-const LEGACY_EXTENSION_UUID: &str = "amazon-q-for-cli-legacy-gnome-integration@aws.amazon.com";
+const LEGACY_EXTENSION_UUID: &str = "kiro-cli-legacy-gnome-integration@aws.amazon.com";
 
 /// Extension uuid for GNOME Shell v45 and after.
-const MODERN_EXTENSION_UUID: &str = "amazon-q-for-cli-gnome-integration@aws.amazon.com";
+const MODERN_EXTENSION_UUID: &str = "kiro-cli-gnome-integration@aws.amazon.com";
 
 /// Represents the installation status for the Amazon Q CLI GNOME Shell extension.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -714,13 +714,13 @@ mod tests {
         fn test_extension_metadata_deser() {
             let metadata = r#"
             {
-              "uuid": "amazon-q-for-cli-legacy-gnome-integration@aws.amazon.com",
+              "uuid": "kiro-cli-legacy-gnome-integration@aws.amazon.com",
               "name": "Kiro for CLI GNOME Integration",
               "url": "https://github.com/aws",
               "version": 1,
               "description": "Integrates Kiro for CLI with GNOME Shell prior to v45",
-              "gettext-domain": "amazon-q-for-cli-legacy-gnome-integration",
-              "settings-schema": "org.gnome.shell.extensions.amazon-q-for-cli-legacy-gnome-integration",
+              "gettext-domain": "kiro-cli-legacy-gnome-integration",
+              "settings-schema": "org.gnome.shell.extensions.kiro-cli-legacy-gnome-integration",
               "shell-version": ["41", "42", "43", "44"]
             }"#;
             let metadata: ExtensionMetadata = serde_json::from_str(metadata).unwrap();

@@ -397,7 +397,7 @@ pub fn figterm_socket_path(session_id: impl Display) -> Result<PathBuf> {
 
 /// The path to the resources directory
 ///
-/// - MacOS: "/Applications/Amazon Q.app/Contents/Resources"
+/// - MacOS: "/Applications/Kiro-Cli.app/Contents/Resources"
 /// - Linux: "/usr/share/fig"
 /// - Windows: "%LOCALAPPDATA%\AmazonQ\resources"
 pub fn resources_path() -> Result<PathBuf> {
@@ -433,7 +433,7 @@ pub fn resources_path_ctx<Ctx: EnvProvider + PlatformProvider>(ctx: &Ctx) -> Res
 
 /// The path to the fig install manifest
 ///
-/// - MacOS: "/Applications/Amazon Q.app/Contents/Resources/manifest.json"
+/// - MacOS: "/Applications/Kiro-Cli.app/Contents/Resources/manifest.json"
 /// - Linux: "/usr/share/fig/manifest.json"
 /// - Windows: "%LOCALAPPDATA%\AmazonQ\resources\bin\manifest.json"
 pub fn manifest_path() -> Result<PathBuf> {
