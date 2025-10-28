@@ -14,12 +14,12 @@ use tracing_subscriber::{
     fmt,
 };
 
-use crate::util::env_var::Q_LOG_LEVEL;
+use crate::util::env_var::KIRO_LOG_LEVEL;
 
 const MAX_FILE_SIZE: u64 = 10 * 1024 * 1024;
 const DEFAULT_FILTER: LevelFilter = LevelFilter::ERROR;
 
-static Q_LOG_LEVEL_GLOBAL: Mutex<Option<String>> = Mutex::new(None);
+static KIRO_LOG_LEVEL_GLOBAL: Mutex<Option<String>> = Mutex::new(None);
 static MAX_LEVEL: Mutex<Option<LevelFilter>> = Mutex::new(None);
 static ENV_FILTER_RELOADABLE_HANDLE: Mutex<Option<tracing_subscriber::reload::Handle<EnvFilter, Registry>>> =
     Mutex::new(None);
@@ -192,11 +192,11 @@ pub fn initialize_logging<T: AsRef<Path>>(args: LogArgs<T>) -> Result<LogGuard, 
 ///
 /// Returns a string identifying the current log level.
 pub fn get_log_level() -> String {
-    Q_LOG_LEVEL_GLOBAL
+    KIRO_LOG_LEVEL_GLOBAL
         .lock()
         .unwrap()
         .clone()
-        .unwrap_or_else(|| std::env::var(Q_LOG_LEVEL).unwrap_or_else(|_| DEFAULT_FILTER.to_string()))
+        .unwrap_or_else(|| std::env::var(KIRO_LOG_LEVEL).unwrap_or_else(|_| DEFAULT_FILTER.to_string()))
 }
 
 /// Set the log level to the given level.
@@ -208,7 +208,7 @@ pub fn set_log_level(level: String) -> Result<String, Error> {
     info!("Setting log level to {level:?}");
 
     let old_level = get_log_level();
-    *Q_LOG_LEVEL_GLOBAL.lock().unwrap() = Some(level);
+    *KIRO_LOG_LEVEL_GLOBAL.lock().unwrap() = Some(level);
 
     let filter_layer = create_filter_layer();
     *MAX_LEVEL.lock().unwrap() = filter_layer.max_level_hint();
@@ -243,11 +243,11 @@ pub fn get_log_level_max() -> LevelFilter {
 fn create_filter_layer() -> EnvFilter {
     let directive = Directive::from(DEFAULT_FILTER);
 
-    let log_level = Q_LOG_LEVEL_GLOBAL
+    let log_level = KIRO_LOG_LEVEL_GLOBAL
         .lock()
         .unwrap()
         .clone()
-        .or_else(|| std::env::var(Q_LOG_LEVEL).ok());
+        .or_else(|| std::env::var(KIRO_LOG_LEVEL).ok());
 
     match log_level {
         Some(level) => EnvFilter::builder()

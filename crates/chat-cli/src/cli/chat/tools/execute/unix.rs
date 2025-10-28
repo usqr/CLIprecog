@@ -27,7 +27,7 @@ pub async fn run_command<W: Write>(
     max_result_size: usize,
     mut updates: Option<W>,
 ) -> Result<CommandResult> {
-    let shell = std::env::var("AMAZON_Q_CHAT_SHELL").unwrap_or("bash".to_string());
+    let shell = std::env::var("KIRO_CHAT_SHELL").unwrap_or("bash".to_string());
 
     // We need to maintain a handle on stderr and stdout, but pipe it to the terminal as well
     let mut child = tokio::process::Command::new(shell)

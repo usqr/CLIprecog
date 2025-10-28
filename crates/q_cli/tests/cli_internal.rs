@@ -38,7 +38,7 @@ fn hostname() -> Result<()> {
 fn should_figterm_launch_code_success() -> Result<()> {
     cli()
         .args(["_", "should-figterm-launch"])
-        .env("Q_FORCE_FIGTERM_LAUNCH", "1")
+        .env("KIRO_FORCE_FIGTERM_LAUNCH", "1")
         .assert()
         .success();
     Ok(())
