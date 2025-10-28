@@ -136,15 +136,15 @@ pub fn old_fig_data_dir() -> Result<PathBuf> {
 
 /// The q data directory
 ///
-/// - Linux: `$XDG_DATA_HOME/amazon-q` or `$HOME/.local/share/amazon-q`
-/// - MacOS: `$HOME/Library/Application Support/amazon-q`
+/// - Linux: `$XDG_DATA_HOME/kiro-cli` or `$HOME/.local/share/kiro-cli`
+/// - MacOS: `$HOME/Library/Application Support/kiro-cli`
 /// - Windows: `%LOCALAPPDATA%\AmazonQ`
 pub fn fig_data_dir() -> Result<PathBuf> {
     cfg_if::cfg_if! {
         if #[cfg(unix)] {
             Ok(dirs::data_local_dir()
                 .ok_or(DirectoryError::NoHomeDirectory)?
-                .join("amazon-q"))
+                .join("kiro-cli"))
         } else if #[cfg(windows)] {
             Ok(dirs::data_local_dir()
             .ok_or(DirectoryError::NoHomeDirectory)?
@@ -184,15 +184,15 @@ pub fn local_data_dir<Ctx: FsProvider + EnvProvider + PlatformProvider>(ctx: &Ct
 
 /// The q cache directory
 ///
-/// - Linux: `$XDG_CACHE_HOME/amazon-q` or `$HOME/.cache/amazon-q`
-/// - MacOS: `$HOME/Library/Caches/amazon-q`
+/// - Linux: `$XDG_CACHE_HOME/kiro-cli` or `$HOME/.cache/kiro-cli`
+/// - MacOS: `$HOME/Library/Caches/kiro-cli`
 /// - Windows: `%LOCALAPPDATA%\AmazonQ\cache`
 pub fn cache_dir() -> Result<PathBuf> {
     cfg_if::cfg_if! {
         if #[cfg(unix)] {
             Ok(dirs::cache_dir()
                 .ok_or(DirectoryError::NoHomeDirectory)?
-                .join("amazon-q"))
+                .join("kiro-cli"))
         } else if #[cfg(windows)] {
             Ok(dirs::cache_dir()
             .ok_or(DirectoryError::NoHomeDirectory)?
@@ -317,10 +317,10 @@ pub fn logs_dir() -> Result<PathBuf> {
 
 /// The directory where fig places all data-sensitive backups
 ///
-/// - Linux/MacOS: `$HOME/.amazon-q.dotfiles.bak`
-/// - Windows: `%USERPROFILE%\.amazon-q.dotfiles.bak`
+/// - Linux/MacOS: `$HOME/.kiro-cli.dotfiles.bak`
+/// - Windows: `%USERPROFILE%\.kiro-cli.dotfiles.bak`
 pub fn backups_dir() -> Result<PathBuf> {
-    Ok(home_dir()?.join(".amazon-q.dotfiles.bak"))
+    Ok(home_dir()?.join(".kiro-cli.dotfiles.bak"))
 }
 
 /// The directory for time based data-sensitive backups
@@ -460,8 +460,8 @@ pub fn bundle_metadata_path<Ctx: EnvProvider + PlatformProvider>(ctx: &Ctx) -> R
 
 /// The path to the fig settings file
 ///
-/// - Linux: `$HOME/.local/share/amazon-q/settings.json`
-/// - MacOS: `$HOME/Library/Application Support/amazon-q/settings.json`
+/// - Linux: `$HOME/.local/share/kiro-cli/settings.json`
+/// - MacOS: `$HOME/Library/Application Support/kiro-cli/settings.json`
 /// - Windows: `%LOCALAPPDATA%\AmazonQ\settings.json`
 pub fn settings_path() -> Result<PathBuf> {
     Ok(fig_data_dir()?.join("settings.json"))
@@ -469,8 +469,8 @@ pub fn settings_path() -> Result<PathBuf> {
 
 /// The path to the lock file used to indicate that the app is updating
 ///
-/// - Linux: `$HOME/.local/share/amazon-q/update.lock`
-/// - MacOS: `$HOME/Library/Application Support/amazon-q/update.lock`
+/// - Linux: `$HOME/.local/share/kiro-cli/update.lock`
+/// - MacOS: `$HOME/Library/Application Support/kiro-cli/update.lock`
 /// - Windows: `%LOCALAPPDATA%\AmazonQ\update.lock`
 pub fn update_lock_path(ctx: &impl FsProvider) -> Result<PathBuf> {
     Ok(fig_data_dir_ctx(ctx)?.join("update.lock"))
@@ -699,8 +699,8 @@ mod tests {
 
     #[test]
     fn snapshot_fig_data_dir() {
-        linux!(fig_data_dir(), @"$HOME/.local/share/amazon-q");
-        macos!(fig_data_dir(), @"$HOME/Library/Application Support/amazon-q");
+        linux!(fig_data_dir(), @"$HOME/.local/share/kiro-cli");
+        macos!(fig_data_dir(), @"$HOME/Library/Application Support/kiro-cli");
         windows!(fig_data_dir(), @r"C:\Users\$USER\AppData\Local\AmazonQ");
     }
 
@@ -720,9 +720,9 @@ mod tests {
 
     #[test]
     fn snapshot_backups_dir() {
-        linux!(backups_dir(), @"$HOME/.amazon-q.dotfiles.bak");
-        macos!(backups_dir(), @"$HOME/.amazon-q.dotfiles.bak");
-        windows!(backups_dir(), @r"C:\Users\$USER\.amazon-q.dotfiles.bak");
+        linux!(backups_dir(), @"$HOME/.kiro-cli.dotfiles.bak");
+        macos!(backups_dir(), @"$HOME/.kiro-cli.dotfiles.bak");
+        windows!(backups_dir(), @r"C:\Users\$USER\.kiro-cli.dotfiles.bak");
     }
 
     #[test]
@@ -755,16 +755,16 @@ mod tests {
 
     #[test]
     fn snapshot_settings_path() {
-        linux!(settings_path(), @"$HOME/.local/share/amazon-q/settings.json");
-        macos!(settings_path(), @"$HOME/Library/Application Support/amazon-q/settings.json");
+        linux!(settings_path(), @"$HOME/.local/share/kiro-cli/settings.json");
+        macos!(settings_path(), @"$HOME/Library/Application Support/kiro-cli/settings.json");
         windows!(settings_path(), @r"C:\Users\$USER\AppData\Local\AmazonQ\settings.json");
     }
 
     #[test]
     fn snapshot_update_lock_path() {
         let ctx = Context::new();
-        linux!(update_lock_path(&ctx), @"$HOME/.local/share/amazon-q/update.lock");
-        macos!(update_lock_path(&ctx), @"$HOME/Library/Application Support/amazon-q/update.lock");
+        linux!(update_lock_path(&ctx), @"$HOME/.local/share/kiro-cli/update.lock");
+        macos!(update_lock_path(&ctx), @"$HOME/Library/Application Support/kiro-cli/update.lock");
         windows!(update_lock_path(&ctx), @r"C:\Users\$USER\AppData\Local\AmazonQ\update.lock");
     }
 
