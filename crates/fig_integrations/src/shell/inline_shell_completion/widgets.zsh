@@ -5,13 +5,13 @@
 
 # Disable suggestions
 _q_autosuggest_disable() {
-	typeset -g _Q_AUTOSUGGEST_DISABLED
+	typeset -g _KIRO_AUTOSUGGEST_DISABLED
 	_q_autosuggest_clear
 }
 
 # Enable suggestions
 _q_autosuggest_enable() {
-	unset _Q_AUTOSUGGEST_DISABLED
+	unset _KIRO_AUTOSUGGEST_DISABLED
 
 	if (( $#BUFFER )); then
 		_q_autosuggest_fetch
@@ -20,7 +20,7 @@ _q_autosuggest_enable() {
 
 # Toggle suggestions (enable/disable)
 _q_autosuggest_toggle() {
-	if (( ${+_Q_AUTOSUGGEST_DISABLED} )); then
+	if (( ${+_KIRO_AUTOSUGGEST_DISABLED} )); then
 		_q_autosuggest_enable
 	else
 		_q_autosuggest_disable
@@ -68,13 +68,13 @@ _q_autosuggest_modify() {
 	fi
 
 	# Bail out if suggestions are disabled
-	if (( ${+_Q_AUTOSUGGEST_DISABLED} )); then
+	if (( ${+_KIRO_AUTOSUGGEST_DISABLED} )); then
 		return $?
 	fi
 
 	# Get a new suggestion if the buffer is not empty after modification
 	if (( $#BUFFER > 0 )); then
-		if [[ -z "$Q_AUTOSUGGEST_BUFFER_MAX_SIZE" ]] || (( $#BUFFER <= $Q_AUTOSUGGEST_BUFFER_MAX_SIZE )); then
+		if [[ -z "$KIRO_AUTOSUGGEST_BUFFER_MAX_SIZE" ]] || (( $#BUFFER <= $KIRO_AUTOSUGGEST_BUFFER_MAX_SIZE )); then
 			_q_autosuggest_fetch
 		fi
 	fi
@@ -84,7 +84,7 @@ _q_autosuggest_modify() {
 
 # Fetch a new suggestion based on what's currently in the buffer
 _q_autosuggest_fetch() {
-	if (( ${+Q_AUTOSUGGEST_USE_ASYNC} )); then
+	if (( ${+KIRO_AUTOSUGGEST_USE_ASYNC} )); then
 		_q_autosuggest_async_request "$BUFFER"
 	else
 		local suggestion
@@ -199,9 +199,9 @@ _q_autosuggest_partial_accept() {
 }
 
 () {
-	typeset -ga _Q_AUTOSUGGEST_BUILTIN_ACTIONS
+	typeset -ga _KIRO_AUTOSUGGEST_BUILTIN_ACTIONS
 
-	_Q_AUTOSUGGEST_BUILTIN_ACTIONS=(
+	_KIRO_AUTOSUGGEST_BUILTIN_ACTIONS=(
 		clear
 		fetch
 		suggest
@@ -213,7 +213,7 @@ _q_autosuggest_partial_accept() {
 	)
 
 	local action
-	for action in $_Q_AUTOSUGGEST_BUILTIN_ACTIONS modify partial_accept; do
+	for action in $_KIRO_AUTOSUGGEST_BUILTIN_ACTIONS modify partial_accept; do
 		eval "_q_autosuggest_widget_$action() {
 			local -i retval
 
@@ -230,7 +230,7 @@ _q_autosuggest_partial_accept() {
 		}"
 	done
 
-	for action in $_Q_AUTOSUGGEST_BUILTIN_ACTIONS; do
+	for action in $_KIRO_AUTOSUGGEST_BUILTIN_ACTIONS; do
 		zle -N autosuggest-$action _q_autosuggest_widget_$action
 	done
 }

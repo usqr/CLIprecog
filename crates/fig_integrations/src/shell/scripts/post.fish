@@ -6,7 +6,7 @@ set --export TTY
 
 set --export SHELL_PID $fish_pid
 
-set --query Q_SHELL; or set Q_SHELL (q _ get-shell)
+set --query KIRO_SHELL; or set KIRO_SHELL (q _ get-shell)
 
 function fig_osc
     builtin printf "\033]697;$argv[1]\007" $argv[2..-1]
@@ -56,14 +56,14 @@ function fig_precmd --on-event fish_prompt
     fig_osc "OSCUnlock=%s" "$QTERM_SESSION_ID"
     fig_osc "Dir=%s" "$PWD"
     fig_osc "Shell=fish"
-    fig_osc "ShellPath=%s" "$Q_SHELL"
+    fig_osc "ShellPath=%s" "$KIRO_SHELL"
     if test -n "$WSL_DISTRO_NAME"
         fig_osc "WSLDistro=%s" "$WSL_DISTRO_NAME"
     end
     fig_osc "PID=%d" "$fish_pid"
     fig_osc "ExitCode=%s" "$last_status"
     fig_osc "TTY=%s" "$TTY"
-    fig_osc "Log=%s" "$Q_LOG_LEVEL"
+    fig_osc "Log=%s" "$KIRO_LOG_LEVEL"
     fig_osc "FishSuggestionColor=%s" "$fish_color_autosuggestion"
 
     if test -n "$USER"

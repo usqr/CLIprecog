@@ -295,9 +295,9 @@ impl ShellScriptShellIntegration {
             } else {
                 let add_to_path_line = match self.shell {
                     Shell::Bash | Shell::Zsh => indoc::indoc! {r#"
-                        _Q_LOCAL_BIN="$HOME/.local/bin"
-                        [[ ":$PATH:" != *":$_Q_LOCAL_BIN:"* ]] && PATH="${PATH:+"$PATH:"}$_Q_LOCAL_BIN"
-                        unset _Q_LOCAL_BIN
+                        _KIRO_LOCAL_BIN="$HOME/.local/bin"
+                        [[ ":$PATH:" != *":$_KIRO_LOCAL_BIN:"* ]] && PATH="${PATH:+"$PATH:"}$_KIRO_LOCAL_BIN"
+                        unset _KIRO_LOCAL_BIN
                     "#},
                     Shell::Fish => "contains $HOME/.local/bin $PATH; or set -a PATH $HOME/.local/bin",
                     Shell::Nu => "",
@@ -412,8 +412,8 @@ impl DotfileShellIntegration {
 
     fn legacy_description(when: When) -> String {
         match when {
-            When::Pre => "# CodeWhisperer pre block. Keep at the top of this file.",
-            When::Post => "# CodeWhisperer post block. Keep at the bottom of this file.",
+            When::Pre => "# Kiro pre block. Keep at the top of this file.",
+            When::Post => "# Kiro post block. Keep at the bottom of this file.",
         }
         .into()
     }
@@ -845,7 +845,7 @@ mod test {
 
         // base case
         let doc = &indoc::formatdoc! {r#"
-            # CodeWhisperer pre block. Keep at the top of this file.
+            # Kiro pre block. Keep at the top of this file.
             [[ -f "${{HOME}}/{dir}/shell/zshrc.pre.zsh" ]] && builtin source "${{HOME}}/{dir}/shell/zshrc.pre.zsh"
         "#};
         let replaced = re.replace_all(doc, "");
@@ -870,7 +870,7 @@ mod test {
         let doc = indoc::formatdoc! {r#"
             [[ -f "${{HOME}}/{dir}/shell/zshrc.pre.zsh" ]] && source "${{HOME}}/{dir}/shell/zshrc.pre.zsh"
             
-            # CodeWhisperer pre block. Keep at the top of this file.
+            # Kiro pre block. Keep at the top of this file.
             [[ -f ${{HOME}}/shell/zshrc.pre.zsh" ]] && builtin source "${{HOME}}/shell/zshrc.pre.zsh"
         "#};
         let replaced = re.replace_all(&doc, "");
@@ -878,7 +878,7 @@ mod test {
 
         // multiple lines
         let doc = indoc::formatdoc! {r#"
-            # CodeWhisperer pre block. Keep at the top of this file.
+            # Kiro pre block. Keep at the top of this file.
             [[ -f "${{HOME}}/{dir}/shell/zshrc.pre.zsh" ]] && builtin source "${{HOME}}/{dir}/shell/zshrc.pre.zsh"
             [[ -f "${{HOME}}/{dir}/shell/zshrc.pre.zsh" ]] && builtin source "${{HOME}}/{dir}/shell/zshrc.pre.zsh"
 

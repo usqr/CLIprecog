@@ -4,17 +4,17 @@
 #--------------------------------------------------------------------#
 
 _q_autosuggest_incr_bind_count() {
-	typeset -gi bind_count=$((_Q_AUTOSUGGEST_BIND_COUNTS[$1]+1))
-	_Q_AUTOSUGGEST_BIND_COUNTS[$1]=$bind_count
+	typeset -gi bind_count=$((_KIRO_AUTOSUGGEST_BIND_COUNTS[$1]+1))
+	_KIRO_AUTOSUGGEST_BIND_COUNTS[$1]=$bind_count
 }
 
 # Bind a single widget to an autosuggest widget, saving a reference to the original widget
 _q_autosuggest_bind_widget() {
-	typeset -gA _Q_AUTOSUGGEST_BIND_COUNTS
+	typeset -gA _KIRO_AUTOSUGGEST_BIND_COUNTS
 
 	local widget=$1
 	local autosuggest_action=$2
-	local prefix=$Q_AUTOSUGGEST_ORIGINAL_WIDGET_PREFIX
+	local prefix=$KIRO_AUTOSUGGEST_ORIGINAL_WIDGET_PREFIX
 
 	local -i bind_count
 
@@ -22,7 +22,7 @@ _q_autosuggest_bind_widget() {
 	case $widgets[$widget] in
 		# Already bound
 		user:_q_autosuggest_(bound|orig)_*)
-			bind_count=$((_Q_AUTOSUGGEST_BIND_COUNTS[$widget]))
+			bind_count=$((_KIRO_AUTOSUGGEST_BIND_COUNTS[$widget]))
 			;;
 
 		# User-defined widget
@@ -69,20 +69,20 @@ _q_autosuggest_bind_widgets() {
 	ignore_widgets=(
 		.\*
 		_\*
-		${_Q_AUTOSUGGEST_BUILTIN_ACTIONS/#/autosuggest-}
-		$Q_AUTOSUGGEST_ORIGINAL_WIDGET_PREFIX\*
-		$Q_AUTOSUGGEST_IGNORE_WIDGETS
+		${_KIRO_AUTOSUGGEST_BUILTIN_ACTIONS/#/autosuggest-}
+		$KIRO_AUTOSUGGEST_ORIGINAL_WIDGET_PREFIX\*
+		$KIRO_AUTOSUGGEST_IGNORE_WIDGETS
 	)
 
 	# Find every widget we might want to bind and bind it appropriately
 	for widget in ${${(f)"$(builtin zle -la)"}:#${(j:|:)~ignore_widgets}}; do
-		if [[ -n ${Q_AUTOSUGGEST_CLEAR_WIDGETS[(r)$widget]} ]]; then
+		if [[ -n ${KIRO_AUTOSUGGEST_CLEAR_WIDGETS[(r)$widget]} ]]; then
 			_q_autosuggest_bind_widget $widget clear
-		elif [[ -n ${Q_AUTOSUGGEST_ACCEPT_WIDGETS[(r)$widget]} ]]; then
+		elif [[ -n ${KIRO_AUTOSUGGEST_ACCEPT_WIDGETS[(r)$widget]} ]]; then
 			_q_autosuggest_bind_widget $widget accept
-		elif [[ -n ${Q_AUTOSUGGEST_EXECUTE_WIDGETS[(r)$widget]} ]]; then
+		elif [[ -n ${KIRO_AUTOSUGGEST_EXECUTE_WIDGETS[(r)$widget]} ]]; then
 			_q_autosuggest_bind_widget $widget execute
-		elif [[ -n ${Q_AUTOSUGGEST_PARTIAL_ACCEPT_WIDGETS[(r)$widget]} ]]; then
+		elif [[ -n ${KIRO_AUTOSUGGEST_PARTIAL_ACCEPT_WIDGETS[(r)$widget]} ]]; then
 			_q_autosuggest_bind_widget $widget partial_accept
 		else
 			# Assume any unspecified widget might modify the buffer

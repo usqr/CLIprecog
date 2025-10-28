@@ -12,7 +12,7 @@ _q_autosuggest_fetch_suggestion() {
 	local strategy
 
 	# Ensure we are working with an array
-	strategies=(${=Q_AUTOSUGGEST_STRATEGY})
+	strategies=(${=KIRO_AUTOSUGGEST_STRATEGY})
 
 	for strategy in $strategies; do
 		# Try to get a suggestion from this strategy

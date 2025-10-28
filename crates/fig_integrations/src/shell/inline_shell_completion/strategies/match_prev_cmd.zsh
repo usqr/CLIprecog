@@ -33,8 +33,8 @@ _q_autosuggest_strategy_match_prev_cmd() {
 	# Get the history items that match the prefix, excluding those that match
 	# the ignore pattern
 	local pattern="$prefix*"
-	if [[ -n $Q_AUTOSUGGEST_HISTORY_IGNORE ]]; then
-		pattern="($pattern)~($Q_AUTOSUGGEST_HISTORY_IGNORE)"
+	if [[ -n $KIRO_AUTOSUGGEST_HISTORY_IGNORE ]]; then
+		pattern="($pattern)~($KIRO_AUTOSUGGEST_HISTORY_IGNORE)"
 	fi
 
 	# Get all history event numbers that correspond to history
