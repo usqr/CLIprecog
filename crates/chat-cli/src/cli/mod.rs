@@ -80,7 +80,7 @@ impl OutputFormat {
     }
 }
 
-/// The Amazon Q CLI
+/// The Kiro CLI
 #[deny(missing_docs)]
 #[derive(Debug, PartialEq, Subcommand)]
 pub enum RootSubcommand {

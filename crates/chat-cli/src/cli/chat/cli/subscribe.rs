@@ -22,7 +22,7 @@ use crate::cli::chat::{
 use crate::os::Os;
 use crate::util::system_info::is_remote;
 
-const SUBSCRIBE_TITLE_TEXT: &str = color_print::cstr! { "<white!,bold>Subscribe to Q Developer Pro</white!,bold>" };
+const SUBSCRIBE_TITLE_TEXT: &str = color_print::cstr! { "<white!,bold>Subscribe to Kiro Developer Pro</white!,bold>" };
 
 const SUBSCRIBE_TEXT: &str = color_print::cstr! { "During the upgrade, you'll be asked to link your Builder ID to the AWS account that will be billed the monthly subscription fee.
 
@@ -44,7 +44,7 @@ impl SubscribeArgs {
             execute!(
                 session.stderr,
                 style::SetForegroundColor(Color::Yellow),
-                style::Print("\nYour Q Developer Pro subscription is managed through IAM Identity Center.\n\n"),
+                style::Print("\nYour Kiro Developer Pro subscription is managed through IAM Identity Center.\n\n"),
                 style::SetForegroundColor(Color::Reset),
             )?;
         } else if self.manage {
@@ -55,7 +55,7 @@ impl SubscribeArgs {
                         queue!(
                             session.stderr,
                             style::SetForegroundColor(Color::Yellow),
-                            style::Print("You don't seem to have a Q Developer Pro subscription. "),
+                            style::Print("You don't seem to have a Kiro Developer Pro subscription. "),
                             style::SetForegroundColor(Color::DarkGrey),
                             style::Print("Use "),
                             style::SetForegroundColor(Color::Green),
@@ -112,7 +112,7 @@ async fn upgrade_to_pro(os: &mut Os, session: &mut ChatSession) -> Result<(), Ch
                 queue!(
                     session.stderr,
                     style::SetForegroundColor(Color::Yellow),
-                    style::Print("Your Builder ID already has a Q Developer Pro subscription.\n\n"),
+                    style::Print("Your Builder ID already has a Kiro Developer Pro subscription.\n\n"),
                     style::SetForegroundColor(Color::Reset),
                 )?;
                 return Ok(());

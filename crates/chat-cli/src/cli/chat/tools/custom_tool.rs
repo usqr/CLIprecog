@@ -75,7 +75,7 @@ impl CustomToolClient {
             args,
             timeout,
             client_info: serde_json::json!({
-               "name": "Q CLI Chat",
+               "name": "Kiro CLI Chat",
                "version": "1.0.0"
             }),
             env,

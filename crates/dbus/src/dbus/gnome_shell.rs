@@ -715,10 +715,10 @@ mod tests {
             let metadata = r#"
             {
               "uuid": "amazon-q-for-cli-legacy-gnome-integration@aws.amazon.com",
-              "name": "Amazon Q for CLI GNOME Integration",
+              "name": "Kiro for CLI GNOME Integration",
               "url": "https://github.com/aws",
               "version": 1,
-              "description": "Integrates Amazon Q for CLI with GNOME Shell prior to v45",
+              "description": "Integrates Kiro for CLI with GNOME Shell prior to v45",
               "gettext-domain": "amazon-q-for-cli-legacy-gnome-integration",
               "settings-schema": "org.gnome.shell.extensions.amazon-q-for-cli-legacy-gnome-integration",
               "shell-version": ["41", "42", "43", "44"]

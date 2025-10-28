@@ -166,7 +166,7 @@ impl UsageArgs {
                 (tools_token_count.value() as f32 / CONTEXT_WINDOW_SIZE as f32) * 100.0
             )),
             style::SetForegroundColor(Color::Blue),
-            style::Print("█ Q responses: "),
+            style::Print("█ Kiro responses: "),
             style::SetForegroundColor(Color::Reset),
             style::Print(format!(
                 "  ~{} tokens ({:.2}%)\n",

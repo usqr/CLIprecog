@@ -155,9 +155,9 @@ pub const EXTRA_HELP: &str = color_print::cstr! {"
                     <black!>Alternatively, [Alt(⌥) + Enter(⏎)]</black!>
 <em>Ctrl(^) + s</em>         <black!>Fuzzy search commands and context files</black!>
                     <black!>Use Tab to select multiple items</black!>
-                    <black!>Change the keybind using: q settings chat.skimCommandKey x</black!>
+                    <black!>Change the keybind using: kiro-cli settings chat.skimCommandKey x</black!>
 <em>chat.editMode</em>       <black!>The prompt editing mode (vim or emacs)</black!>
-                    <black!>Change using: q settings chat.skimCommandKey x</black!>
+                    <black!>Change using: kiro-cli settings chat.skimCommandKey x</black!>
 "};
 
 #[derive(Debug, Clone, PartialEq, Eq, Default, Args)]
@@ -346,17 +346,17 @@ const RESUME_TEXT: &str = color_print::cstr! {"<em>Picking up where we left off.
 // Only show the model-related tip for now to make users aware of this feature.
 const ROTATING_TIPS: [&str; 16] = [
     color_print::cstr! {"You can resume the last conversation from your current directory by launching with
-    <green!>q chat --resume</green!>"},
+    <green!>kiro chat --resume</green!>"},
     color_print::cstr! {"Get notified whenever Kiro CLI finishes responding.
-    Just run <green!>q settings chat.enableNotifications true</green!>"},
+    Just run <green!>kiro-cli settings chat.enableNotifications true</green!>"},
     color_print::cstr! {"You can use
     <green!>/editor</green!> to edit your prompt with a vim-like experience"},
     color_print::cstr! {"<green!>/usage</green!> shows you a visual breakdown of your current context window usage"},
-    color_print::cstr! {"Get notified whenever Kiro CLI finishes responding. Just run <green!>q settings
+    color_print::cstr! {"Get notified whenever Kiro CLI finishes responding. Just run <green!>kiro-cli settings
     chat.enableNotifications true</green!>"},
     color_print::cstr! {"You can execute bash commands by typing
     <green!>!</green!> followed by the command"},
-    color_print::cstr! {"Q can use tools without asking for
+    color_print::cstr! {"Kiro can use tools without asking for
     confirmation every time. Give <green!>/tools trust</green!> a try"},
     color_print::cstr! {"You can
     programmatically inject context to your prompts by using hooks. Check out <green!>/context hooks
@@ -364,17 +364,17 @@ const ROTATING_TIPS: [&str; 16] = [
     color_print::cstr! {"You can use <green!>/compact</green!> to replace the conversation
     history with its summary to free up the context space"},
     color_print::cstr! {"If you want to file an issue
-    to the Kiro CLI team, just tell me, or run <green!>q issue</green!>"},
+    to the Kiro CLI team, just tell me, or run <green!>kiro-cli issue</green!>"},
     color_print::cstr! {"You can enable
     custom tools with <green!>MCP servers</green!>. Learn more with /help"},
     color_print::cstr! {"You can
-    specify wait time (in ms) for mcp server loading with <green!>q settings mcp.initTimeout {timeout in
+    specify wait time (in ms) for mcp server loading with <green!>kiro-cli settings mcp.initTimeout {timeout in
     int}</green!>. Servers that takes longer than the specified time will continue to load in the background. Use
     /tools to see pending servers."},
     color_print::cstr! {"You can see the server load status as well as any
     warnings or errors associated with <green!>/mcp</green!>"},
     color_print::cstr! {"Use <green!>/model</green!> to select the model to use for this conversation"},
-    color_print::cstr! {"Set a default model by running <green!>q settings chat.defaultModel MODEL</green!>. Run <green!>/model</green!> to learn more."},
+    color_print::cstr! {"Set a default model by running <green!>kiro-cli settings chat.defaultModel MODEL</green!>. Run <green!>/model</green!> to learn more."},
     color_print::cstr! {"Run <green!>/prompts</green!> to learn how to build & run repeatable workflows"},
 ];
 
@@ -2152,7 +2152,7 @@ impl ChatSession {
 
     /// Apply program context to tools that Q may not have.
     // We cannot attach this any other way because Tools are constructed by deserializing
-    // output from Amazon Q.
+    // output from Kiro.
     // TODO: Is there a better way?
     fn contextualize_tool(&self, tool: &mut Tool) {
         if let Tool::GhIssue(gh_issue) = tool {

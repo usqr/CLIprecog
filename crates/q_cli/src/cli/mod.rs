@@ -268,7 +268,7 @@ const HELP_TEXT: &str = color_print::cstr! {"
 
 <magenta,em>q</magenta,em> (Kiro CLI)
 
-<magenta,em>Popular Subcommands</magenta,em>              <black!><em>Usage:</em> q [subcommand]</black!>
+<magenta,em>Popular Subcommands</magenta,em>              <black!><em>Usage:</em> kiro-cli [subcommand]</black!>
 ╭────────────────────────────────────────────────────╮
 │ <em>chat</em>         <black!>Chat with Kiro</black!>                    │
 │ <em>translate</em>    <black!>Natural Language to Shell translation</black!> │

@@ -29,7 +29,7 @@ How it works
 • The assistant will reference the summary context in future responses
 
 Compaction will be automatically performed whenever the context window overflows.
-To disable this behavior, run: `q settings chat.disableAutoCompaction true`"
+To disable this behavior, run: `kiro-cli settings chat.disableAutoCompaction true`"
 )]
 pub struct CompactArgs {
     /// The prompt to use when generating the summary

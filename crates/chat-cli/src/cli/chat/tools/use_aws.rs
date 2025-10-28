@@ -28,7 +28,7 @@ const READONLY_OPS: [&str; 6] = ["get", "describe", "list", "ls", "search", "bat
 
 /// The environment variable name where we set additional metadata for the AWS CLI user agent.
 const USER_AGENT_ENV_VAR: &str = "AWS_EXECUTION_ENV";
-const USER_AGENT_APP_NAME: &str = "AmazonQ-For-CLI";
+const USER_AGENT_APP_NAME: &str = "Kiro-For-CLI";
 const USER_AGENT_VERSION_KEY: &str = "Version";
 const USER_AGENT_VERSION_VALUE: &str = env!("CARGO_PKG_VERSION");
 

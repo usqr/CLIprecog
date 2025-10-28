@@ -67,7 +67,7 @@ fn write_plist() {
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2022 Amazon Q CLI Team (q-cli@amazon.com):Chay Nabors (nabochay@amazon.com):Brandon Kiser (bskiser@amazon.com) All rights reserved.</string>
+	<string>Copyright © 2022 Kiro CLI Team (kiro-cli@amazon.com):Chay Nabors (nabochay@amazon.com):Brandon Kiser (bskiser@amazon.com) All rights reserved.</string>
 </dict>
 </plist>
 "#,

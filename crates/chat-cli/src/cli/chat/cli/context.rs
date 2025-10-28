@@ -30,7 +30,7 @@ use crate::os::Os;
 #[command(
     before_long_help = "Context rules determine which files are included in your Kiro session. 
 The files matched by these rules provide Kiro with additional information 
-about your project or environment. Adding relevant files helps Q generate 
+about your project or environment. Adding relevant files helps Kiro generate 
 more accurate and helpful responses.
 
 Notes:
@@ -303,7 +303,7 @@ impl ContextSubcommand {
                                 session.stderr,
                                 style::SetForegroundColor(Color::DarkYellow),
                                 style::Print(format!(
-                                    "Total token count exceeds limit: {}. The following files will be automatically dropped when interacting with Q. Consider removing them. \n\n",
+                                    "Total token count exceeds limit: {}. The following files will be automatically dropped when interacting with Kiro. Consider removing them. \n\n",
                                     CONTEXT_FILES_MAX_SIZE
                                 )),
                                 style::SetForegroundColor(Color::Reset)

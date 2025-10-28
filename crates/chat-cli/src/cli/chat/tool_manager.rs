@@ -930,7 +930,7 @@ impl ToolManager {
                     let _ = queue!(
                         stderr,
                         style::Print(
-                            "Not all mcp servers loaded. Configure non-interactive timeout with q settings mcp.noInteractiveTimeout"
+                            "Not all mcp servers loaded. Configure non-interactive timeout with kiro-cli settings mcp.noInteractiveTimeout"
                         ),
                         style::Print("\n------\n")
                     );

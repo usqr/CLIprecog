@@ -38,7 +38,7 @@ use crate::cli::chat::{
 use crate::cli::issue;
 use crate::os::Os;
 
-/// q (Amazon Q Chat)
+/// q (Kiro Chat)
 #[derive(Debug, PartialEq, Parser)]
 #[command(color = clap::ColorChoice::Always, term_width = 0, after_long_help = EXTRA_HELP)]
 pub enum SlashCommand {
@@ -53,7 +53,7 @@ pub enum SlashCommand {
     /// Manage context files for the chat session
     #[command(subcommand)]
     Context(ContextSubcommand),
-    /// (Beta) Manage knowledge base for persistent context storage. Requires "q settings
+    /// (Beta) Manage knowledge base for persistent context storage. Requires "kiro-cli settings
     /// chat.enableKnowledge true"
     #[command(subcommand, hide = true)]
     Knowledge(KnowledgeSubcommand),
@@ -76,7 +76,7 @@ pub enum SlashCommand {
     Mcp(McpArgs),
     /// Select a model for the current conversation session
     Model(ModelArgs),
-    /// Upgrade to a Q Developer Pro subscription for increased query limits
+    /// Upgrade to a Kiro Developer Pro subscription for increased query limits
     Subscribe(SubscribeArgs),
     #[command(flatten)]
     Persist(PersistSubcommand),

@@ -274,7 +274,7 @@ pub async fn login_interactive(args: LoginArgs) -> Result<()> {
                 pre_portal_spinner.stop();
                 error!(%err, "Unified portal init failed");
                 eprintln!("Failed to initialize auth portal.");
-                eprintln!("Please try again with: q login --use-device-flow");
+                eprintln!("Please try again with: kiro-cli login --use-device-flow");
                 bail!("Auth portal initialization failed");
             },
         };
@@ -283,7 +283,7 @@ pub async fn login_interactive(args: LoginArgs) -> Result<()> {
             pre_portal_spinner.stop();
             error!(%err, "Failed to open portal URL");
             eprintln!("Failed to open browser for authentication.");
-            eprintln!("Please try again with: q login --use-device-flow");
+            eprintln!("Please try again with: kiro-cli login --use-device-flow");
             bail!("Failed to open auth portal URL");
         }
 

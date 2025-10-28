@@ -79,7 +79,9 @@ impl KnowledgeSubcommand {
         queue!(
             session.stderr,
             style::SetForegroundColor(Color::Red),
-            style::Print("\nKnowledge tool is disabled. Enable it with: q settings chat.enableKnowledge true\n\n"),
+            style::Print(
+                "\nKnowledge tool is disabled. Enable it with: kiro-cli settings chat.enableKnowledge true\n\n"
+            ),
             style::SetForegroundColor(Color::Reset)
         )
     }

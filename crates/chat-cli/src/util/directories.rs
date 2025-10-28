@@ -129,12 +129,12 @@ pub fn logs_dir() -> Result<PathBuf> {
     }
 }
 
-/// The directory to the directory containing config for the `/context` feature in `q chat`.
+/// The directory to the directory containing config for the `/context` feature in `kiro-cli chat`.
 pub fn chat_global_context_path(os: &Os) -> Result<PathBuf> {
     Ok(home_dir(os)?.join(".aws").join("amazonq").join("global_context.json"))
 }
 
-/// The directory to the directory containing config for the `/context` feature in `q chat`.
+/// The directory to the directory containing config for the `/context` feature in `kiro-cli chat`.
 pub fn chat_profiles_dir(os: &Os) -> Result<PathBuf> {
     Ok(home_dir(os)?.join(".aws").join("amazonq").join("profiles"))
 }
