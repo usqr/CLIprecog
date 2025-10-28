@@ -196,7 +196,6 @@ impl ShellExt for Shell {
                     include_str!("scripts/bash-preexec.sh"),
                     "}\n",
                     "__fig_source_bash_preexec\n",
-                    "function __bp_adjust_histcontrol() { :; }\n",
                     include_str!("scripts/pre.sh")
                 )
             },
@@ -206,7 +205,6 @@ impl ShellExt for Shell {
                     include_str!("scripts/bash-preexec.sh"),
                     "}\n",
                     "__fig_source_bash_preexec\n",
-                    "function __bp_adjust_histcontrol() { :; }\n",
                     include_str!("scripts/post.bash")
                 )
             },

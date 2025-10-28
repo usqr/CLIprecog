@@ -121,7 +121,7 @@ pub mod env_var {
         PROCESS_LAUNCHED_BY_Q = "PROCESS_LAUNCHED_BY_Q",
 
         /// The shell to use in qterm
-        Q_SHELL = "Q_SHELL",
+        Q_SHELL = "KIRO_SHELL",
 
         /// Indicates the user is debugging the shell
         Q_DEBUG_SHELL = "Q_DEBUG_SHELL",
