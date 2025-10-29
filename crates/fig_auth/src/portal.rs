@@ -346,7 +346,7 @@ async fn handle_valid_callback(
             urlencoding::encode(error_msg)
         )
     } else {
-        format!("{}?auth_status=success&redirect_from=kirocli", auth_portal_url)
+        format!("{}/signin?auth_status=success&redirect_from=kirocli", auth_portal_url)
     };
 
     Response::builder()
