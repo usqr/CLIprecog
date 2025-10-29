@@ -143,7 +143,7 @@ if [ -n "${Q_INSTALL_GLOBAL:-}" ]; then
     install -m 755 "$SCRIPT_DIR/bin/$CHAT_BINARY_NAME" /usr/local/bin/
     install -m 755 "$SCRIPT_DIR/bin/$PTY_BINARY_NAME" /usr/local/bin/
 
-    if [ -z "${Q_SKIP_SETUP:-}" ]; then
+    if [ -z "${KIRO_CLI_SKIP_SETUP:-}" ]; then
         /usr/local/bin/q integrations install dotfiles
         /usr/local/bin/q setup --global "$@"
     fi
@@ -154,7 +154,7 @@ else
     install -m 755 "$SCRIPT_DIR/bin/$CHAT_BINARY_NAME" "$HOME/.local/bin/"
     install -m 755 "$SCRIPT_DIR/bin/$PTY_BINARY_NAME" "$HOME/.local/bin/"
 
-    if [ -z "${Q_SKIP_SETUP:-}" ]; then
+    if [ -z "${KIRO_CLI_SKIP_SETUP:-}" ]; then
         "$HOME/.local/bin/q" setup "$@"
     fi
 fi

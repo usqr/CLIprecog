@@ -3,17 +3,17 @@
 set -eu
 
 # =============================================================================
-# Q CLI Installation Script
+# Kiro CLI Installation Script
 # =============================================================================
 
 # Configuration
-BINARY_NAME="q"
-CLI_NAME="Q CLI"
-COMMAND_NAME="q"
+BINARY_NAME="kiro-cli"
+CLI_NAME="Kiro-Cli"
+COMMAND_NAME="kiro-cli"
 BASE_URL="https://desktop-release.q.us-east-1.amazonaws.com"
 MANIFEST_URL="${BASE_URL}/latest/manifest.json"
-MACOS_FILENAME="Amazon Q.dmg"
-MACOS_FILENAME_ESCAPED="Amazon%20Q.dmg"
+MACOS_FILENAME="Kiro-Cli.dmg"
+MACOS_FILENAME_ESCAPED="Kiro-Cli.dmg"
 
 # Installation directories
 MACOS_APP_DIR="/Applications"
@@ -360,7 +360,7 @@ install_macos() {
     mkdir -p "$HOME/.local/bin"
     local macos_bin="$MACOS_APP_DIR/$app_name/Contents/MacOS"
 
-    "$macos_bin/q_desktop" --no-dashboard > /dev/null 2>&1 &
+    "$macos_bin/kiro_cli_desktop" --no-dashboard > /dev/null 2>&1 &
 }
 
 # Install on Linux
@@ -383,7 +383,7 @@ install_linux() {
     
     log "Running installer..."
     chmod +x "$install_script"
-    Q_SKIP_SETUP=1 "$install_script"
+    KIRO_CLI_SKIP_SETUP=1 "$install_script"
 }
 
 # Cleanup function - only removes files/dirs we created

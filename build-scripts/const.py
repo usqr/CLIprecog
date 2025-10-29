@@ -9,6 +9,7 @@ DESKTOP_BINARY_NAME = "kiro-cli-desktop"
 URL_SCHEMA = "kiro-cli"
 TAURI_PRODUCT_NAME = "kiro_cli_desktop"
 LINUX_PACKAGE_NAME = "kiro-cli"
+CHAT_BINARY_BRANCH = "qv2"
 
 # macos specific
 MACOS_BUNDLE_ID = "com.amazon.codewhisperer"
