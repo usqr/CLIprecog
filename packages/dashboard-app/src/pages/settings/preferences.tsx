@@ -23,6 +23,10 @@ export default function Page() {
   const [profiles, setProfiles] = useState<Profile[] | undefined>(undefined);
 
   useEffect(() => {
+    if (auth.authKind !== "IamIdentityCenter") {
+      return;
+    }
+
     Profile.listAvailableProfiles()
       .then(async (res) => {
         setProfiles(
@@ -35,7 +39,7 @@ export default function Page() {
       .catch((err) => {
         console.error(err);
       });
-  }, []);
+  }, [auth.authKind]);
 
   useEffect(() => {
     State.get("api.codewhisperer.profile").then((profile) => {
