@@ -41,10 +41,7 @@ use aws_smithy_runtime_api::client::identity::{
 };
 use aws_smithy_types::error::display::DisplayErrorContext;
 use aws_types::region::Region;
-use eyre::{
-    Result,
-    eyre,
-};
+use eyre::Result;
 use time::OffsetDateTime;
 use tracing::{
     debug,
@@ -606,7 +603,7 @@ pub async fn is_idc_user(database: &Database) -> Result<bool> {
     if let Ok(Some(token)) = BuilderIdToken::load(database).await {
         Ok(token.token_type() == TokenType::IamIdentityCenter)
     } else {
-        Err(eyre!("No auth token found - is the user signed in?"))
+        Ok(false)
     }
 }
 

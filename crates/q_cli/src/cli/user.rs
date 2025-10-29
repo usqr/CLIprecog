@@ -229,13 +229,18 @@ impl RootUserSubcommand {
             Self::Profile => {
                 assert_logged_in().await?;
 
-                if let Ok(Some(token)) = fig_auth::builder_id_token().await {
-                    if matches!(token.token_type(), TokenType::IamIdentityCenter) {
-                        select_profile_interactive(false).await?;
-                    }
+                let is_idc = fig_auth::builder_id_token()
+                    .await
+                    .ok()
+                    .flatten()
+                    .is_some_and(|token| matches!(token.token_type(), TokenType::IamIdentityCenter));
+
+                if !is_idc {
+                    bail!("This command is only available for IAM Identity Center users");
                 }
 
-                bail!("This command is only available for IAM Identity Center users");
+                select_profile_interactive(false).await?;
+                Ok(ExitCode::SUCCESS)
             },
         }
     }
