@@ -12,6 +12,7 @@ use fig_os_shim::Env;
 use fig_util::{
     CLI_BINARY_NAME,
     PRODUCT_NAME,
+    PTY_BINARY_NAME,
     Shell,
     directories,
 };
@@ -54,12 +55,15 @@ pub mod inline_shell_completion_plugin {
             assert!(ZSH_SCRIPT.contains("Copyright"));
 
             // Ensure script has _q_autosuggest_strategy_inline_shell_completion()
+            let cli_binary_name_underscore = CLI_BINARY_NAME.replace('-', "_");
             assert!(ZSH_SCRIPT.contains(&format!(
-                "_{CLI_BINARY_NAME}_autosuggest_strategy_inline_shell_completion()"
+                "_{cli_binary_name_underscore}_autosuggest_strategy_inline_shell_completion()"
             )));
 
             // Ensure script adds precmd hook
-            assert!(ZSH_SCRIPT.contains(&format!("add-zsh-hook precmd _{CLI_BINARY_NAME}_autosuggest_start")));
+            assert!(ZSH_SCRIPT.contains(&format!(
+                "add-zsh-hook precmd _{cli_binary_name_underscore}_autosuggest_start"
+            )));
         }
     }
 }
@@ -97,7 +101,7 @@ pub trait ShellExt {
     fn get_shell_integrations(&self, env: &Env) -> Result<Vec<Box<dyn ShellIntegration>>>;
     /// Script integrations are installed into ~/.fig/shell
     fn get_script_integrations(&self) -> Result<Vec<ShellScriptShellIntegration>>;
-    fn get_fig_integration_source(&self, when: &When) -> &'static str;
+    fn get_fig_integration_source(&self, when: &When) -> String;
 }
 
 impl ShellExt for Shell {
@@ -186,8 +190,8 @@ impl ShellExt for Shell {
         Ok(integrations)
     }
 
-    fn get_fig_integration_source(&self, when: &When) -> &'static str {
-        match (self, when) {
+    fn get_fig_integration_source(&self, when: &When) -> String {
+        let script = match (self, when) {
             (Shell::Fish, When::Pre) => include_str!("scripts/pre.fish"),
             (Shell::Fish, When::Post) => include_str!("scripts/post.fish"),
             (Shell::Zsh, When::Pre) => include_str!("scripts/pre.sh"),
@@ -198,6 +202,7 @@ impl ShellExt for Shell {
                     include_str!("scripts/bash-preexec.sh"),
                     "}\n",
                     "__fig_source_bash_preexec\n",
+                    "# shellcheck disable=SC2329\n",
                     "function __bp_adjust_histcontrol() { :; }\n",
                     include_str!("scripts/pre.sh")
                 )
@@ -208,13 +213,18 @@ impl ShellExt for Shell {
                     include_str!("scripts/bash-preexec.sh"),
                     "}\n",
                     "__fig_source_bash_preexec\n",
+                    "# shellcheck disable=SC2329\n",
                     "function __bp_adjust_histcontrol() { :; }\n",
                     include_str!("scripts/post.bash")
                 )
             },
             (Shell::Nu, When::Pre) => include_str!("scripts/pre.nu"),
             (Shell::Nu, When::Post) => include_str!("scripts/post.nu"),
-        }
+        };
+
+        script
+            .replace("{{CLI_BINARY_NAME}}", CLI_BINARY_NAME)
+            .replace("{{PTY_BINARY_NAME}}", PTY_BINARY_NAME)
     }
 }
 
@@ -812,7 +822,7 @@ mod test {
     }
 
     fn check_script(shell: Shell, when: When) {
-        run_shellcheck(shell.get_fig_integration_source(&when).to_owned());
+        run_shellcheck(shell.get_fig_integration_source(&when));
     }
 
     #[test]

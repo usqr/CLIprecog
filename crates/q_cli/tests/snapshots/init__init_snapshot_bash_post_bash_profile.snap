@@ -387,6 +387,7 @@ if [[ -z "${__bp_delay_install:-}" ]]; then
 fi;
 }
 __fig_source_bash_preexec
+# shellcheck disable=SC2329
 function __bp_adjust_histcontrol() { :; }
 if [[ -n "${BASH:-}" ]]; then
 
