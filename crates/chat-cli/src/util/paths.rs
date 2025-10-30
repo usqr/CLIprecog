@@ -29,6 +29,8 @@ pub mod application {
     //! Application data paths (system-specific)
     #[cfg(unix)]
     pub const DATA_DIR_NAME: &str = "amazon-q";
+    #[cfg(windows)]
+    pub const DATA_DIR_NAME: &str = "AmazonQ";
     pub const SETTINGS_FILE: &str = "settings.json";
     pub const DATABASE_FILE: &str = "data.sqlite3";
 }
@@ -78,22 +80,13 @@ pub fn home_dir(#[cfg_attr(windows, allow(unused_variables))] os: &Os) -> Result
 }
 
 /// The application data directory
-/// - Linux: `$XDG_DATA_HOME/amazon-q` or `$HOME/.local/share/amazon-q`
-/// - MacOS: `$HOME/Library/Application Support/amazon-q`
-/// - Windows: `%LOCALAPPDATA%\AmazonQ`
+/// - Linux: `$XDG_DATA_HOME/{data_dir}` or `$HOME/.local/share/{data_dir}`
+/// - MacOS: `$HOME/Library/Application Support/{data_dir}`
+/// - Windows: `%LOCALAPPDATA%\{data_dir}`
 pub fn app_data_dir() -> Result<PathBuf> {
-    #[cfg(unix)]
-    {
-        Ok(dirs::data_local_dir()
-            .ok_or(DirectoryError::NoHomeDirectory)?
-            .join(application::DATA_DIR_NAME))
-    }
-    #[cfg(windows)]
-    {
-        Ok(dirs::data_local_dir()
-            .ok_or(DirectoryError::NoHomeDirectory)?
-            .join("AmazonQ"))
-    }
+    Ok(dirs::data_local_dir()
+        .ok_or(DirectoryError::NoHomeDirectory)?
+        .join(application::DATA_DIR_NAME))
 }
 
 /// Path resolver with hierarchy-aware methods

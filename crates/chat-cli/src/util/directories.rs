@@ -117,7 +117,8 @@ pub fn logs_dir() -> Result<PathBuf> {
         if #[cfg(unix)] {
             Ok(runtime_dir()?.join("qlog"))
         } else if #[cfg(windows)] {
-            Ok(std::env::temp_dir().join("amazon-q").join("logs"))
+            use crate::util::paths::application::DATA_DIR_NAME;
+            Ok(std::env::temp_dir().join(DATA_DIR_NAME).join("logs"))
         }
     }
 }

@@ -25,6 +25,15 @@ pub const PRODUCT_NAME: &str = "Amazon Q";
 
 pub const RUNTIME_DIR_NAME: &str = "cwrun";
 
+/// Data directory name used in paths like ~/.local/share/{DATA_DIR_NAME}
+#[cfg(unix)]
+pub const DATA_DIR_NAME: &str = "amazon-q";
+#[cfg(windows)]
+pub const DATA_DIR_NAME: &str = "AmazonQ";
+
+/// Backup directory name
+pub const BACKUP_DIR_NAME: &str = ".amazon-q.dotfiles.bak";
+
 // These are the old "CodeWhisperer" branding, used anywhere we will not update to Amazon Q
 pub const OLD_PRODUCT_NAME: &str = "CodeWhisperer";
 pub const OLD_CLI_BINARY_NAMES: &[&str] = &["cw"];
