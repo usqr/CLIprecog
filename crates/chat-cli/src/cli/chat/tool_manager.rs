@@ -95,7 +95,7 @@ use crate::mcp_client::{
 };
 use crate::os::Os;
 use crate::telemetry::TelemetryThread;
-use crate::util::directories::home_dir;
+use crate::util::paths::PathResolver;
 
 const NAMESPACE_DELIMITER: &str = "___";
 // This applies for both mcp server and tool name since in the end the tool name as seen by the
@@ -104,11 +104,11 @@ const VALID_TOOL_NAME: &str = "^[a-zA-Z][a-zA-Z0-9_]*$";
 const SPINNER_CHARS: [char; 10] = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
 pub fn workspace_mcp_config_path(os: &Os) -> eyre::Result<PathBuf> {
-    Ok(os.env.current_dir()?.join(".amazonq").join("mcp.json"))
+    Ok(PathResolver::new(os).workspace().mcp_config()?)
 }
 
 pub fn global_mcp_config_path(os: &Os) -> eyre::Result<PathBuf> {
-    Ok(home_dir(os)?.join(".aws").join("amazonq").join("mcp.json"))
+    Ok(PathResolver::new(os).global().mcp_config()?)
 }
 
 /// Messages used for communication between the tool initialization thread and the loading
@@ -158,12 +158,13 @@ pub struct McpServerConfig {
 
 impl McpServerConfig {
     pub async fn load_config(stderr: &mut impl Write) -> eyre::Result<Self> {
-        let mut cwd = std::env::current_dir()?;
-        cwd.push(".amazonq/mcp.json");
-        let expanded_path = shellexpand::tilde("~/.aws/amazonq/mcp.json");
-        let global_path = PathBuf::from(expanded_path.as_ref() as &str);
+        let os = Os::new().await?;
+        let resolver = PathResolver::new(&os);
+        let workspace_path = resolver.workspace().mcp_config()?;
+        let global_path = resolver.global().mcp_config()?;
+
         let global_buf = tokio::fs::read(global_path).await.ok();
-        let local_buf = tokio::fs::read(cwd).await.ok();
+        let local_buf = tokio::fs::read(workspace_path).await.ok();
         let conf = match (global_buf, local_buf) {
             (Some(global_buf), Some(local_buf)) => {
                 let mut global_conf = Self::from_slice(&global_buf, stderr, "global")?;

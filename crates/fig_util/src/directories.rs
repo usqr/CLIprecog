@@ -403,7 +403,7 @@ pub fn figterm_socket_path(session_id: impl Display) -> Result<PathBuf> {
 pub fn resources_path() -> Result<PathBuf> {
     cfg_if::cfg_if! {
         if #[cfg(all(unix, not(target_os = "macos")))] {
-            Ok(std::path::Path::new("/usr/share/fig").into())
+            Ok(std::path::Path::new("/usr/share").join(PACKAGE_NAME))
         } else if #[cfg(target_os = "macos")] {
             Ok(crate::app_bundle_path().join(crate::macos::BUNDLE_CONTENTS_RESOURCE_PATH))
         } else if #[cfg(windows)] {

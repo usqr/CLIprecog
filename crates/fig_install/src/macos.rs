@@ -16,6 +16,7 @@ use std::path::{
 use fig_util::consts::{
     APP_BUNDLE_ID,
     CLI_BINARY_NAME,
+    system_paths,
 };
 use fig_util::macos::BUNDLE_CONTENTS_MACOS_PATH;
 use fig_util::{
@@ -187,7 +188,7 @@ pub(crate) async fn update(
     let installed_app_path = if same_bundle_name {
         fig_util::app_bundle_path()
     } else {
-        Path::new("/Applications").join(app_name)
+        Path::new(system_paths::APPLICATIONS_DIR).join(app_name)
     };
 
     let installed_app_path_cstr = CString::new(installed_app_path.as_os_str().as_bytes())?;

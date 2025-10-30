@@ -93,6 +93,7 @@ use fig_util::{
     Shell,
     Terminal,
     directories,
+    system_paths,
 };
 use futures::FutureExt;
 use futures::future::BoxFuture;
@@ -1144,7 +1145,8 @@ impl DoctorCheck<DiagnosticsResponse> for BundlePathCheck {
 
     async fn check(&self, diagnostics: &DiagnosticsResponse) -> Result<(), DoctorError> {
         let path = diagnostics.path_to_bundle.clone();
-        if path.contains(&format!("/Applications/{APP_BUNDLE_NAME}")) || path.contains(".toolbox") {
+        if path.contains(&format!("{}/{APP_BUNDLE_NAME}", system_paths::APPLICATIONS_DIR)) || path.contains(".toolbox")
+        {
             Ok(())
         } else if path.contains(&format!("/Build/Products/Debug/{APP_BUNDLE_NAME}")) {
             Err(DoctorError::Warning(
@@ -1154,7 +1156,7 @@ impl DoctorCheck<DiagnosticsResponse> for BundlePathCheck {
             Err(DoctorError::Error {
                 reason: format!("App is installed in {}", path.bold()).into(),
                 info: vec![
-                    "You need to install the app into /Applications.".into(),
+                    format!("You need to install the app into {}.", system_paths::APPLICATIONS_DIR).into(),
                     "To fix: uninstall and reinstall in the correct location.".into(),
                     "Remember to drag the installed app into the Applications folder.".into(),
                 ],
@@ -1251,8 +1253,8 @@ impl DoctorCheck<DiagnosticsResponse> for CliPathCheck {
             .join(CLI_BINARY_NAME);
 
         if path == local_bin_path
-            || path == Path::new("/usr/local/bin").join(CLI_BINARY_NAME)
-            || path == Path::new("/opt/homebrew/bin").join(CLI_BINARY_NAME)
+            || path == Path::new(system_paths::USR_LOCAL_BIN).join(CLI_BINARY_NAME)
+            || path == Path::new(system_paths::OPT_HOMEBREW_BIN).join(CLI_BINARY_NAME)
         {
             Ok(())
         } else if path.ends_with(Path::new("target/debug").join(CLI_BINARY_NAME))

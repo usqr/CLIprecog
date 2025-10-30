@@ -628,9 +628,11 @@ async fn load_global_config(os: &Os) -> Result<ContextConfig> {
         Ok(config)
     } else {
         // Return default global configuration with predefined paths
+        use crate::util::paths::workspace;
+
         Ok(ContextConfig {
             paths: vec![
-                ".amazonq/rules/**/*.md".to_string(),
+                workspace::RULES_PATTERN.to_string(),
                 "README.md".to_string(),
                 AMAZONQ_FILENAME.to_string(),
             ],
