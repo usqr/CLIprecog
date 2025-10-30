@@ -171,7 +171,7 @@ pub async fn finish_unified_portal(init: PortalInit, secret_store: &SecretStore)
     }
 }
 
-fn format_user_friendly_error(error_code: &str, description: Option<&str>, provider: &str) -> String {
+pub fn format_user_friendly_error(error_code: &str, description: Option<&str>, provider: &str) -> String {
     let cleaned_description = description.map(|d| {
         let first_part = d.split(';').next().unwrap_or(d);
         // Replace + with spaces (URL encoding)
