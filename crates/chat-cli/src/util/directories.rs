@@ -3,7 +3,9 @@ use std::path::PathBuf;
 use thiserror::Error;
 
 use crate::os::Os;
+use crate::util::paths::PathResolver;
 
+#[allow(dead_code)] // Allow unused variants during migration
 #[derive(Debug, Error)]
 pub enum DirectoryError {
     #[error("home directory not found")]
@@ -32,6 +34,7 @@ type Result<T, E = DirectoryError> = std::result::Result<T, E>;
 /// - Linux: /home/Alice
 /// - MacOS: /Users/Alice
 /// - Windows: C:\Users\Alice
+#[allow(dead_code)] // Allow unused function during migration
 pub fn home_dir(#[cfg_attr(windows, allow(unused_variables))] os: &Os) -> Result<PathBuf> {
     #[cfg(unix)]
     match cfg!(test) {
@@ -75,9 +78,7 @@ pub fn home_dir(#[cfg_attr(windows, allow(unused_variables))] os: &Os) -> Result
 /// - Linux: `$XDG_DATA_HOME/amazon-q` or `$HOME/.local/share/amazon-q`
 /// - MacOS: `$HOME/Library/Application Support/amazon-q`
 pub fn fig_data_dir() -> Result<PathBuf> {
-    Ok(dirs::data_local_dir()
-        .ok_or(DirectoryError::NoHomeDirectory)?
-        .join("amazon-q"))
+    crate::util::paths::app_data_dir().map_err(|e| DirectoryError::Io(std::io::Error::other(e)))
 }
 
 /// Get the macos tempdir from the `confstr` function
@@ -131,17 +132,24 @@ pub fn logs_dir() -> Result<PathBuf> {
 
 /// The directory to the directory containing config for the `/context` feature in `q chat`.
 pub fn chat_global_context_path(os: &Os) -> Result<PathBuf> {
-    Ok(home_dir(os)?.join(".aws").join("amazonq").join("global_context.json"))
+    PathResolver::new(os)
+        .global()
+        .global_context()
+        .map_err(|e| DirectoryError::Io(std::io::Error::other(e)))
 }
 
 /// The directory to the directory containing config for the `/context` feature in `q chat`.
 pub fn chat_profiles_dir(os: &Os) -> Result<PathBuf> {
-    Ok(home_dir(os)?.join(".aws").join("amazonq").join("profiles"))
+    PathResolver::new(os)
+        .global()
+        .profiles_dir()
+        .map_err(|e| DirectoryError::Io(std::io::Error::other(e)))
 }
 
 /// The path to the fig settings file
 pub fn settings_path() -> Result<PathBuf> {
-    Ok(fig_data_dir()?.join("settings.json"))
+    crate::util::paths::ApplicationPaths::settings_path_static()
+        .map_err(|e| DirectoryError::Io(std::io::Error::other(e)))
 }
 
 /// The path to the local sqlite database
