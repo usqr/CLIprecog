@@ -273,84 +273,37 @@ pub async fn login_interactive(args: LoginArgs) -> Result<()> {
         ]);
 
         // Try unified portal, fallback to device flow on any error
-        let init = match init_unified_portal().await {
-            Ok(v) => v,
-            Err(err) => {
-                pre_portal_spinner.stop();
-                error!(%err, "Unified portal init failed");
-                eprintln!("Failed to initialize auth portal.");
-                eprintln!("Please try again with: q login --use-device-flow");
-                bail!("Auth portal initialization failed");
-            },
-        };
+        let init = init_unified_portal().await.map_err(|err| {
+            pre_portal_spinner.stop();
+            error!(%err, "Unified portal init failed");
+            eprintln!("Failed to initialize auth portal.\nPlease try again with: kiro-cli login --use-device-flow");
+            err
+        })?;
 
-        if let Err(err) = fig_util::open_url_async(&init.auth_url).await {
+        fig_util::open_url_async(&init.auth_url).await.map_err(|err| {
             pre_portal_spinner.stop();
             error!(%err, "Failed to open portal URL");
-            eprintln!("Failed to open browser for authentication.");
-            eprintln!("Please try again with: q login --use-device-flow");
-            bail!("Failed to open auth portal URL");
-        }
+            eprintln!(
+                "Failed to open browser for authentication.\nPlease try again with: kiro-cli login --use-device-flow"
+            );
+            err
+        })?;
 
-        match finish_unified_portal(init, &secret_store).await {
-            Ok(PortalResult::Social(provider)) => {
+        match finish_unified_portal(init, &secret_store).await? {
+            PortalResult::Social(provider) => {
                 pre_portal_spinner.stop_with_message(format!("Logged in with {}", provider));
-                fig_telemetry::send_user_logged_in().await;
-                if let Err(err) = login_command().await {
-                    error!(%err, "Failed to send login command.");
-                }
                 Some(AuthMethod::Social(provider))
             },
-            Ok(
-                PortalResult::Internal { issuer_url, idc_region }
-                | PortalResult::BuilderId { issuer_url, idc_region }
-                | PortalResult::AwsIdc { issuer_url, idc_region },
-            ) => {
-                pre_portal_spinner.stop();
-
-                let (client, registration) =
-                    start_pkce_authorization(Some(issuer_url.clone()), Some(idc_region.clone())).await?;
-
-                match fig_util::open_url_async(&registration.url).await {
-                    // If it succeeded, finish PKCE.
-                    Ok(()) => {
-                        let mut spinner = Spinner::new(vec![
-                            SpinnerComponent::Spinner,
-                            SpinnerComponent::Text(" Logging in...".into()),
-                        ]);
-                        let mut ctrl_c_stream = signal(SignalKind::interrupt())?;
-                        tokio::select! {
-                            res = registration.finish(&client, Some(&secret_store)) => res?,
-                            Some(_) = ctrl_c_stream.recv() => {
-                                #[allow(clippy::exit)]
-                                exit(1);
-                            },
-                        }
-                        fig_telemetry::send_user_logged_in().await;
-                        spinner.stop_with_message("Device authorized".into());
-                    },
-                    // If we are unable to open the link with the browser, then fallback to
-                    // the device code flow.
-                    Err(err) => {
-                        error!(%err, "Failed to open URL with browser, falling back to device code flow");
-
-                        // Try device code flow.
-                        try_device_authorization(&secret_store, Some(issuer_url), Some(idc_region)).await?;
-                    },
-                }
-
-                Some(AuthMethod::IdentityCenter)
+            PortalResult::BuilderId { issuer_url, idc_region } => {
+                pre_portal_spinner.stop_with_message("".into());
+                complete_sso_auth(&secret_store, issuer_url, idc_region).await?;
+                Some(AuthMethod::BuilderId)
             },
-            Err(err) => {
-                pre_portal_spinner.stop();
-                error!(%err, "Unified portal failed, falling back to device code flow");
-                try_device_authorization(&secret_store, None, None).await?;
-                fig_telemetry::send_user_logged_in().await;
-                if let Err(err) = login_command().await {
-                    error!(%err, "Failed to send login command.");
-                }
-                eprintln!("Logged in successfully");
-                return Ok(());
+
+            PortalResult::Internal { issuer_url, idc_region } | PortalResult::AwsIdc { issuer_url, idc_region } => {
+                pre_portal_spinner.stop_with_message("".into());
+                complete_sso_auth(&secret_store, issuer_url, idc_region).await?;
+                Some(AuthMethod::IdentityCenter)
             },
         }
     } else {
@@ -415,6 +368,8 @@ pub async fn login_interactive(args: LoginArgs) -> Result<()> {
         Some(method)
     };
 
+    fig_telemetry::send_user_logged_in().await;
+
     if let Err(err) = login_command().await {
         error!(%err, "Failed to send login command.");
     }
@@ -474,7 +429,6 @@ async fn try_device_authorization(
         {
             PollCreateToken::Pending => {},
             PollCreateToken::Complete(_) => {
-                fig_telemetry::send_user_logged_in().await;
                 spinner.stop_with_message("Device authorized".into());
                 break;
             },
@@ -484,6 +438,42 @@ async fn try_device_authorization(
             },
         };
     }
+    Ok(())
+}
+
+/// Complete SSO authentication (BuilderID, IdC, or Internal) after portal selection
+async fn complete_sso_auth(secret_store: &SecretStore, issuer_url: String, idc_region: String) -> Result<()> {
+    let (client, registration) = start_pkce_authorization(Some(issuer_url.clone()), Some(idc_region.clone())).await?;
+
+    match fig_util::open_url_async(&registration.url).await {
+        Ok(()) => {
+            // Browser opened successfully, wait for PKCE flow to complete
+            let mut spinner = Spinner::new(vec![
+                SpinnerComponent::Spinner,
+                SpinnerComponent::Text(" Logging in...".into()),
+            ]);
+
+            let mut ctrl_c_stream = signal(SignalKind::interrupt())?;
+            tokio::select! {
+                res = registration.finish(&client, Some(secret_store)) => res?,
+                Some(_) = ctrl_c_stream.recv() => {
+                    #[allow(clippy::exit)]
+                    exit(1);
+                },
+            }
+
+            let _ = fig_settings::state::set_value("auth.idc.start-url", issuer_url.clone());
+            let _ = fig_settings::state::set_value("auth.idc.region", idc_region.clone());
+
+            spinner.stop_with_message("Device authorized".into());
+        },
+        Err(err) => {
+            // Failed to open browser, fallback to device code flow
+            error!(%err, "Failed to open URL, falling back to device code flow");
+            try_device_authorization(secret_store, Some(issuer_url), Some(idc_region)).await?;
+        },
+    }
+
     Ok(())
 }
 
