@@ -69,7 +69,6 @@ use fig_settings::state;
 use fig_util::consts::CLI_BINARY_NAME;
 use fig_util::env_var::{
     Q_LOG_LEVEL,
-    Q_PARENT,
     Q_SHELL,
     Q_TERM,
     QTERM_SESSION_ID,
@@ -491,7 +490,7 @@ fn figterm_main(command: Option<&[String]>) -> Result<()> {
         std::env::set_var(QTERM_SESSION_ID, &session_id);
     }
 
-    let parent_id = std::env::var(Q_PARENT).ok();
+    let parent_id = fig_os_shim::Env::new().q_parent().ok();
 
     let mut terminal = SystemTerminal::new_from_stdio()?;
     let screen_size = terminal.get_screen_size()?;

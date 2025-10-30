@@ -165,6 +165,83 @@ impl Env {
     pub fn in_appimage(&self) -> bool {
         self.get_os("APPIMAGE").is_some()
     }
+
+    // Q-specific environment variable methods
+    pub fn q_fake_is_remote(&self) -> bool {
+        self.get_os("Q_FAKE_IS_REMOTE").is_some()
+    }
+
+    pub fn q_log_level(&self) -> Result<String, VarError> {
+        self.get("Q_LOG_LEVEL")
+    }
+
+    pub fn q_log_stdout(&self) -> bool {
+        self.get_os("Q_LOG_STDOUT").is_some()
+    }
+
+    pub fn amazon_q_sigv4(&self) -> bool {
+        self.get("AMAZON_Q_SIGV4").is_ok_and(|v| !v.is_empty())
+    }
+
+    pub fn amazon_q_chat_shell(&self) -> String {
+        self.get("AMAZON_Q_CHAT_SHELL").unwrap_or_else(|_| "bash".to_string())
+    }
+
+    pub fn q_cli_client_application(&self) -> Result<String, VarError> {
+        self.get("Q_CLI_CLIENT_APPLICATION")
+    }
+
+    pub fn q_parent(&self) -> Result<String, VarError> {
+        self.get("Q_PARENT")
+    }
+
+    pub fn q_term(&self) -> Result<String, VarError> {
+        self.get("Q_TERM")
+    }
+
+    pub fn q_using_zsh_autosuggestions(&self) -> bool {
+        self.get_os("Q_USING_ZSH_AUTOSUGGESTIONS").is_some()
+    }
+
+    pub fn q_init_snapshot_test(&self) -> bool {
+        self.get_os("Q_INIT_SNAPSHOT_TEST").is_some()
+    }
+
+    pub fn q_desktop_release_url(&self) -> Result<String, VarError> {
+        self.get("Q_DESKTOP_RELEASE_URL")
+    }
+
+    pub fn q_inline_shell_completion_cache_enabled(&self) -> bool {
+        self.get_os("Q_INLINE_SHELL_COMPLETION_CACHE_DISABLE").is_none()
+    }
+
+    pub fn q_inline_shell_completion_history_count(&self) -> Result<String, VarError> {
+        self.get("Q_INLINE_SHELL_COMPLETION_HISTORY_COUNT")
+    }
+
+    pub fn q_inline_shell_completion_debounce_ms(&self) -> Result<String, VarError> {
+        self.get("Q_INLINE_SHELL_COMPLETION_DEBOUNCE_MS")
+    }
+
+    pub fn q_backend(&self) -> Result<String, VarError> {
+        self.get("Q_BACKEND")
+    }
+
+    pub fn q_prompt_offset_workaround(&self) -> Result<String, VarError> {
+        self.get("Q_PROMPT_OFFSET_WORKAROUND")
+    }
+
+    pub fn q_use_sendmessage(&self) -> bool {
+        self.get("Q_USE_SENDMESSAGE").is_ok_and(|v| !v.is_empty())
+    }
+
+    pub fn q_custom_cert(&self) -> Result<String, VarError> {
+        self.get("Q_CUSTOM_CERT")
+    }
+
+    pub fn has_q_parent(&self) -> bool {
+        self.q_parent().is_ok()
+    }
 }
 
 impl Shim for Env {

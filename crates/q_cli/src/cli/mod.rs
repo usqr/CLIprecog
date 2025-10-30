@@ -310,7 +310,7 @@ impl Cli {
                 ),
                 false => None,
             },
-            log_to_stdout: std::env::var_os("Q_LOG_STDOUT").is_some() || self.verbose > 0,
+            log_to_stdout: fig_os_shim::Env::new().q_log_stdout() || self.verbose > 0,
             log_file_path: match self.subcommand {
                 Some(CliRootCommands::Chat { .. }) => Some("chat.log".to_owned()),
                 Some(CliRootCommands::Translate(..)) => Some("translate.log".to_owned()),

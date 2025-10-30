@@ -45,7 +45,7 @@ const DEFAULT_RELEASE_URL: &str = "https://desktop-release.q.us-east-1.amazonaws
 /// - The setting `install.releaseUrl`
 /// - Falls back to the default or the build time env var `Q_BUILD_DESKTOP_RELEASE_URL`
 static RELEASE_URL: LazyLock<Url> = LazyLock::new(|| {
-    match std::env::var("Q_DESKTOP_RELEASE_URL") {
+    match fig_os_shim::Env::new().q_desktop_release_url() {
         Ok(s) => Url::parse(&s),
         Err(_) => match fig_settings::settings::get_string("install.releaseUrl") {
             Ok(Some(s)) => Url::parse(&s),

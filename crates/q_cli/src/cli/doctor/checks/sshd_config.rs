@@ -4,7 +4,6 @@ use async_trait::async_trait;
 use eyre::Context;
 use fig_auth::is_amzn_user;
 use fig_util::CLI_BINARY_NAME;
-use fig_util::env_var::Q_PARENT;
 use fig_util::url::AUTOCOMPLETE_SSH_WIKI;
 use owo_colors::OwoColorize;
 use regex::Regex;
@@ -55,7 +54,7 @@ impl DoctorCheck<()> for SshdConfigCheck {
 
         let sshd_config = match std::fs::read_to_string(sshd_config_path).context("Could not read sshd_config") {
             Ok(config) => config,
-            Err(_err) if std::env::var_os(Q_PARENT).is_some() => {
+            Err(_err) if fig_os_shim::Env::new().q_parent().is_ok() => {
                 // We will assume amzn users have this configured correctly and warn other users.
                 if is_amzn_user().await.unwrap_or_default() {
                     return Ok(());

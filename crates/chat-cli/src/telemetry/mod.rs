@@ -66,7 +66,6 @@ pub use crate::telemetry::core::{
     QProfileSwitchIntent,
     TelemetryResult,
 };
-use crate::util::env_var::Q_CLI_CLIENT_APPLICATION;
 use crate::util::system_info::os_version;
 
 #[derive(thiserror::Error, Debug)]
@@ -381,7 +380,7 @@ async fn set_event_metadata(database: &Database, event: &mut Event) {
     }
 
     // Set the client application from environment variable
-    if let Ok(client_app) = std::env::var(Q_CLI_CLIENT_APPLICATION) {
+    if let Ok(client_app) = crate::os::Env::new().q_cli_client_application() {
         event.set_client_application(client_app);
     }
 }

@@ -60,19 +60,21 @@ static INLINE_ENABLED: Mutex<bool> = Mutex::const_new(true);
 static LAST_RECEIVED: Mutex<Option<SystemTime>> = Mutex::const_new(None);
 
 static CACHE_ENABLED: LazyLock<bool> =
-    LazyLock::new(|| std::env::var_os("Q_INLINE_SHELL_COMPLETION_CACHE_DISABLE").is_none());
+    LazyLock::new(|| fig_os_shim::Env::new().q_inline_shell_completion_cache_enabled());
 static COMPLETION_CACHE: LazyLock<Mutex<CompletionCache>> = LazyLock::new(|| Mutex::new(CompletionCache::new()));
 
 static TELEMETRY_QUEUE: Mutex<TelemetryQueue> = Mutex::const_new(TelemetryQueue::new());
 
 static HISTORY_COUNT: LazyLock<usize> = LazyLock::new(|| {
-    std::env::var("Q_INLINE_SHELL_COMPLETION_HISTORY_COUNT")
+    fig_os_shim::Env::new()
+        .q_inline_shell_completion_history_count()
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(HISTORY_COUNT_DEFAULT)
 });
 static DEBOUNCE_DURATION: LazyLock<Duration> = LazyLock::new(|| {
-    std::env::var("Q_INLINE_SHELL_COMPLETION_DEBOUNCE_MS")
+    fig_os_shim::Env::new()
+        .q_inline_shell_completion_debounce_ms()
         .ok()
         .and_then(|s| s.parse().ok())
         .map_or(DEBOUNCE_DURATION_DEFAULT, Duration::from_millis)

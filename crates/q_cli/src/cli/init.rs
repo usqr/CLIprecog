@@ -33,7 +33,7 @@ use crate::util::app_path_from_bundle_id;
 const INLINE_ENABLED_SETTINGS_KEY: &str = "inline.enabled";
 const SHELL_INTEGRATIONS_ENABLED_STATE_KEY: &str = "shell-integrations.enabled";
 
-static IS_SNAPSHOT_TEST: LazyLock<bool> = LazyLock::new(|| std::env::var_os("Q_INIT_SNAPSHOT_TEST").is_some());
+static IS_SNAPSHOT_TEST: LazyLock<bool> = LazyLock::new(|| fig_os_shim::Env::new().q_init_snapshot_test());
 
 #[derive(Debug, Args, PartialEq, Eq)]
 pub struct InitArgs {

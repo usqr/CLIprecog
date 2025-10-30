@@ -149,7 +149,7 @@ async fn main() -> ExitCode {
 
     #[cfg(target_os = "linux")]
     {
-        match std::env::var("Q_BACKEND").ok().as_deref() {
+        match fig_os_shim::Env::new().q_backend().ok().as_deref() {
             Some("default") => {},
             // SAFETY: we are calling set_var in a single-threaded context.
             Some(backend) => unsafe { std::env::set_var("GDK_BACKEND", backend) },

@@ -191,11 +191,9 @@ pub fn initialize_logging<T: AsRef<Path>>(args: LogArgs<T>) -> Result<LogGuard, 
 ///
 /// Returns a string identifying the current log level.
 pub fn get_log_level() -> String {
-    Q_LOG_LEVEL_GLOBAL
-        .lock()
-        .unwrap()
-        .clone()
-        .unwrap_or_else(|| std::env::var(Q_LOG_LEVEL).unwrap_or_else(|_| DEFAULT_FILTER.to_string()))
+    Q_LOG_LEVEL_GLOBAL.lock().unwrap().clone().unwrap_or_else(|| {
+        std::env::var(Q_LOG_LEVEL).unwrap_or_else(|_| DEFAULT_FILTER.to_string()) // ALLOWED: fig_log doesn't have fig_os_shim dependency
+    })
 }
 
 /// Set the log level to the given level.
@@ -246,7 +244,7 @@ fn create_filter_layer() -> EnvFilter {
         .lock()
         .unwrap()
         .clone()
-        .or_else(|| std::env::var(Q_LOG_LEVEL).ok());
+        .or_else(|| std::env::var(Q_LOG_LEVEL).ok()); // ALLOWED: fig_log doesn't have fig_os_shim dependency
 
     match log_level {
         Some(level) => EnvFilter::builder()

@@ -23,7 +23,7 @@ pub fn create_default_root_cert_store() -> RootCertStore {
         let _ = root_cert_store.add(cert);
     }
 
-    let custom_cert = std::env::var("Q_CUSTOM_CERT")
+    let custom_cert = std::env::var("Q_CUSTOM_CERT") // ALLOWED: fig_request doesn't have fig_os_shim dependency
         .ok()
         .or_else(|| fig_settings::state::get_string("Q_CUSTOM_CERT").ok().flatten());
 

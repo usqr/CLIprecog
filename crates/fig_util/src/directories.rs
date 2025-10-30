@@ -366,7 +366,7 @@ pub fn remote_socket_path() -> Result<PathBuf> {
     // Normal implementation for non-test code
     // TODO(grant): This is only enabled on Linux for now to prevent public dist
     if is_remote() && !in_cloudshell() && cfg!(target_os = "linux") {
-        if let Some(parent_socket) = std::env::var_os(Q_PARENT) {
+        if let Some(parent_socket) = fig_os_shim::Env::new().get_os(Q_PARENT) {
             Ok(PathBuf::from(parent_socket))
         } else {
             Err(DirectoryError::QParentNotSet)

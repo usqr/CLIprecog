@@ -15,7 +15,6 @@ use sha2::{
 };
 
 use crate::Error;
-use crate::env_var::Q_PARENT;
 use crate::manifest::is_minimal;
 
 /// The support level for different platforms
@@ -266,13 +265,13 @@ pub fn in_wsl() -> bool {
 /// Is the calling binary running on a remote instance
 pub fn is_remote() -> bool {
     // TODO(chay): Add detection for inside docker container
-    in_ssh() || in_cloudshell() || in_wsl() || std::env::var_os("Q_FAKE_IS_REMOTE").is_some()
+    in_ssh() || in_cloudshell() || in_wsl() || fig_os_shim::Env::new().q_fake_is_remote()
 }
 
 /// Determines if we have an IPC path to a Desktop app from a remote environment
 pub fn has_parent() -> bool {
     static HAS_PARENT: OnceLock<bool> = OnceLock::new();
-    *HAS_PARENT.get_or_init(|| std::env::var_os(Q_PARENT).is_some())
+    *HAS_PARENT.get_or_init(|| fig_os_shim::Env::new().has_q_parent())
 }
 
 /// This true if the env var `AWS_EXECUTION_ENV=CloudShell`
@@ -283,13 +282,12 @@ pub fn in_cloudshell() -> bool {
 
 pub fn in_codespaces() -> bool {
     static IN_CODESPACES: OnceLock<bool> = OnceLock::new();
-    *IN_CODESPACES
-        .get_or_init(|| std::env::var_os("CODESPACES").is_some() || std::env::var_os("Q_CODESPACES").is_some())
+    *IN_CODESPACES.get_or_init(|| std::env::var_os("CODESPACES").is_some() || fig_os_shim::Env::new().in_codespaces())
 }
 
 pub fn in_ci() -> bool {
     static IN_CI: OnceLock<bool> = OnceLock::new();
-    *IN_CI.get_or_init(|| std::env::var_os("CI").is_some() || std::env::var_os("Q_CI").is_some())
+    *IN_CI.get_or_init(|| std::env::var_os("CI").is_some() || fig_os_shim::Env::new().in_ci())
 }
 
 #[cfg(target_os = "macos")]
