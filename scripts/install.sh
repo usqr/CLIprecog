@@ -443,9 +443,9 @@ main() {
     else
         # Linux
         if [[ "$use_musl" == "true" ]]; then
-            filename="q-${arch}-linux-musl.zip"
+            filename="${BINARY_NAME}-${arch}-linux-musl.zip"
         else
-            filename="q-${arch}-linux.zip"
+            filename="${BINARY_NAME}-${arch}-linux.zip"
         fi
         download_url="${BASE_URL}/latest/$filename"
     fi
