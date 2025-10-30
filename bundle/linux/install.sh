@@ -7,9 +7,9 @@ set -o errexit
 set -o nounset
 
 SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
-CLI_BINARY_NAME="q"
-CHAT_BINARY_NAME="qchat"
-PTY_BINARY_NAME="qterm"
+CLI_BINARY_NAME="kiro-cli"
+CHAT_BINARY_NAME="kiro-cli-chat"
+PTY_BINARY_NAME="kiro-cli-term"
 
 log_error() {
     printf '\e[31m[ERROR]\e[0m %s\n' "$1" >&2

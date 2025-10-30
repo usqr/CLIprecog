@@ -7,14 +7,14 @@ set -eu
 # =============================================================================
 
 # Configuration
-BINARY_NAME="q"
-CLI_NAME="Q CLI"
-COMMAND_NAME="q"
-DESKTOP_BINARY_NAME="q_desktop"
+BINARY_NAME="kiro-cli"
+CLI_NAME="Kiro-Cli"
+COMMAND_NAME="kiro-cli"
+DESKTOP_BINARY_NAME="kiro_cli_desktop"
 BASE_URL="https://desktop-release.q.us-east-1.amazonaws.com"
 MANIFEST_URL="${BASE_URL}/latest/manifest.json"
-MACOS_FILENAME="Amazon Q.dmg"
-MACOS_FILENAME_ESCAPED="Amazon%20Q.dmg"
+MACOS_FILENAME="Kiro-Cli.dmg"
+MACOS_FILENAME_ESCAPED="Kiro-Cli.dmg"
 
 # Installation directories
 MACOS_APP_DIR="/Applications"
