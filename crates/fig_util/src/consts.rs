@@ -26,9 +26,9 @@ pub const PRODUCT_NAME: &str = "Kiro-Cli";
 pub const RUNTIME_DIR_NAME: &str = "cwrun";
 
 // These are the old "CodeWhisperer" branding, used anywhere we will not update to Amazon Q
-pub const OLD_PRODUCT_NAME: &str = "Amazon Q";
-pub const OLD_CLI_BINARY_NAMES: &[&str] = &["q"];
-pub const OLD_PTY_BINARY_NAMES: &[&str] = &["qterm"];
+pub const OLD_PRODUCT_NAME: &str = "CodeWhisperer";
+pub const OLD_CLI_BINARY_NAMES: &[&str] = &["cw"];
+pub const OLD_PTY_BINARY_NAMES: &[&str] = &["cwterm"];
 
 pub const GITHUB_REPO_NAME: &str = "aws/amazon-q-developer-cli";
 
