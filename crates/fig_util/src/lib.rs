@@ -126,7 +126,7 @@ fn app_bundle_path_opt() -> Option<PathBuf> {
 
 #[must_use]
 pub fn app_bundle_path() -> PathBuf {
-    app_bundle_path_opt().unwrap_or_else(|| Path::new("/Applications").join(APP_BUNDLE_NAME))
+    app_bundle_path_opt().unwrap_or_else(|| Path::new(consts::system_paths::APPLICATIONS_DIR).join(APP_BUNDLE_NAME))
 }
 
 pub fn partitioned_compare(lhs: &str, rhs: &str, by: char) -> Ordering {

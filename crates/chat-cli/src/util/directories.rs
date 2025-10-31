@@ -73,14 +73,6 @@ pub fn home_dir(#[cfg_attr(windows, allow(unused_variables))] os: &Os) -> Result
     }
 }
 
-/// The q data directory
-///
-/// - Linux: `$XDG_DATA_HOME/amazon-q` or `$HOME/.local/share/amazon-q`
-/// - MacOS: `$HOME/Library/Application Support/amazon-q`
-pub fn fig_data_dir() -> Result<PathBuf> {
-    crate::util::paths::app_data_dir().map_err(|e| DirectoryError::Io(std::io::Error::other(e)))
-}
-
 /// Get the macos tempdir from the `confstr` function
 ///
 /// See: <https://man7.org/linux/man-pages/man3/confstr.3.html>
@@ -125,7 +117,8 @@ pub fn logs_dir() -> Result<PathBuf> {
         if #[cfg(unix)] {
             Ok(runtime_dir()?.join("qlog"))
         } else if #[cfg(windows)] {
-            Ok(std::env::temp_dir().join("amazon-q").join("logs"))
+            use crate::util::paths::application::DATA_DIR_NAME;
+            Ok(std::env::temp_dir().join(DATA_DIR_NAME).join("logs"))
         }
     }
 }
@@ -154,7 +147,8 @@ pub fn settings_path() -> Result<PathBuf> {
 
 /// The path to the local sqlite database
 pub fn database_path() -> Result<PathBuf> {
-    Ok(fig_data_dir()?.join("data.sqlite3"))
+    crate::util::paths::ApplicationPaths::database_path_static()
+        .map_err(|e| DirectoryError::Io(std::io::Error::other(e)))
 }
 
 #[cfg(test)]
@@ -245,9 +239,11 @@ mod tests {
 
     #[test]
     fn snapshot_fig_data_dir() {
-        linux!(fig_data_dir(), @"$HOME/.local/share/amazon-q");
-        macos!(fig_data_dir(), @"$HOME/Library/Application Support/amazon-q");
-        windows!(fig_data_dir(), @r"C:\Users\$USER\AppData\Local\amazon-q");
+        let app_data_dir =
+            || crate::util::paths::app_data_dir().map_err(|e| DirectoryError::Io(std::io::Error::other(e)));
+        linux!(app_data_dir(), @"$HOME/.local/share/amazon-q");
+        macos!(app_data_dir(), @"$HOME/Library/Application Support/amazon-q");
+        windows!(app_data_dir(), @r"C:\Users\$USER\AppData\Local\AmazonQ");
     }
 
     #[test]

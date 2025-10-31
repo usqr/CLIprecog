@@ -25,6 +25,15 @@ pub const PRODUCT_NAME: &str = "Amazon Q";
 
 pub const RUNTIME_DIR_NAME: &str = "cwrun";
 
+/// Data directory name used in paths like ~/.local/share/{DATA_DIR_NAME}
+#[cfg(unix)]
+pub const DATA_DIR_NAME: &str = "amazon-q";
+#[cfg(windows)]
+pub const DATA_DIR_NAME: &str = "AmazonQ";
+
+/// Backup directory name
+pub const BACKUP_DIR_NAME: &str = ".amazon-q.dotfiles.bak";
+
 // These are the old "CodeWhisperer" branding, used anywhere we will not update to Amazon Q
 pub const OLD_PRODUCT_NAME: &str = "CodeWhisperer";
 pub const OLD_CLI_BINARY_NAMES: &[&str] = &["cw"];
@@ -132,6 +141,14 @@ pub mod env_var {
         /// Overrides the path to the bundle metadata released with certain desktop builds.
         Q_BUNDLE_METADATA_PATH = "Q_BUNDLE_METADATA_PATH"
     }
+}
+
+pub mod system_paths {
+    /// System installation paths
+    pub const APPLICATIONS_DIR: &str = "/Applications";
+    pub const USR_LOCAL_BIN: &str = "/usr/local/bin";
+    pub const USR_SHARE: &str = "/usr/share";
+    pub const OPT_HOMEBREW_BIN: &str = "/opt/homebrew/bin";
 }
 
 #[cfg(test)]

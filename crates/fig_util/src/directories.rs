@@ -16,7 +16,6 @@ use time::OffsetDateTime;
 
 #[cfg(unix)]
 use crate::RUNTIME_DIR_NAME;
-use crate::TAURI_PRODUCT_NAME;
 use crate::env_var::{
     Q_BUNDLE_METADATA_PATH,
     Q_PARENT,
@@ -25,6 +24,11 @@ use crate::linux::PACKAGE_NAME;
 use crate::system_info::{
     in_cloudshell,
     is_remote,
+};
+use crate::{
+    BACKUP_DIR_NAME,
+    DATA_DIR_NAME,
+    TAURI_PRODUCT_NAME,
 };
 
 macro_rules! utf8_dir {
@@ -136,21 +140,13 @@ pub fn old_fig_data_dir() -> Result<PathBuf> {
 
 /// The q data directory
 ///
-/// - Linux: `$XDG_DATA_HOME/amazon-q` or `$HOME/.local/share/amazon-q`
-/// - MacOS: `$HOME/Library/Application Support/amazon-q`
-/// - Windows: `%LOCALAPPDATA%\AmazonQ`
+/// - Linux: `$XDG_DATA_HOME/{data_dir}` or `$HOME/.local/share/{data_dir}`
+/// - MacOS: `$HOME/Library/Application Support/{data_dir}`
+/// - Windows: `%LOCALAPPDATA%\{data_dir}`
 pub fn fig_data_dir() -> Result<PathBuf> {
-    cfg_if::cfg_if! {
-        if #[cfg(unix)] {
-            Ok(dirs::data_local_dir()
-                .ok_or(DirectoryError::NoHomeDirectory)?
-                .join("amazon-q"))
-        } else if #[cfg(windows)] {
-            Ok(dirs::data_local_dir()
-            .ok_or(DirectoryError::NoHomeDirectory)?
-            .join("AmazonQ"))
-        }
-    }
+    Ok(dirs::data_local_dir()
+        .ok_or(DirectoryError::NoHomeDirectory)?
+        .join(DATA_DIR_NAME))
 }
 
 pub fn fig_data_dir_ctx(fs: &impl FsProvider) -> Result<PathBuf> {
@@ -184,21 +180,13 @@ pub fn local_data_dir<Ctx: FsProvider + EnvProvider + PlatformProvider>(ctx: &Ct
 
 /// The q cache directory
 ///
-/// - Linux: `$XDG_CACHE_HOME/amazon-q` or `$HOME/.cache/amazon-q`
-/// - MacOS: `$HOME/Library/Caches/amazon-q`
-/// - Windows: `%LOCALAPPDATA%\AmazonQ\cache`
+/// - Linux: `$XDG_CACHE_HOME/{data_dir}` or `$HOME/.cache/{data_dir}`
+/// - MacOS: `$HOME/Library/Caches/{data_dir}`
+/// - Windows: `%LOCALAPPDATA%\{data_dir}\cache`
 pub fn cache_dir() -> Result<PathBuf> {
-    cfg_if::cfg_if! {
-        if #[cfg(unix)] {
-            Ok(dirs::cache_dir()
-                .ok_or(DirectoryError::NoHomeDirectory)?
-                .join("amazon-q"))
-        } else if #[cfg(windows)] {
-            Ok(dirs::cache_dir()
-            .ok_or(DirectoryError::NoHomeDirectory)?
-            .join("AmazonQ"))
-        }
-    }
+    Ok(dirs::cache_dir()
+        .ok_or(DirectoryError::NoHomeDirectory)?
+        .join(DATA_DIR_NAME))
 }
 
 /// Get the macos tempdir from the `confstr` function
@@ -246,13 +234,13 @@ pub fn runtime_dir() -> Result<PathBuf> {
 ///
 /// - Linux: $XDG_RUNTIME_DIR/cwrun
 /// - MacOS: $TMPDIR/cwrun
-/// - Windows: %TEMP%\sockets
+/// - Windows: %TEMP%\{data_dir}\sockets
 pub fn sockets_dir() -> Result<PathBuf> {
     cfg_if::cfg_if! {
         if #[cfg(unix)] {
             Ok(runtime_dir()?.join(RUNTIME_DIR_NAME))
         } else if #[cfg(windows)] {
-            Ok(runtime_dir()?.join("AmazonQ").join("sockets"))
+            Ok(runtime_dir()?.join(DATA_DIR_NAME).join("sockets"))
         }
     }
 }
@@ -303,24 +291,24 @@ pub fn autocomplete_specs_dir() -> Result<PathBuf> {
 /// The directory to all the fig logs
 /// - Linux: `/tmp/fig/$USER/logs`
 /// - MacOS: `$TMPDIR/logs`
-/// - Windows: `%TEMP%\AmazonQ\logs`
+/// - Windows: `%TEMP%\{data_dir}\logs`
 pub fn logs_dir() -> Result<PathBuf> {
     cfg_if::cfg_if! {
         if #[cfg(unix)] {
             use crate::CLI_BINARY_NAME;
             Ok(runtime_dir()?.join(format!("{CLI_BINARY_NAME}log")))
         } else if #[cfg(windows)] {
-            Ok(std::env::temp_dir().join("AmazonQ").join("logs"))
+            Ok(std::env::temp_dir().join(DATA_DIR_NAME).join("logs"))
         }
     }
 }
 
 /// The directory where fig places all data-sensitive backups
 ///
-/// - Linux/MacOS: `$HOME/.amazon-q.dotfiles.bak`
-/// - Windows: `%USERPROFILE%\.amazon-q.dotfiles.bak`
+/// - Linux/MacOS: `$HOME/{backup_dir}`
+/// - Windows: `%USERPROFILE%\{backup_dir}`
 pub fn backups_dir() -> Result<PathBuf> {
-    Ok(home_dir()?.join(".amazon-q.dotfiles.bak"))
+    Ok(home_dir()?.join(BACKUP_DIR_NAME))
 }
 
 /// The directory for time based data-sensitive backups
@@ -397,13 +385,13 @@ pub fn figterm_socket_path(session_id: impl Display) -> Result<PathBuf> {
 
 /// The path to the resources directory
 ///
-/// - MacOS: "/Applications/Amazon Q.app/Contents/Resources"
+/// - MacOS: "/Applications/{app_name}.app/Contents/Resources"
 /// - Linux: "/usr/share/fig"
-/// - Windows: "%LOCALAPPDATA%\AmazonQ\resources"
+/// - Windows: "%LOCALAPPDATA%\{data_dir}\resources"
 pub fn resources_path() -> Result<PathBuf> {
     cfg_if::cfg_if! {
         if #[cfg(all(unix, not(target_os = "macos")))] {
-            Ok(std::path::Path::new("/usr/share/fig").into())
+            Ok(std::path::Path::new("/usr/share").join(PACKAGE_NAME))
         } else if #[cfg(target_os = "macos")] {
             Ok(crate::app_bundle_path().join(crate::macos::BUNDLE_CONTENTS_RESOURCE_PATH))
         } else if #[cfg(windows)] {
@@ -433,9 +421,9 @@ pub fn resources_path_ctx<Ctx: EnvProvider + PlatformProvider>(ctx: &Ctx) -> Res
 
 /// The path to the fig install manifest
 ///
-/// - MacOS: "/Applications/Amazon Q.app/Contents/Resources/manifest.json"
+/// - MacOS: "/Applications/{app_name}.app/Contents/Resources/manifest.json"
 /// - Linux: "/usr/share/fig/manifest.json"
-/// - Windows: "%LOCALAPPDATA%\AmazonQ\resources\bin\manifest.json"
+/// - Windows: "%LOCALAPPDATA%\{data_dir}\resources\bin\manifest.json"
 pub fn manifest_path() -> Result<PathBuf> {
     cfg_if::cfg_if! {
         if #[cfg(unix)] {
@@ -460,18 +448,18 @@ pub fn bundle_metadata_path<Ctx: EnvProvider + PlatformProvider>(ctx: &Ctx) -> R
 
 /// The path to the fig settings file
 ///
-/// - Linux: `$HOME/.local/share/amazon-q/settings.json`
-/// - MacOS: `$HOME/Library/Application Support/amazon-q/settings.json`
-/// - Windows: `%LOCALAPPDATA%\AmazonQ\settings.json`
+/// - Linux: `$HOME/.local/share/{data_dir}/settings.json`
+/// - MacOS: `$HOME/Library/Application Support/{data_dir}/settings.json`
+/// - Windows: `%LOCALAPPDATA%\{data_dir}\settings.json`
 pub fn settings_path() -> Result<PathBuf> {
     Ok(fig_data_dir()?.join("settings.json"))
 }
 
 /// The path to the lock file used to indicate that the app is updating
 ///
-/// - Linux: `$HOME/.local/share/amazon-q/update.lock`
-/// - MacOS: `$HOME/Library/Application Support/amazon-q/update.lock`
-/// - Windows: `%LOCALAPPDATA%\AmazonQ\update.lock`
+/// - Linux: `$HOME/.local/share/{data_dir}/update.lock`
+/// - MacOS: `$HOME/Library/Application Support/{data_dir}/update.lock`
+/// - Windows: `%LOCALAPPDATA%\{data_dir}\update.lock`
 pub fn update_lock_path(ctx: &impl FsProvider) -> Result<PathBuf> {
     Ok(fig_data_dir_ctx(ctx)?.join("update.lock"))
 }
