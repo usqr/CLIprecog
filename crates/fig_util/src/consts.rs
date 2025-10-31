@@ -21,7 +21,7 @@ pub const CLI_CRATE_NAME: &str = "q_cli";
 
 pub const URL_SCHEMA: &str = "kiro-cli";
 
-pub const PRODUCT_NAME: &str = "Kiro-Cli";
+pub const PRODUCT_NAME: &str = "Kiro CLI";
 
 pub const RUNTIME_DIR_NAME: &str = "cwrun";
 

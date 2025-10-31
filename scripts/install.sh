@@ -8,7 +8,7 @@ set -eu
 
 # Configuration
 BINARY_NAME="kiro-cli"
-CLI_NAME="Kiro-Cli"
+CLI_NAME="Kiro CLI"
 COMMAND_NAME="kiro-cli"
 BASE_URL="https://desktop-release.q.us-east-1.amazonaws.com"
 MANIFEST_URL="${BASE_URL}/latest/manifest.json"
