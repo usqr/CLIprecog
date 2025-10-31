@@ -10,7 +10,11 @@ import Tab, { ProfileTab } from "./tabs";
 import { useLocalStateZodDefault } from "@/hooks/store/useState";
 import { z } from "zod";
 import { Link } from "@/components/ui/link";
-import { Q_MIGRATION_URL } from "@/lib/constants";
+import {
+  Q_MIGRATION_URL,
+  PRODUCT_NAME,
+  PREVIOUS_PRODUCT_NAME,
+} from "@/lib/constants";
 import { useAuth, useAuthRequest, useRefreshAuth } from "@/hooks/store/useAuth";
 
 export default function LoginModal({ next }: { next: () => void }) {
@@ -405,7 +409,7 @@ export default function LoginModal({ next }: { next: () => void }) {
             <>
               <div className="text-center mb-6">
                 <h2 className="text-xl font-semibold text-white mb-3">
-                  Welcome to Kiro
+                  Welcome to {PRODUCT_NAME}
                 </h2>
                 <p className="text-base text-white">
                   Click below to open the auth portal and sign in
@@ -450,7 +454,7 @@ export default function LoginModal({ next }: { next: () => void }) {
         {completedOnboarding && tab == "builderId" && (
           <div className="text-center flex flex-col">
             <div className="font-ember font-bold">
-              CodeWhisperer is now Amazon Q
+              {PREVIOUS_PRODUCT_NAME} is now {PRODUCT_NAME}
             </div>
             <Link href={Q_MIGRATION_URL} className="text-sm">
               Read the announcement blog post
