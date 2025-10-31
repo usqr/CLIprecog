@@ -58,10 +58,7 @@ pub struct StreamingClient {
 
 impl StreamingClient {
     pub async fn new() -> Result<Self, Error> {
-        let client = if fig_util::system_info::in_cloudshell()
-            || std::env::var("Q_USE_SENDMESSAGE").is_ok_and(|v| !v.is_empty())
-        {
-            // ALLOWED: fig_api_client doesn't have fig_os_shim dependency
+        let client = if fig_util::system_info::in_cloudshell() || fig_os_shim::Env::new().q_use_sendmessage() {
             Self::new_qdeveloper_client(&Endpoint::load_q()).await?
         } else {
             Self::new_codewhisperer_client(&Endpoint::load_codewhisperer()).await

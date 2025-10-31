@@ -282,12 +282,12 @@ pub fn in_cloudshell() -> bool {
 
 pub fn in_codespaces() -> bool {
     static IN_CODESPACES: OnceLock<bool> = OnceLock::new();
-    *IN_CODESPACES.get_or_init(|| std::env::var_os("CODESPACES").is_some() || fig_os_shim::Env::new().in_codespaces())
+    *IN_CODESPACES.get_or_init(|| fig_os_shim::Env::new().in_codespaces())
 }
 
 pub fn in_ci() -> bool {
     static IN_CI: OnceLock<bool> = OnceLock::new();
-    *IN_CI.get_or_init(|| std::env::var_os("CI").is_some() || fig_os_shim::Env::new().in_ci())
+    *IN_CI.get_or_init(|| fig_os_shim::Env::new().in_ci())
 }
 
 #[cfg(target_os = "macos")]

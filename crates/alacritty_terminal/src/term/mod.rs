@@ -833,8 +833,7 @@ impl<T> Term<T> {
         trace!("New command cursor: {:?}", self.shell_state.cmd_cursor);
 
         // Add work around for emojis
-        if let Ok(cursor_offset) = std::env::var("Q_PROMPT_OFFSET_WORKAROUND") {
-            // ALLOWED: alacritty_terminal doesn't have fig_os_shim dependency
+        if let Ok(cursor_offset) = fig_os_shim::Env::new().q_prompt_offset_workaround() {
             if let Ok(offset) = cursor_offset.parse::<i32>() {
                 self.shell_state.cmd_cursor = self.shell_state.cmd_cursor.map(|cursor| Point {
                     column: Column((cursor.column.0 as i32 - offset).max(0) as usize),

@@ -27,6 +27,7 @@ aws-types.workspace = true
 bytes.workspace = true
 fig_auth.workspace = true
 fig_aws_common.workspace = true
+fig_os_shim.workspace = true
 fig_request.workspace = true
 fig_settings.workspace = true
 fig_util.workspace = true

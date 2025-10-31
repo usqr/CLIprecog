@@ -66,6 +66,7 @@ version = "1.19.3"
 dependencies = [
  "bitflags 2.10.0",
  "camino",
+ "fig_os_shim",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -3058,6 +3059,7 @@ dependencies = [
  "bytes",
  "fig_auth",
  "fig_aws_common",
+ "fig_os_shim",
  "fig_request",
  "fig_settings",
  "fig_util",
