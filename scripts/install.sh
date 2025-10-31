@@ -12,8 +12,8 @@ CLI_NAME="Kiro CLI"
 COMMAND_NAME="kiro-cli"
 BASE_URL="https://desktop-release.q.us-east-1.amazonaws.com"
 MANIFEST_URL="${BASE_URL}/latest/manifest.json"
-MACOS_FILENAME="Kiro-Cli.dmg"
-MACOS_FILENAME_ESCAPED="Kiro-Cli.dmg"
+MACOS_FILENAME="Kiro CLI.dmg"
+MACOS_FILENAME_ESCAPED="Kiro%20CLI.dmg"
 
 # Installation directories
 MACOS_APP_DIR="/Applications"
