@@ -374,9 +374,21 @@ impl Cli {
 
                     Self::execute_chat("chat", Some(args), true).await
                 },
-                CliRootCommands::Mcp { args } => Self::execute_chat("mcp", Some(args), false).await,
+                CliRootCommands::Mcp { args } => {
+                    if args.iter().any(|arg| ["--help", "-h"].contains(&arg.as_str())) {
+                        return Self::execute_chat("mcp", Some(args), false).await;
+                    }
+
+                    Self::execute_chat("mcp", Some(args), true).await
+                },
                 CliRootCommands::Inline(subcommand) => subcommand.execute(&cli_context).await,
-                CliRootCommands::Agent { args } => Self::execute_chat("agent", Some(args), false).await,
+                CliRootCommands::Agent { args } => {
+                    if args.iter().any(|arg| ["--help", "-h"].contains(&arg.as_str())) {
+                        return Self::execute_chat("agent", Some(args), false).await;
+                    }
+
+                    Self::execute_chat("agent", Some(args), true).await
+                },
             },
             // Root command
             None => Self::execute_chat("chat", None, true).await,
@@ -385,12 +397,19 @@ impl Cli {
 
     pub async fn execute_chat(subcmd: &str, args: Option<Vec<String>>, enforce_login: bool) -> Result<ExitCode> {
         if enforce_login && !is_logged_in_check().await {
-            let options = ["Yes", "No"];
-            match crate::util::choose(" You are not logged in. Login now?", &options)? {
-                Some(0) => {},
-                _ => bail!("Login is required to use chat"),
+            if subcmd == "chat" {
+                let options = ["Yes", "No"];
+                match crate::util::choose(" You are not logged in. Login now?", &options)? {
+                    Some(0) => {},
+                    _ => bail!("Login is required to use chat"),
+                }
+                crate::cli::user::login_interactive(Default::default()).await?;
+            } else {
+                bail!(
+                    "You are not logged in, please log in with {}",
+                    format!("{CLI_BINARY_NAME} login",).bold()
+                );
             }
-            crate::cli::user::login_interactive(Default::default()).await?;
         }
 
         // Save credentials from the macOS keychain to sqlite.
