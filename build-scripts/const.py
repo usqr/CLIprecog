@@ -1,7 +1,7 @@
 import pathlib
 
 
-APP_NAME = "Kiro-Cli"
+APP_NAME = "Kiro CLI"
 CLI_BINARY_NAME = "kiro-cli"
 CHAT_BINARY_NAME = "kiro-cli-chat"
 PTY_BINARY_NAME = "kiro-cli-term"
