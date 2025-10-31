@@ -348,7 +348,7 @@ install_macos() {
     if [[ -d "$MACOS_APP_DIR/$app_name" ]]; then
         warning "Existing $app_name found in $MACOS_APP_DIR"
         echo "Do you want to replace it? (y/N): "
-        read -r response
+        read -r response < /dev/tty
         if [[ ! "$response" =~ ^[Yy]$ ]]; then
             error "Installation cancelled by user"
         fi
