@@ -3,7 +3,12 @@ import translateDemo from "@assets/images/translate_demo.gif";
 import chatDemo from "@assets/images/chat_demo.gif";
 import { Link } from "@/components/ui/link";
 import { QLogo } from "@/components/svg/icons";
-import { AUTOCOMPLETE_SSH_WIKI_URL, Q_MIGRATION_URL } from "@/lib/constants";
+import {
+  AUTOCOMPLETE_SSH_WIKI_URL,
+  Q_MIGRATION_URL,
+  PRODUCT_NAME,
+  PREVIOUS_PRODUCT_NAME,
+} from "@/lib/constants";
 import { Terminal } from "@/components/ui/terminal";
 
 export default function Page() {
@@ -19,7 +24,7 @@ export default function Page() {
           <QLogo size={42} />
           <div className="flex flex-col gap-1">
             <h1 className="font-bold text-xl font-ember leading-none">
-              CodeWhisperer is now Amazon Q
+              {PREVIOUS_PRODUCT_NAME} is now {PRODUCT_NAME}
             </h1>
             <p className="text-base leading-tight">
               <Link
