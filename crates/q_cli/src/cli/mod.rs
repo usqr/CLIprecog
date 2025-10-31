@@ -20,7 +20,6 @@ mod translate;
 mod uninstall;
 mod update;
 mod user;
-
 use std::io::{
     Write as _,
     stdout,
@@ -87,7 +86,7 @@ use crate::util::desktop::{
 };
 use crate::util::{
     CliContext,
-    assert_logged_in,
+    is_logged_in_check,
 };
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, ValueEnum)]
@@ -397,8 +396,20 @@ impl Cli {
     }
 
     pub async fn execute_chat(subcmd: &str, args: Option<Vec<String>>, enforce_login: bool) -> Result<ExitCode> {
-        if enforce_login {
-            assert_logged_in().await?;
+        if enforce_login && !is_logged_in_check().await {
+            if subcmd == "chat" {
+                let options = ["Yes", "No"];
+                match crate::util::choose(" You are not logged in. Login now?", &options)? {
+                    Some(0) => {},
+                    _ => bail!("Login is required to use chat"),
+                }
+                crate::cli::user::login_interactive(Default::default()).await?;
+            } else {
+                bail!(
+                    "You are not logged in, please log in with {}",
+                    format!("{CLI_BINARY_NAME} login",).bold()
+                );
+            }
         }
 
         // Save credentials from the macOS keychain to sqlite.
