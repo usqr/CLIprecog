@@ -49,3 +49,5 @@ book/
 .env*
 
 run-build.sh
+# Amazon Q CLI files
+.amazonq/

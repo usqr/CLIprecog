@@ -16,6 +16,7 @@ default = []
 # sentry = ["dep:sentry-tracing"]
 
 [dependencies]
+fig_os_shim.workspace = true
 fig_util.workspace = true
 parking_lot.workspace = true
 thiserror.workspace = true
