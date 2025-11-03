@@ -2,7 +2,7 @@ import autocompleteDemo from "@assets/images/autocomplete_demo.gif";
 import translateDemo from "@assets/images/translate_demo.gif";
 import chatDemo from "@assets/images/chat_demo.gif";
 import { Link } from "@/components/ui/link";
-import { QLogo } from "@/components/svg/icons";
+import { Logo } from "@/components/svg/icons";
 import {
   AUTOCOMPLETE_SSH_WIKI_URL,
   Q_MIGRATION_URL,
@@ -19,20 +19,28 @@ export default function Page() {
           Getting started
         </h1>
       </div>
-      <section className="flex flex-col p-6 gap-4 w-full gradient-q-secondary-light-alt rounded-lg items-start text-white">
+      <section
+        className="flex flex-col p-6 gap-4 w-full items-start text-white"
+        style={{
+          backgroundColor: "var(--banner-bg)",
+          border: "1px solid var(--banner-border)",
+          borderRadius: "var(--banner-radius)",
+        }}
+      >
         <div className="flex flex-row gap-4 w-full items-center">
-          <QLogo size={42} />
+          <Logo size={42} />
           <div className="flex flex-col gap-1">
             <h1 className="font-bold text-xl font-ember leading-none">
-              {PREVIOUS_PRODUCT_NAME} is now {PRODUCT_NAME}
+              {PREVIOUS_PRODUCT_NAME} CLI is now {PRODUCT_NAME} CLI
             </h1>
             <p className="text-base leading-tight">
+              All existing features remain unchanged.{" "}
               <Link
                 href={Q_MIGRATION_URL}
                 className="font-medium"
                 variant="primary"
               >
-                Read the announcement blog post
+                Learn more
               </Link>
             </p>
           </div>

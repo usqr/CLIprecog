@@ -452,12 +452,20 @@ export default function LoginModal({ next }: { next: () => void }) {
           </h2>
         )}
         {completedOnboarding && tab == "builderId" && (
-          <div className="text-center flex flex-col">
+          <div
+            className="text-center flex flex-col p-4"
+            style={{
+              backgroundColor: "var(--banner-bg)",
+              border: "1px solid var(--banner-border)",
+              borderRadius: "var(--banner-radius)",
+            }}
+          >
             <div className="font-ember font-bold">
-              {PREVIOUS_PRODUCT_NAME} is now {PRODUCT_NAME}
+              {PREVIOUS_PRODUCT_NAME} CLI is now {PRODUCT_NAME} CLI
             </div>
+            All existing features remain unchanged.{" "}
             <Link href={Q_MIGRATION_URL} className="text-sm">
-              Read the announcement blog post
+              Learn more
             </Link>
           </div>
         )}
