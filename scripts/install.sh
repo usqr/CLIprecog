@@ -360,7 +360,8 @@ install_macos() {
     mkdir -p "$HOME/.local/bin"
     local macos_bin="$MACOS_APP_DIR/$app_name/Contents/MacOS"
 
-    "$macos_bin/kiro_cli_desktop" --no-dashboard > /dev/null 2>&1 &
+    open -g -a "$MACOS_APP_DIR/$app_name" --args --no-dashboard
+    sleep 3
 }
 
 # Install on Linux
@@ -421,8 +422,6 @@ cleanup() {
 # =============================================================================
 
 main() {
-    log "Installing $CLI_NAME..."
-    
     # Parse command line arguments
     parse_args "$@"
     
@@ -452,6 +451,8 @@ main() {
     # Download and verify
     download_and_verify "$download_url" "$filename"
     local downloaded_file="$DOWNLOAD_DIR/$filename"
+
+    log "Installing $CLI_NAME..."
 
     # Install based on platform
     if [[ "$os" == "darwin" ]]; then
