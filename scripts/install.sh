@@ -318,6 +318,23 @@ create_symlink() {
     ln -s "$src" "$dst"
 }
 
+# Create legacy q wrapper script
+create_q_wrapper() {
+    local install_dir="$1"
+    local wrapper_path="$install_dir/q"
+    
+    # Remove existing q command if it exists
+    rm -f "$wrapper_path"
+    
+    # Create wrapper script
+    cat > "$wrapper_path" << EOF
+#!/bin/sh
+"$install_dir/kiro-cli" --show-legacy-warning "\$@"
+EOF
+    
+    chmod +x "$wrapper_path"
+}
+
 # Install on macOS
 install_macos() {
     local dmg_path="$1"
@@ -459,6 +476,14 @@ main() {
         install_macos "$downloaded_file"
     else
         install_linux "$downloaded_file"
+    fi
+    
+    # Create legacy q wrapper script
+    log "Creating legacy q wrapper..."
+    if [[ "$os" == "macos" ]]; then
+        create_q_wrapper "$HOME/.local/bin"
+    else
+        create_q_wrapper "$LINUX_INSTALL_DIR"
     fi
     
     SUCCESS=true

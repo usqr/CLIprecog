@@ -89,6 +89,8 @@ use crate::util::{
     is_logged_in_check,
 };
 
+const LEGACY_WARNING: &str = "Warn: Q CLI is now Kiro CLI and should be invoked as kiro-cli rather than q";
+
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, ValueEnum)]
 pub enum OutputFormat {
     /// Outputs the results as markdown
@@ -292,10 +294,18 @@ pub struct Cli {
     /// Print help for all subcommands
     #[arg(long)]
     help_all: bool,
+    /// Show legacy warning for q command
+    #[arg(long, hide = true, default_value = "false")]
+    show_legacy_warning: bool,
 }
 
 impl Cli {
     pub async fn execute(self) -> Result<ExitCode> {
+        // Show legacy warning if flag is set
+        if self.show_legacy_warning {
+            eprintln!("{}", LEGACY_WARNING);
+        }
+
         // Initialize our logger and keep around the guard so logging can perform as expected.
         let _log_guard = initialize_logging(LogArgs {
             log_level: match self.verbose > 0 {
@@ -698,21 +708,18 @@ mod test {
     #[test]
     fn test_flags() {
         assert_eq!(Cli::parse_from([CLI_BINARY_NAME, "-v"]), Cli {
-            subcommand: None,
             verbose: 1,
-            help_all: false,
+            ..Default::default()
         });
 
         assert_eq!(Cli::parse_from([CLI_BINARY_NAME, "-vvv"]), Cli {
-            subcommand: None,
             verbose: 3,
-            help_all: false,
+            ..Default::default()
         });
 
         assert_eq!(Cli::parse_from([CLI_BINARY_NAME, "--help-all"]), Cli {
-            subcommand: None,
-            verbose: 0,
             help_all: true,
+            ..Default::default()
         });
     }
 
