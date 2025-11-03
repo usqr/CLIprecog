@@ -292,10 +292,18 @@ pub struct Cli {
     /// Print help for all subcommands
     #[arg(long)]
     help_all: bool,
+    /// Show legacy warning for q command
+    #[arg(long, hide = true)]
+    show_legacy_warning: bool,
 }
 
 impl Cli {
     pub async fn execute(self) -> Result<ExitCode> {
+        // Show legacy warning if flag is set
+        if self.show_legacy_warning {
+            eprintln!("Warn: Q CLI is now Kiro CLI and should be invoked as kiro-cli rather than q");
+        }
+
         // Initialize our logger and keep around the guard so logging can perform as expected.
         let _log_guard = initialize_logging(LogArgs {
             log_level: match self.verbose > 0 {
