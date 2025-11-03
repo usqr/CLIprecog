@@ -72,6 +72,9 @@
     --ring: 240 10% 3.9%;
 
     --radius: 0.5rem;
+    --banner-bg: #262626;
+    --banner-border: #C6A0FF;
+    --banner-radius: 13px;
   }
 
   body {
