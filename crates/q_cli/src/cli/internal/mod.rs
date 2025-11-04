@@ -777,11 +777,6 @@ impl InternalSubcommand {
                     tokio::time::sleep(Duration::from_millis(200)).await;
                 }
 
-                // Create legacy q wrapper script for backward compatibility
-                if let Err(err) = fig_util::wrapper::create_q_wrapper(&fig_util::directories::home_local_bin()?).await {
-                    tracing::warn!("Failed to create q wrapper: {}", err);
-                }
-
                 launch_fig_desktop(LaunchArgs {
                     wait_for_socket: false,
                     open_dashboard: relaunch_dashboard,

@@ -111,11 +111,6 @@ async fn replace_bins(bin_dir: &Path) -> Result<(), Error> {
         }
     }
 
-    // Create legacy q wrapper script after updating binaries
-    if let Err(err) = fig_util::wrapper::create_q_wrapper(&local_bin).await {
-        tracing::warn!("Failed to create q wrapper: {}", err);
-    }
-
     res
 }
 
