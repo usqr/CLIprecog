@@ -13,6 +13,7 @@ use semver::Version;
 use tracing::{
     error,
     info,
+    warn,
 };
 
 #[allow(unused_imports)]
