@@ -13,6 +13,7 @@ use semver::Version;
 use tracing::{
     error,
     info,
+    warn,
 };
 
 #[allow(unused_imports)]
@@ -327,7 +328,18 @@ pub async fn initialize_fig_dir(env: &fig_os_shim::Env) -> anyhow::Result<()> {
 
             for old_cli_binary_name in OLD_CLI_BINARY_NAMES {
                 let old_cli_binary_path = local_bin.join(old_cli_binary_name);
-                if old_cli_binary_path.is_symlink() {
+                if old_cli_binary_name == &"q" {
+                    // Create wrapper script for q instead of symlink
+                    if let Err(err) = fig_util::wrapper::create_q_wrapper(&local_bin).await {
+                        warn!(%err, "Failed to create q wrapper script");
+                    }
+                } else if old_cli_binary_name == &"qchat" {
+                    // Create wrapper script for qchat that calls q chat
+                    if let Err(err) = fig_util::wrapper::create_qchat_wrapper(&local_bin).await {
+                        warn!(%err, "Failed to create qchat wrapper script");
+                    }
+                } else if old_cli_binary_path.is_symlink() {
+                    // Handle other legacy binaries (cw) with symlinks
                     if let Err(err) = symlink(&q_cli_path, &old_cli_binary_path).await {
                         warn!(%err, "Failed to symlink legacy CLI: {old_cli_binary_path:?}");
                     }
@@ -658,6 +670,16 @@ async fn install_appimage_binaries(ctx: &Context) -> anyhow::Result<()> {
         } else {
             copy_binary_from_appimage_mount(ctx, binary_name, local_binary_path).await?;
         }
+    }
+
+    // Create q wrapper for backward compatibility
+    if let Err(err) = fig_util::wrapper::create_q_wrapper(&home_local_bin_ctx(ctx)?).await {
+        warn!(%err, "Failed to create q wrapper script");
+    }
+
+    // Create qchat wrapper for backward compatibility
+    if let Err(err) = fig_util::wrapper::create_qchat_wrapper(&home_local_bin_ctx(ctx)?).await {
+        warn!(%err, "Failed to create qchat wrapper script");
     }
 
     Ok(())

@@ -43,6 +43,33 @@ pub async fn create_q_wrapper(install_dir: &Path) -> Result<(), Error> {
     Ok(())
 }
 
+/// Create legacy qchat wrapper script for backward compatibility
+pub async fn create_qchat_wrapper(install_dir: &Path) -> Result<(), Error> {
+    let wrapper_path = install_dir.join("qchat");
+
+    // Remove existing qchat command if it exists
+    if wrapper_path.exists() {
+        tokio::fs::remove_file(&wrapper_path).await?;
+    }
+
+    // Create wrapper script content that calls q chat
+    let wrapper_content = format!("#!/bin/sh\n\"{}/q\" chat \"$@\"\n", install_dir.display());
+
+    // Write wrapper script
+    tokio::fs::write(&wrapper_path, wrapper_content).await?;
+
+    // Make executable
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mut perms = tokio::fs::metadata(&wrapper_path).await?.permissions();
+        perms.set_mode(0o755);
+        tokio::fs::set_permissions(&wrapper_path, perms).await?;
+    }
+
+    Ok(())
+}
+
 /// Check if the existing q command is our wrapper script
 async fn is_our_wrapper(path: &Path) -> Result<bool, Error> {
     if let Ok(content) = tokio::fs::read_to_string(path).await {
