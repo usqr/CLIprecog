@@ -53,6 +53,7 @@ use fig_auth::consts::OIDC_BUILDER_ID_REGION;
 use fig_auth::is_logged_in;
 use fig_auth::pkce::Region;
 use fig_auth::secret_store::SecretStore;
+use fig_auth::social::SocialToken;
 use fig_ipc::local::open_ui_element;
 use fig_log::{
     LogArgs,
@@ -124,7 +125,7 @@ pub enum Processes {
     App,
 }
 
-/// The Amazon Q CLI
+/// The Kiro CLI
 #[deny(missing_docs)]
 #[derive(Debug, PartialEq, Subcommand)]
 pub enum CliRootCommands {
@@ -267,11 +268,11 @@ impl CliRootCommands {
 
 const HELP_TEXT: &str = color_print::cstr! {"
 
-<magenta,em>q</magenta,em> (Amazon Q CLI)
+<magenta,em>kiro-cli</magenta,em> (Kiro CLI)
 
-<magenta,em>Popular Subcommands</magenta,em>              <black!><em>Usage:</em> q [subcommand]</black!>
+<magenta,em>Popular Subcommands</magenta,em>              <black!><em>Usage:</em> kiro-cli [subcommand]</black!>
 ╭────────────────────────────────────────────────────╮
-│ <em>chat</em>         <black!>Chat with Amazon Q</black!>                    │
+│ <em>chat</em>         <black!>Chat with Kiro CLI</black!>                    │
 │ <em>translate</em>    <black!>Natural Language to Shell translation</black!> │
 │ <em>doctor</em>       <black!>Debug installation issues</black!>             │ 
 │ <em>settings</em>     <black!>Customize appearance & behavior</black!>       │
@@ -279,7 +280,7 @@ const HELP_TEXT: &str = color_print::cstr! {"
 ╰────────────────────────────────────────────────────╯
 
 <black!>To see all subcommands, use:</black!>
- <black!>❯</black!> q --help-all
+ <black!>❯</black!> kiro-cli --help-all
 ㅤ
 "};
 
@@ -428,33 +429,35 @@ impl Cli {
         if let Some(secret_store) = secret_store {
             if let Ok(database) = database().map_err(|err| error!(?err, "failed to open database")) {
                 // check builderid token flow
+<<<<<<< HEAD
                 if let Ok(token) = BuilderIdToken::load(&secret_store, false).await {
+=======
+                if let Ok(Some(token)) = BuilderIdToken::load(&secret_store, false).await {
+>>>>>>> qv2
                     // Save the device registration. This is required for token refresh to succeed.
-                    if let Some(token) = token.as_ref() {
-                        let region = token.region.clone().map_or(OIDC_BUILDER_ID_REGION, Region::new);
-                        match DeviceRegistration::load_from_secret_store(&secret_store, &region).await {
-                            Ok(Some(reg)) => match serde_json::to_string(&reg) {
-                                Ok(reg) => {
-                                    database
-                                        .set_auth_value("codewhisperer:odic:device-registration", reg)
-                                        .map_err(|err| error!(?err, "failed to write device registration to auth db"))
-                                        .ok();
-                                },
-                                Err(err) => error!(?err, "failed to serialize the device registration"),
+                    let region = token.region.clone().map_or(OIDC_BUILDER_ID_REGION, Region::new);
+                    match DeviceRegistration::load_from_secret_store(&secret_store, &region).await {
+                        Ok(Some(reg)) => match serde_json::to_string(&reg) {
+                            Ok(reg) => {
+                                database
+                                    .set_auth_value(DeviceRegistration::SECRET_KEY, reg)
+                                    .map_err(|err| error!(?err, "failed to write device registration to auth db"))
+                                    .ok();
                             },
-                            Ok(None) => {
-                                warn!(?token, "no device registration found for token");
-                            },
-                            Err(err) => {
-                                error!(?err, "failed to load device registration");
-                            },
-                        }
+                            Err(err) => error!(?err, "failed to serialize the device registration"),
+                        },
+                        Ok(None) => {
+                            warn!(?token, "no device registration found for token");
+                        },
+                        Err(err) => {
+                            error!(?err, "failed to load device registration");
+                        },
                     }
 
                     // Next, save the token.
                     if let Ok(token) = serde_json::to_string(&token) {
                         database
-                            .set_auth_value("codewhisperer:odic:token", token)
+                            .set_auth_value(BuilderIdToken::SECRET_KEY, token)
                             .map_err(|err| error!(?err, "failed to write credentials to auth db"))
                             .ok();
                     }
@@ -465,7 +468,11 @@ impl Cli {
                     Ok(Some(social)) => {
                         if let Ok(social_json) = serde_json::to_string(&social) {
                             database
+<<<<<<< HEAD
                                 .set_auth_value("codewhisperer:social:token", social_json)
+=======
+                                .set_auth_value(SocialToken::SECRET_KEY, social_json)
+>>>>>>> qv2
                                 .map_err(|err| error!(?err, "failed to write social token to auth db"))
                                 .ok();
                         }

@@ -10,8 +10,16 @@ import {
   PREVIOUS_PRODUCT_NAME,
 } from "@/lib/constants";
 import { Terminal } from "@/components/ui/terminal";
+import { useLocalStateZodDefault } from "@/hooks/store/useState";
+import { z } from "zod";
 
 export default function Page() {
+  const [completedOnboarding] = useLocalStateZodDefault(
+    "desktop.completedOnboarding",
+    z.boolean(),
+    false,
+  );
+
   return (
     <div className="flex flex-col items-start gap-4">
       <div className="flex flex-col">
@@ -19,33 +27,35 @@ export default function Page() {
           Getting started
         </h1>
       </div>
-      <section
-        className="flex flex-col p-6 gap-4 w-full items-start text-white"
-        style={{
-          backgroundColor: "var(--banner-bg)",
-          border: "1px solid var(--banner-border)",
-          borderRadius: "var(--banner-radius)",
-        }}
-      >
-        <div className="flex flex-row gap-4 w-full items-center">
-          <Logo size={42} />
-          <div className="flex flex-col gap-1">
-            <h1 className="font-bold text-xl font-ember leading-none">
-              {PREVIOUS_PRODUCT_NAME} CLI is now {PRODUCT_NAME} CLI
-            </h1>
-            <p className="text-base leading-tight">
-              All existing features remain unchanged.{" "}
-              <Link
-                href={Q_MIGRATION_URL}
-                className="font-medium"
-                variant="primary"
-              >
-                Learn more
-              </Link>
-            </p>
+      {completedOnboarding && (
+        <section
+          className="flex flex-col p-6 gap-4 w-full items-start text-white"
+          style={{
+            backgroundColor: "var(--banner-bg)",
+            border: "1px solid var(--banner-border)",
+            borderRadius: "var(--banner-radius)",
+          }}
+        >
+          <div className="flex flex-row gap-4 w-full items-center">
+            <Logo size={42} />
+            <div className="flex flex-col gap-1">
+              <h1 className="font-bold text-xl font-ember leading-none">
+                {PREVIOUS_PRODUCT_NAME} CLI is now {PRODUCT_NAME} CLI
+              </h1>
+              <p className="text-base leading-tight">
+                All existing features remain unchanged.{" "}
+                <Link
+                  href={Q_MIGRATION_URL}
+                  className="font-medium"
+                  variant="primary"
+                >
+                  Learn more
+                </Link>
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
       <div className="flex flex-col gap-2 w-full border bg-zinc-50 border-zinc-200 dark:bg-zinc-900 dark:border-zinc-600 rounded-lg p-4 mb-4 overflow-x-auto">
         <h2 className="font-bold font-ember tracking-tight text-lg dark:text-zinc-300">
           Launch a new shell session to start using autocomplete!

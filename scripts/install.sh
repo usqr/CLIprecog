@@ -373,16 +373,9 @@ install_macos() {
     fi
     
     cp -R "$app_bundle" "$MACOS_APP_DIR/"
-    
-    mkdir -p "$HOME/.local/bin"
-    local macos_bin="$MACOS_APP_DIR/$app_name/Contents/MacOS"
 
-<<<<<<< HEAD
-    "$macos_bin/$DESKTOP_BINARY_NAME" --no-dashboard > /dev/null 2>&1 &
-=======
     open -g -a "$MACOS_APP_DIR/$app_name" --args --no-dashboard
     sleep 3
->>>>>>> qv2
 }
 
 # Install on Linux

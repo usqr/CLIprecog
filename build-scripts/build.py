@@ -54,6 +54,7 @@ from const import (
     PTY_BINARY_NAME,
     PTY_PACKAGE_NAME,
     URL_SCHEMA,
+    CHAT_BINARY_BRANCH,
 )
 
 BUILD_DIR_RELATIVE = pathlib.Path(os.environ.get("BUILD_DIR") or "build")
