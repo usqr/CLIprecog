@@ -125,7 +125,7 @@ pub enum Processes {
     App,
 }
 
-/// The Amazon Q CLI
+/// The Kiro CLI
 #[deny(missing_docs)]
 #[derive(Debug, PartialEq, Subcommand)]
 pub enum CliRootCommands {
@@ -268,11 +268,11 @@ impl CliRootCommands {
 
 const HELP_TEXT: &str = color_print::cstr! {"
 
-<magenta,em>q</magenta,em> (Amazon Q CLI)
+<magenta,em>kiro-cli</magenta,em> (Kiro CLI)
 
-<magenta,em>Popular Subcommands</magenta,em>              <black!><em>Usage:</em> q [subcommand]</black!>
+<magenta,em>Popular Subcommands</magenta,em>              <black!><em>Usage:</em> kiro-cli [subcommand]</black!>
 ╭────────────────────────────────────────────────────╮
-│ <em>chat</em>         <black!>Chat with Amazon Q</black!>                    │
+│ <em>chat</em>         <black!>Chat with Kiro CLI</black!>                    │
 │ <em>translate</em>    <black!>Natural Language to Shell translation</black!> │
 │ <em>doctor</em>       <black!>Debug installation issues</black!>             │ 
 │ <em>settings</em>     <black!>Customize appearance & behavior</black!>       │
@@ -280,7 +280,7 @@ const HELP_TEXT: &str = color_print::cstr! {"
 ╰────────────────────────────────────────────────────╯
 
 <black!>To see all subcommands, use:</black!>
- <black!>❯</black!> q --help-all
+ <black!>❯</black!> kiro-cli --help-all
 ㅤ
 "};
 
