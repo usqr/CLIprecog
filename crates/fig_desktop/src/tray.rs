@@ -1,21 +1,17 @@
 use std::borrow::Cow;
 
 use cfg_if::cfg_if;
+use fig_install::index::get_file_type;
 use fig_install::{
     InstallComponents,
     UpdateOptions,
 };
-use fig_os_shim::{
-    Context,
-    Os,
-};
+use fig_os_shim::Context;
 use fig_remote_ipc::figterm::FigtermState;
 use fig_util::consts::PRODUCT_NAME;
 use fig_util::manifest::{
     FileType,
     Variant,
-    bundle_metadata,
-    manifest,
 };
 use fig_util::url::USER_MANUAL;
 use muda::{
@@ -101,6 +97,7 @@ fn tray_update(proxy: &EventLoopProxy) {
                 ignore_rollout: true,
                 interactive: true,
                 relaunch_dashboard: true,
+                is_auto_update: false,
             },
         )
         .await;
@@ -140,24 +137,15 @@ fn tray_update(proxy: &EventLoopProxy) {
 /// continuing.
 ///
 /// Returns `true` if we should continue with updating, `false` otherwise.
-///
-/// Currently only the Linux flow gets affected, since some bundles (eg, `AppImage`) are able to
-/// update and others (packages like `deb`) cannot.
 async fn should_continue_with_update(ctx: &Context, proxy: &EventLoopProxy) -> bool {
-    if !(ctx.platform().os() == Os::Linux && manifest().variant == Variant::Full) {
-        return true;
-    }
-
-    match fig_install::check_for_updates(true).await {
+    match fig_install::check_for_updates(true, false).await {
         Ok(Some(pkg)) => {
-            let file_type = bundle_metadata(&ctx)
+            let file_type = get_file_type(ctx, &Variant::Full)
                 .await
-                .map_err(|err| error!(?err, "Failed to get bundle metadata"))
-                .ok()
-                .flatten()
-                .map(|md| md.packaged_as);
-            // Only AppImage is able to self-update.
-            if file_type == Some(FileType::AppImage) {
+                .map_err(|err| error!(?err, "Failed to get file type"))
+                .ok();
+            // Only AppImage and dmg is able to self-update.
+            if file_type == Some(FileType::AppImage) || file_type == Some(FileType::Dmg) {
                 let (tx, mut rx) = tokio::sync::mpsc::channel(1);
                 proxy
                     .send_event(

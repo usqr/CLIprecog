@@ -42,8 +42,7 @@ const generalPreferences = [
       {
         id: "app.disableAutoupdates",
         title: "Automatic updates",
-        description:
-          "Asynchronously check for updates when launching a new shell session.",
+        description: "Automatically update when new versions are released.",
         type: "boolean",
         default: false,
         inverted: true,

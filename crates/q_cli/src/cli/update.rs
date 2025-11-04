@@ -102,6 +102,7 @@ impl UpdateArgs {
                 ignore_rollout: !rollout,
                 interactive: !non_interactive,
                 relaunch_dashboard: *relaunch_dashboard,
+                is_auto_update: false,
             },
         )
         .await;
@@ -129,7 +130,10 @@ impl UpdateArgs {
 }
 
 async fn try_linux_update() -> Result<ExitCode> {
-    match (fig_install::check_for_updates(true).await, bundle_metadata().await) {
+    match (
+        fig_install::check_for_updates(true, false).await,
+        bundle_metadata().await,
+    ) {
         (ref update_result @ Ok(Some(ref pkg)), Some(file_type)) => {
             if file_type == FileType::AppImage {
                 let should_continue = dialoguer::Select::with_theme(&dialoguer_theme())

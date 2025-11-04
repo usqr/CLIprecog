@@ -144,7 +144,7 @@ pub fn get_max_channel() -> Channel {
         .unwrap()
 }
 
-pub async fn check_for_updates(ignore_rollout: bool) -> Result<Option<UpdatePackage>, Error> {
+pub async fn check_for_updates(ignore_rollout: bool, is_auto_update: bool) -> Result<Option<UpdatePackage>, Error> {
     let manifest = manifest();
     let ctx = Context::new();
     let file_type = match (&manifest.variant, ctx.platform().os()) {
@@ -157,6 +157,7 @@ pub async fn check_for_updates(ignore_rollout: bool) -> Result<Option<UpdatePack
         &manifest.variant,
         file_type.as_ref(),
         ignore_rollout,
+        is_auto_update,
     )
     .await
 }
@@ -177,6 +178,8 @@ pub struct UpdateOptions {
     pub interactive: bool,
     /// If to relaunch into dashboard after update (false will launch in background)
     pub relaunch_dashboard: bool,
+    /// Whether or not the update is being invoked automatically without the user's approval
+    pub is_auto_update: bool,
 }
 
 /// Attempt to update if there is a newer version of Fig
@@ -187,10 +190,11 @@ pub async fn update(
         ignore_rollout,
         interactive,
         relaunch_dashboard,
+        is_auto_update,
     }: UpdateOptions,
 ) -> Result<bool, Error> {
     info!("Checking for updates...");
-    if let Some(update) = check_for_updates(ignore_rollout).await? {
+    if let Some(update) = check_for_updates(ignore_rollout, is_auto_update).await? {
         info!("Found update: {}", update.version);
         debug!("Update info: {:?}", update);
 

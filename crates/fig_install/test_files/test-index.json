@@ -487,6 +487,7 @@
 
     {
       "version": "1.2.1",
+      "disable_autoupdate": true,
       "packages": [
         {
           "kind": "deb",

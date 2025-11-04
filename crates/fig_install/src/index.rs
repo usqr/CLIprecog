@@ -101,6 +101,7 @@ impl Index {
     /// than the currently installed version*. This is useful to check if an update exists for the
     /// given target and variant without filtering on file type, e.g. in the case of Linux desktop
     /// bundles.
+    #[allow(clippy::too_many_arguments)]
     pub fn find_next_version(
         &self,
         target_triple: &TargetTriple,
@@ -108,6 +109,7 @@ impl Index {
         file_type: Option<&FileType>,
         current_version: &str,
         ignore_rollout: bool,
+        is_auto_update: bool,
         threshold_override: Option<u8>,
     ) -> Result<Option<UpdatePackage>, Error> {
         if !self.supported.iter().any(|support| {
@@ -137,6 +139,7 @@ impl Index {
                 Some(rollout) => rollout.start <= right_now,
                 None => true,
             })
+            .filter(|version| !is_auto_update || !version.disable_autoupdate)
             .collect::<Vec<&RemoteVersion>>();
 
         valid_versions.sort_unstable_by(|lhs, rhs| lhs.version.cmp(&rhs.version));
@@ -252,20 +255,22 @@ struct Support {
     file_type: Option<FileType>,
 }
 
-#[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub(crate) struct RemoteVersion {
     pub version: Version,
     pub rollout: Option<Rollout>,
     pub packages: Vec<Package>,
+    #[serde(default)]
+    pub disable_autoupdate: bool,
 }
 
-#[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub(crate) struct Rollout {
     start: u64,
     end: u64,
 }
 
-#[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Package {
     #[serde(deserialize_with = "deser_enum_other")]
@@ -306,7 +311,7 @@ pub struct UpdatePackage {
     pub cli_path: Option<String>,
 }
 
-#[derive(Deserialize, Serialize, PartialEq, Eq, EnumString, Debug, Display)]
+#[derive(Deserialize, Serialize, PartialEq, Eq, EnumString, Debug, Clone, Display)]
 #[serde(rename_all = "camelCase")]
 #[strum(serialize_all = "camelCase")]
 pub enum PackageArchitecture {
@@ -360,14 +365,21 @@ pub async fn check_for_updates(
     variant: &Variant,
     file_type: Option<&FileType>,
     ignore_rollout: bool,
+    is_auto_update: bool,
 ) -> Result<Option<UpdatePackage>, Error> {
     const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
-    pull(&channel)
-        .await?
-        .find_next_version(target_triple, variant, file_type, CURRENT_VERSION, ignore_rollout, None)
+    pull(&channel).await?.find_next_version(
+        target_triple,
+        variant,
+        file_type,
+        CURRENT_VERSION,
+        ignore_rollout,
+        is_auto_update,
+        None,
+    )
 }
 
-pub(crate) async fn get_file_type(ctx: &Context, variant: &Variant) -> Result<FileType, Error> {
+pub async fn get_file_type(ctx: &Context, variant: &Variant) -> Result<FileType, Error> {
     match ctx.platform().os() {
         fig_os_shim::Os::Mac => Ok(FileType::Dmg),
         fig_os_shim::Os::Linux => match variant {
@@ -428,6 +440,7 @@ mod tests {
             &TargetTriple::UniversalAppleDarwin,
             &Variant::Full,
             Some(FileType::Dmg).as_ref(),
+            false,
             false,
         )
         .await
@@ -515,7 +528,8 @@ mod tests {
                             "sha256": "5a6abea56bfa91bd58d49fe40322058d0efea825f7e19f7fb7db1c204ae625b6",
                             "size": 76836772,
                         }
-                    ]
+                    ],
+                    "disable_autoupdate": true,
                 },
                 {
                     "version": "2.0.0",
@@ -560,6 +574,11 @@ mod tests {
 
         assert_eq!(index.versions.len(), 4);
 
+        assert!(
+            !index.versions[1].disable_autoupdate,
+            "missing disable_autoupdate field should default to false"
+        );
+
         // check the 1.0.0 entry matches
         assert_eq!(index.versions[2], RemoteVersion {
             version: Version::new(1, 0, 0),
@@ -588,6 +607,7 @@ mod tests {
                     cli_path: None,
                 }
             ],
+            disable_autoupdate: true,
         });
     }
 
@@ -604,6 +624,7 @@ mod tests {
                 Some(&FileType::TarZst),
                 "1.2.1",
                 true,
+                false,
                 None,
             )
             .unwrap();
@@ -619,6 +640,7 @@ mod tests {
                 Some(&FileType::TarZst),
                 "1.2.0",
                 true,
+                false,
                 None,
             )
             .unwrap()
@@ -635,6 +657,7 @@ mod tests {
             Some(&FileType::TarZst),
             "1.2.1",
             true,
+            false,
             None,
         );
         assert!(next.is_err());
@@ -649,10 +672,50 @@ mod tests {
                 None,
                 "1.0.5",
                 true,
+                false,
                 None,
             )
             .unwrap()
             .expect("should have update package");
         assert_eq!(next.version.to_string().as_str(), "1.2.1");
+    }
+
+    #[test]
+    fn index_autoupdate_does_not_update_into_disabled() {
+        let mut index = load_test_index();
+
+        let next = index
+            .find_next_version(
+                &TargetTriple::X86_64UnknownLinuxGnu,
+                &Variant::Full,
+                None,
+                "1.0.5",
+                true,
+                true,
+                None,
+            )
+            .unwrap()
+            .expect("should have update package");
+        assert_eq!(next.version.to_string().as_str(), "1.2.0");
+
+        // Push a newer update that does not have autoupdate disabled
+        let mut last = index.versions.last().cloned().unwrap();
+        last.version = Version::from_str("2.0.0").unwrap();
+        last.disable_autoupdate = false;
+        index.versions.push(last);
+
+        let next = index
+            .find_next_version(
+                &TargetTriple::X86_64UnknownLinuxGnu,
+                &Variant::Full,
+                None,
+                "1.0.5",
+                true,
+                true,
+                None,
+            )
+            .unwrap()
+            .expect("should have update package");
+        assert_eq!(next.version.to_string().as_str(), "2.0.0");
     }
 }

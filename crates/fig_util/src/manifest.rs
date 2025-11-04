@@ -49,7 +49,7 @@ pub enum ManagedBy {
 
 /// The target triplet, describes a platform on which the project is build for. Note that this also
 /// includes "fake" targets like `universal-apple-darwin` as provided by [Tauri](https://tauri.app/v1/guides/building/macos/#binary-targets)
-#[derive(Deserialize, Serialize, PartialEq, Eq, EnumString, Debug, Display)]
+#[derive(Deserialize, Serialize, PartialEq, Eq, EnumString, Debug, Clone, Display)]
 pub enum TargetTriple {
     #[serde(rename = "universal-apple-darwin")]
     #[strum(serialize = "universal-apple-darwin")]

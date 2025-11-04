@@ -55,7 +55,7 @@ pub fn check_for_update(context: &Context) {
     }
 
     tokio::spawn(async {
-        match fig_install::check_for_updates(false).await {
+        match fig_install::check_for_updates(false, true).await {
             Ok(Some(pkg)) => {
                 if let Err(err) = fig_settings::state::set_value(UPDATE_AVAILABLE_KEY, pkg.version.to_string()) {
                     warn!(?err, "Error setting {UPDATE_AVAILABLE_KEY}: {err}");

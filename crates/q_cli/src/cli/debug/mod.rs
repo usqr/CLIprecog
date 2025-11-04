@@ -218,6 +218,8 @@ pub enum DebugSubcommand {
         #[arg(short = 'r', long)]
         enable_rollout: bool,
         #[arg(short, long)]
+        is_auto_update: bool,
+        #[arg(short, long)]
         override_threshold: Option<u8>,
         #[arg(short, long)]
         file_type: String,
@@ -748,6 +750,7 @@ impl DebugSubcommand {
                 variant,
                 version: current_version,
                 enable_rollout,
+                is_auto_update,
                 override_threshold,
                 file_type,
             } => {
@@ -765,6 +768,7 @@ impl DebugSubcommand {
                         Some(&FileType::from_str(file_type)?),
                         current_version,
                         !enable_rollout,
+                        *is_auto_update,
                         *override_threshold,
                     );
 
