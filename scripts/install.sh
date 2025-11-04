@@ -3,18 +3,17 @@
 set -eu
 
 # =============================================================================
-# Q CLI Installation Script
+# Kiro CLI Installation Script
 # =============================================================================
 
 # Configuration
-BINARY_NAME="q"
-CLI_NAME="Q CLI"
-COMMAND_NAME="q"
-DESKTOP_BINARY_NAME="q_desktop"
+BINARY_NAME="kiro-cli"
+CLI_NAME="Kiro CLI"
+COMMAND_NAME="kiro-cli"
 BASE_URL="https://desktop-release.q.us-east-1.amazonaws.com"
 MANIFEST_URL="${BASE_URL}/latest/manifest.json"
-MACOS_FILENAME="Amazon Q.dmg"
-MACOS_FILENAME_ESCAPED="Amazon%20Q.dmg"
+MACOS_FILENAME="Kiro CLI.dmg"
+MACOS_FILENAME_ESCAPED="Kiro%20CLI.dmg"
 
 # Installation directories
 MACOS_APP_DIR="/Applications"
@@ -319,6 +318,23 @@ create_symlink() {
     ln -s "$src" "$dst"
 }
 
+# Create legacy q wrapper script
+create_q_wrapper() {
+    local install_dir="$1"
+    local wrapper_path="$install_dir/q"
+    
+    # Remove existing q command if it exists
+    rm -f "$wrapper_path"
+    
+    # Create wrapper script
+    cat > "$wrapper_path" << EOF
+#!/bin/sh
+"$install_dir/kiro-cli" --show-legacy-warning "\$@"
+EOF
+    
+    chmod +x "$wrapper_path"
+}
+
 # Install on macOS
 install_macos() {
     local dmg_path="$1"
@@ -361,7 +377,12 @@ install_macos() {
     mkdir -p "$HOME/.local/bin"
     local macos_bin="$MACOS_APP_DIR/$app_name/Contents/MacOS"
 
+<<<<<<< HEAD
     "$macos_bin/$DESKTOP_BINARY_NAME" --no-dashboard > /dev/null 2>&1 &
+=======
+    open -g -a "$MACOS_APP_DIR/$app_name" --args --no-dashboard
+    sleep 3
+>>>>>>> qv2
 }
 
 # Install on Linux
@@ -384,7 +405,7 @@ install_linux() {
     
     log "Running installer..."
     chmod +x "$install_script"
-    Q_SKIP_SETUP=1 "$install_script"
+    KIRO_CLI_SKIP_SETUP=1 "$install_script"
 }
 
 # Cleanup function - only removes files/dirs we created
@@ -422,8 +443,6 @@ cleanup() {
 # =============================================================================
 
 main() {
-    log "Installing $CLI_NAME..."
-    
     # Parse command line arguments
     parse_args "$@"
     
@@ -454,11 +473,21 @@ main() {
     download_and_verify "$download_url" "$filename"
     local downloaded_file="$DOWNLOAD_DIR/$filename"
 
+    log "Installing $CLI_NAME..."
+
     # Install based on platform
     if [[ "$os" == "darwin" ]]; then
         install_macos "$downloaded_file"
     else
         install_linux "$downloaded_file"
+    fi
+    
+    # Create legacy q wrapper script
+    log "Creating legacy q wrapper..."
+    if [[ "$os" == "macos" ]]; then
+        create_q_wrapper "$HOME/.local/bin"
+    else
+        create_q_wrapper "$LINUX_INSTALL_DIR"
     fi
     
     SUCCESS=true

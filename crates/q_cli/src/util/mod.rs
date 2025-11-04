@@ -292,6 +292,10 @@ pub fn input(prompt: &str, initial_text: Option<&str>) -> Result<String> {
     Ok(input.interact_text()?)
 }
 
+pub async fn is_logged_in_check() -> bool {
+    std::env::var("AMAZON_Q_SIGV4").is_ok_and(|v| !v.is_empty()) || fig_auth::is_logged_in().await
+}
+
 pub fn get_running_app_info(bundle_id: impl AsRef<str>, field: impl AsRef<str>) -> Result<String> {
     let info = Command::new("lsappinfo")
         .args(["info", "-only", field.as_ref(), "-app", bundle_id.as_ref()])
