@@ -53,6 +53,7 @@ use fig_auth::consts::OIDC_BUILDER_ID_REGION;
 use fig_auth::is_logged_in;
 use fig_auth::pkce::Region;
 use fig_auth::secret_store::SecretStore;
+use fig_auth::social::SocialToken;
 use fig_ipc::local::open_ui_element;
 use fig_log::{
     LogArgs,
@@ -418,33 +419,31 @@ impl Cli {
         if let Some(secret_store) = secret_store {
             if let Ok(database) = database().map_err(|err| error!(?err, "failed to open database")) {
                 // check builderid token flow
-                if let Ok(token) = BuilderIdToken::load(&secret_store, false).await {
+                if let Ok(Some(token)) = BuilderIdToken::load(&secret_store, false).await {
                     // Save the device registration. This is required for token refresh to succeed.
-                    if let Some(token) = token.as_ref() {
-                        let region = token.region.clone().map_or(OIDC_BUILDER_ID_REGION, Region::new);
-                        match DeviceRegistration::load_from_secret_store(&secret_store, &region).await {
-                            Ok(Some(reg)) => match serde_json::to_string(&reg) {
-                                Ok(reg) => {
-                                    database
-                                        .set_auth_value("codewhisperer:odic:device-registration", reg)
-                                        .map_err(|err| error!(?err, "failed to write device registration to auth db"))
-                                        .ok();
-                                },
-                                Err(err) => error!(?err, "failed to serialize the device registration"),
+                    let region = token.region.clone().map_or(OIDC_BUILDER_ID_REGION, Region::new);
+                    match DeviceRegistration::load_from_secret_store(&secret_store, &region).await {
+                        Ok(Some(reg)) => match serde_json::to_string(&reg) {
+                            Ok(reg) => {
+                                database
+                                    .set_auth_value(DeviceRegistration::SECRET_KEY, reg)
+                                    .map_err(|err| error!(?err, "failed to write device registration to auth db"))
+                                    .ok();
                             },
-                            Ok(None) => {
-                                warn!(?token, "no device registration found for token");
-                            },
-                            Err(err) => {
-                                error!(?err, "failed to load device registration");
-                            },
-                        }
+                            Err(err) => error!(?err, "failed to serialize the device registration"),
+                        },
+                        Ok(None) => {
+                            warn!(?token, "no device registration found for token");
+                        },
+                        Err(err) => {
+                            error!(?err, "failed to load device registration");
+                        },
                     }
 
                     // Next, save the token.
                     if let Ok(token) = serde_json::to_string(&token) {
                         database
-                            .set_auth_value("codewhisperer:odic:token", token)
+                            .set_auth_value(BuilderIdToken::SECRET_KEY, token)
                             .map_err(|err| error!(?err, "failed to write credentials to auth db"))
                             .ok();
                     }
@@ -455,7 +454,7 @@ impl Cli {
                     Ok(Some(social)) => {
                         if let Ok(social_json) = serde_json::to_string(&social) {
                             database
-                                .set_auth_value("codewhisperer:social:token", social_json)
+                                .set_auth_value(SocialToken::SECRET_KEY, social_json)
                                 .map_err(|err| error!(?err, "failed to write social token to auth db"))
                                 .ok();
                         }

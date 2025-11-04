@@ -8,6 +8,7 @@ use aws_smithy_runtime_api::client::identity::{
     IdentityFuture,
     ResolveIdentity,
 };
+use fig_settings::sqlite::database;
 use tracing::{
     info,
     warn,
@@ -72,6 +73,12 @@ pub async fn logout() -> Result<()> {
         secret_store.delete(DeviceRegistration::SECRET_KEY),
         secret_store.delete(SocialToken::SECRET_KEY),
     );
+
+    if let Ok(db) = database() {
+        let _ = db.unset_auth_value(BuilderIdToken::SECRET_KEY);
+        let _ = db.unset_auth_value(DeviceRegistration::SECRET_KEY);
+        let _ = db.unset_auth_value(SocialToken::SECRET_KEY);
+    }
 
     let profile_res = fig_settings::state::remove_value("api.codewhisperer.profile");
 
