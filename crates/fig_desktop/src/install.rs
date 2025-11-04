@@ -332,6 +332,11 @@ pub async fn initialize_fig_dir(env: &fig_os_shim::Env) -> anyhow::Result<()> {
                     if let Err(err) = fig_util::wrapper::create_q_wrapper(&local_bin).await {
                         warn!(%err, "Failed to create q wrapper script");
                     }
+                } else if old_cli_binary_name == &"qchat" {
+                    // Create wrapper script for qchat that calls q chat
+                    if let Err(err) = fig_util::wrapper::create_qchat_wrapper(&local_bin).await {
+                        warn!(%err, "Failed to create qchat wrapper script");
+                    }
                 } else if old_cli_binary_path.is_symlink() {
                     // Handle other legacy binaries (cw) with symlinks
                     if let Err(err) = symlink(&q_cli_path, &old_cli_binary_path).await {
@@ -668,7 +673,12 @@ async fn install_appimage_binaries(ctx: &Context) -> anyhow::Result<()> {
 
     // Create q wrapper for backward compatibility
     if let Err(err) = fig_util::wrapper::create_q_wrapper(&home_local_bin_ctx(ctx)?).await {
-        error!(%err, "Failed to create q wrapper script");
+        warn!(%err, "Failed to create q wrapper script");
+    }
+
+    // Create qchat wrapper for backward compatibility
+    if let Err(err) = fig_util::wrapper::create_qchat_wrapper(&home_local_bin_ctx(ctx)?).await {
+        warn!(%err, "Failed to create qchat wrapper script");
     }
 
     Ok(())

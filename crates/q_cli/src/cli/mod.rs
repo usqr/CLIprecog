@@ -90,7 +90,7 @@ use crate::util::{
     is_logged_in_check,
 };
 
-const LEGACY_WARNING: &str = "Warn: Q CLI is now Kiro CLI and should be invoked as kiro-cli rather than q";
+const LEGACY_WARNING: &str = "Warning! Q CLI is now Kiro CLI and should be invoked as kiro-cli rather than q";
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, ValueEnum)]
 pub enum OutputFormat {
@@ -304,7 +304,7 @@ impl Cli {
     pub async fn execute(self) -> Result<ExitCode> {
         // Show legacy warning if flag is set
         if self.show_legacy_warning {
-            eprintln!("{}", LEGACY_WARNING);
+            eprintln!("\x1b[33m{}\x1b[0m", LEGACY_WARNING);
         }
 
         // Initialize our logger and keep around the guard so logging can perform as expected.
