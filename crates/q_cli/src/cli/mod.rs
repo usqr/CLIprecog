@@ -429,11 +429,7 @@ impl Cli {
         if let Some(secret_store) = secret_store {
             if let Ok(database) = database().map_err(|err| error!(?err, "failed to open database")) {
                 // check builderid token flow
-<<<<<<< HEAD
-                if let Ok(token) = BuilderIdToken::load(&secret_store, false).await {
-=======
                 if let Ok(Some(token)) = BuilderIdToken::load(&secret_store, false).await {
->>>>>>> qv2
                     // Save the device registration. This is required for token refresh to succeed.
                     let region = token.region.clone().map_or(OIDC_BUILDER_ID_REGION, Region::new);
                     match DeviceRegistration::load_from_secret_store(&secret_store, &region).await {
@@ -468,11 +464,7 @@ impl Cli {
                     Ok(Some(social)) => {
                         if let Ok(social_json) = serde_json::to_string(&social) {
                             database
-<<<<<<< HEAD
-                                .set_auth_value("codewhisperer:social:token", social_json)
-=======
                                 .set_auth_value(SocialToken::SECRET_KEY, social_json)
->>>>>>> qv2
                                 .map_err(|err| error!(?err, "failed to write social token to auth db"))
                                 .ok();
                         }
