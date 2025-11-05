@@ -6,6 +6,7 @@ pub mod index;
 mod linux;
 #[cfg(target_os = "macos")]
 pub mod macos;
+pub mod migrate;
 #[cfg(windows)]
 mod windows;
 

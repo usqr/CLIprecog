@@ -28,6 +28,7 @@ use crate::system_info::{
 use crate::{
     BACKUP_DIR_NAME,
     DATA_DIR_NAME,
+    OLD_DATA_DIR_NAME,
     TAURI_PRODUCT_NAME,
 };
 
@@ -133,7 +134,9 @@ pub fn config_dir() -> Result<PathBuf> {
 /// This should be removed at some point in the future, once all our users have migrated
 /// - MacOS: `$HOME/Library/Application Support/codewhisperer`
 pub fn old_fig_data_dir() -> Result<PathBuf> {
-    Ok(dirs::data_local_dir().ok_or(DirectoryError::NoHomeDirectory)?.join("q"))
+    Ok(dirs::data_local_dir()
+        .ok_or(DirectoryError::NoHomeDirectory)?
+        .join(OLD_DATA_DIR_NAME))
 }
 
 /// The q data directory
@@ -446,11 +449,11 @@ pub fn bundle_metadata_path<Ctx: EnvProvider + PlatformProvider>(ctx: &Ctx) -> R
 
 /// The path to the fig settings file
 ///
-/// - Linux: `$HOME/.aws/kiro-cli/settings.json`
-/// - MacOS: `$HOME/.aws/kiro-cli/settings.json`
-/// - Windows: `$HOME/.aws/kiro-cli/settings.json`
+/// - MacOS: `$HOME/.kiro/settings/cli.json`
+/// - Linux: `$HOME/.kiro/settings/cli.json`
+/// - Windows: `$HOME/.kiro/settings/cli.json`
 pub fn settings_path() -> Result<PathBuf> {
-    Ok(home_dir()?.join(".aws").join("kiro-cli").join("settings.json"))
+    Ok(home_dir()?.join(".kiro").join("settings").join("cli.json"))
 }
 
 /// The path to the lock file used to indicate that the app is updating
@@ -739,22 +742,22 @@ mod tests {
     fn snapshot_figterm_socket_path() {
         linux!(figterm_socket_path("$SESSION_ID"), @"$XDG_RUNTIME_DIR/cwrun/t/$SESSION_ID.sock");
         macos!(figterm_socket_path("$SESSION_ID"), @"$TMPDIR/cwrun/t/$SESSION_ID.sock");
-        windows!(figterm_socket_path("$SESSION_ID"), @r"C:\Users\$USER\AppData\Local\Temp\AmazonQ\sockets\t\$SESSION_ID.sock");
+        windows!(figterm_socket_path("$SESSION_ID"), @r"C:\Users\$USER\AppData\Local\Temp\KiroCli\sockets\t\$SESSION_ID.sock");
     }
 
     #[test]
     fn snapshot_settings_path() {
-        linux!(settings_path(), @"$HOME/.local/share/amazon-q/settings.json");
-        macos!(settings_path(), @"$HOME/.aws/kiro-cli/settings.json");
-        windows!(settings_path(), @r"C:\Users\$USER\AppData\Local\AmazonQ\settings.json");
+        linux!(settings_path(), @"$HOME/.local/share/.kiro/settings/cli.json");
+        macos!(settings_path(), @"$HOME/.kiro/settings/cli.json");
+        windows!(settings_path(), @r"C:\Users\$USER\AppData\Local\.kiro\settings\cli.json");
     }
 
     #[test]
     fn snapshot_update_lock_path() {
         let ctx = Context::new();
-        linux!(update_lock_path(&ctx), @"$HOME/.local/share/amazon-q/update.lock");
+        linux!(update_lock_path(&ctx), @"$HOME/.local/share/kiro-cli/update.lock");
         macos!(update_lock_path(&ctx), @"$HOME/Library/Application Support/kiro-cli/update.lock");
-        windows!(update_lock_path(&ctx), @r"C:\Users\$USER\AppData\Local\AmazonQ\update.lock");
+        windows!(update_lock_path(&ctx), @r"C:\Users\$USER\AppData\Local\KiroCli\update.lock");
     }
 
     #[test]
