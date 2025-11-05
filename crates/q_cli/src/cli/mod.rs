@@ -302,9 +302,12 @@ pub struct Cli {
 
 impl Cli {
     pub async fn execute(self) -> Result<ExitCode> {
-        // Show legacy warning if flag is set
+        // Show legacy warning if flag is set, but not for hidden commands
         if self.show_legacy_warning {
-            eprintln!("\x1b[33m{}\x1b[0m", LEGACY_WARNING);
+            let is_hidden_command = matches!(self.subcommand, Some(CliRootCommands::Internal(_)));
+            if !is_hidden_command {
+                eprintln!("\x1b[33m{}\x1b[0m", LEGACY_WARNING);
+            }
         }
 
         // Initialize our logger and keep around the guard so logging can perform as expected.
