@@ -73,9 +73,9 @@
 
     --radius: 0.5rem;
     --banner-bg: #262626;
-    --banner-border: #C6A0FF;
+    --banner-border: #c6a0ff;
     --banner-radius: 13px;
-    --kiro-purple: #9047FF;
+    --kiro-purple: #9047ff;
   }
 
   body {
@@ -129,7 +129,8 @@
   }
 
   .gradient-q-secondary-dark {
-    background: radial-gradient(
+    background:
+      radial-gradient(
         122.5% 122.5% at 0% 0%,
         #000000 0%,
         rgba(0, 0, 0, 0) 100%
