@@ -91,6 +91,7 @@ use crate::util::{
 };
 
 const LEGACY_WARNING: &str = "Warning! Q CLI is now Kiro CLI and should be invoked as kiro-cli rather than q";
+const KIRO_MIGRATION_KEY: &str = "migration.kiro.completed";
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, ValueEnum)]
 pub enum OutputFormat {
@@ -339,6 +340,19 @@ impl Cli {
         });
 
         debug!(command =? std::env::args().collect::<Vec<_>>(), "Command ran");
+
+        // Run migration silently on startup (skips if already completed or locked)
+        let migration_complete = database()
+            .ok()
+            .and_then(|db| db.get_state_value(KIRO_MIGRATION_KEY).ok())
+            .and_then(|v| v.and_then(|val| val.as_bool()))
+            .unwrap_or(false);
+
+        if !migration_complete {
+            let _ = Self::execute_chat("migrate", Some(vec!["--yes".to_owned()]), false).await;
+        } else {
+            debug!("Migration already completed");
+        }
 
         self.send_telemetry().await;
 
