@@ -133,7 +133,9 @@ pub fn config_dir() -> Result<PathBuf> {
 /// This should be removed at some point in the future, once all our users have migrated
 /// - MacOS: `$HOME/Library/Application Support/codewhisperer`
 pub fn old_fig_data_dir() -> Result<PathBuf> {
-    Ok(dirs::data_local_dir().ok_or(DirectoryError::NoHomeDirectory)?.join("q"))
+    Ok(dirs::data_local_dir()
+        .ok_or(DirectoryError::NoHomeDirectory)?
+        .join("codewhisperer"))
 }
 
 /// The q data directory
@@ -446,11 +448,11 @@ pub fn bundle_metadata_path<Ctx: EnvProvider + PlatformProvider>(ctx: &Ctx) -> R
 
 /// The path to the fig settings file
 ///
-/// - Linux: `$HOME/.aws/kiro-cli/settings.json`
-/// - MacOS: `$HOME/.aws/kiro-cli/settings.json`
-/// - Windows: `$HOME/.aws/kiro-cli/settings.json`
+/// - Linux: `$HOME/.local/share/{data_dir}/settings.json`
+/// - MacOS: `$HOME/Library/Application Support/{data_dir}/settings.json`
+/// - Windows: `%LOCALAPPDATA%\{data_dir}\settings.json`
 pub fn settings_path() -> Result<PathBuf> {
-    Ok(home_dir()?.join(".aws").join("kiro-cli").join("settings.json"))
+    Ok(fig_data_dir()?.join("settings.json"))
 }
 
 /// The path to the lock file used to indicate that the app is updating
@@ -689,7 +691,7 @@ mod tests {
     #[test]
     fn snapshot_fig_data_dir() {
         linux!(fig_data_dir(), @"$HOME/.local/share/amazon-q");
-        macos!(fig_data_dir(), @"$HOME/Library/Application Support/kiro-cli");
+        macos!(fig_data_dir(), @"$HOME/Library/Application Support/amazon-q");
         windows!(fig_data_dir(), @r"C:\Users\$USER\AppData\Local\AmazonQ");
     }
 
@@ -745,7 +747,7 @@ mod tests {
     #[test]
     fn snapshot_settings_path() {
         linux!(settings_path(), @"$HOME/.local/share/amazon-q/settings.json");
-        macos!(settings_path(), @"$HOME/.aws/kiro-cli/settings.json");
+        macos!(settings_path(), @"$HOME/Library/Application Support/amazon-q/settings.json");
         windows!(settings_path(), @r"C:\Users\$USER\AppData\Local\AmazonQ\settings.json");
     }
 
@@ -753,7 +755,7 @@ mod tests {
     fn snapshot_update_lock_path() {
         let ctx = Context::new();
         linux!(update_lock_path(&ctx), @"$HOME/.local/share/amazon-q/update.lock");
-        macos!(update_lock_path(&ctx), @"$HOME/Library/Application Support/kiro-cli/update.lock");
+        macos!(update_lock_path(&ctx), @"$HOME/Library/Application Support/amazon-q/update.lock");
         windows!(update_lock_path(&ctx), @r"C:\Users\$USER\AppData\Local\AmazonQ\update.lock");
     }
 

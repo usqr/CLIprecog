@@ -27,9 +27,9 @@ pub const RUNTIME_DIR_NAME: &str = "cwrun";
 
 /// Data directory name used in paths like ~/.local/share/{DATA_DIR_NAME}
 #[cfg(unix)]
-pub const DATA_DIR_NAME: &str = "kiro-cli";
+pub const DATA_DIR_NAME: &str = "amazon-q";
 #[cfg(windows)]
-pub const DATA_DIR_NAME: &str = "KiroCli";
+pub const DATA_DIR_NAME: &str = "AmazonQ";
 
 /// Backup directory name
 pub const BACKUP_DIR_NAME: &str = ".amazon-q.dotfiles.bak";
