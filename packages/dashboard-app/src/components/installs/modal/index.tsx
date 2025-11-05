@@ -125,7 +125,7 @@ export function WelcomeModal({
   figMigration?: boolean;
 }) {
   return (
-    <div className="flex flex-col items-center gap-8 gradient-q-secondary-light -m-10 p-4 pt-10 rounded-lg text-white">
+    <div className="flex flex-col items-center gap-8 kiro-purple-bg -m-10 p-4 pt-10 rounded-lg text-white">
       <div className="flex flex-col items-center gap-8">
         {figMigration ? (
           <img src={migrate_dark} className="w-40" />

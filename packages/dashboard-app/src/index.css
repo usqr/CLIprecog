@@ -75,6 +75,7 @@
     --banner-bg: #262626;
     --banner-border: #C6A0FF;
     --banner-radius: 13px;
+    --kiro-purple: #9047FF;
   }
 
   body {
@@ -123,23 +124,8 @@
 }
 
 @layer components {
-  .gradient-q-secondary-light {
-    background: radial-gradient(
-      ellipse farthest-corner at 100% 0%,
-      #a7f8ff 0%,
-      #008dff 40%,
-      #8700ff 80%,
-      #5500b3 100%
-    );
-  }
-
-  .gradient-q-secondary-light-alt {
-    background: radial-gradient(
-      ellipse farthest-corner at 100% 0%,
-      #008dff 0%,
-      #8700ff 50%,
-      #5500b3 100%
-    );
+  .kiro-purple-bg {
+    background: var(--kiro-purple);
   }
 
   .gradient-q-secondary-dark {
