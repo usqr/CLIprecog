@@ -319,7 +319,7 @@ export function ProfileTab({
   }, [loading, profiles, handleSetProfile]);
 
   return (
-    <div className="flex flex-col items-center gap-8 gradient-q-secondary-light -m-10 p-10 rounded-lg text-white">
+    <div className="flex flex-col items-center gap-8 kiro-purple-bg -m-10 p-10 rounded-lg text-white">
       <h2 className="text-xl text-white font-semibold select-none leading-none font-ember tracking-tight">
         Select a profile
       </h2>

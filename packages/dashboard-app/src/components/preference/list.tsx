@@ -20,7 +20,7 @@ export type Intro = {
 
 function FeatureIntro({ intro }: { intro: Intro }) {
   return (
-    <section className="flex flex-col justify-center p-6 gap-4 w-full gradient-q-secondary-light-alt rounded-lg items-start text-white min-h-[6.5rem]">
+    <section className="flex flex-col justify-center p-6 gap-4 w-full kiro-purple-bg rounded-lg items-start text-white min-h-[6.5rem]">
       <div className="flex gap-4 justify-between w-full">
         <div className="flex gap-4">
           <div className="flex-shrink-0">

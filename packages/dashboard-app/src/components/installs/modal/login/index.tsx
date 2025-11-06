@@ -271,7 +271,7 @@ export default function LoginModal({ next }: { next: () => void }) {
     }
 
     return (
-      <div className="flex flex-col items-center gap-8 gradient-q-secondary-light -m-10 pt-10 p-4 rounded-lg text-white">
+      <div className="flex flex-col items-center gap-8 kiro-purple-bg -m-10 pt-10 p-4 rounded-lg text-white">
         <div className="flex flex-col items-center gap-8">
           <Lockup />
           {!completedOnboarding && (
@@ -443,7 +443,7 @@ export default function LoginModal({ next }: { next: () => void }) {
       }}
     />
   ) : (
-    <div className="flex flex-col items-center gap-8 gradient-q-secondary-light -m-10 pt-10 p-4 rounded-lg text-white">
+    <div className="flex flex-col items-center gap-8 kiro-purple-bg -m-10 pt-10 p-4 rounded-lg text-white">
       <div className="flex flex-col items-center gap-8">
         <Lockup />
         {!completedOnboarding && (
