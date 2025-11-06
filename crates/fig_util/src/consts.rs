@@ -25,6 +25,12 @@ pub const PRODUCT_NAME: &str = "Kiro CLI";
 
 pub const RUNTIME_DIR_NAME: &str = "cwrun";
 
+/// Data directory name used in paths like ~/.local/share/{OLD_DATA_DIR_NAME}
+#[cfg(unix)]
+pub const OLD_DATA_DIR_NAME: &str = "amazon-q";
+#[cfg(windows)]
+pub const OLD_DATA_DIR_NAME: &str = "AmazonQ";
+
 /// Data directory name used in paths like ~/.local/share/{DATA_DIR_NAME}
 #[cfg(unix)]
 pub const DATA_DIR_NAME: &str = "kiro-cli";

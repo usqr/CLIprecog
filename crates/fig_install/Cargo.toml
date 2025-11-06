@@ -19,6 +19,7 @@ bytes.workspace = true
 camino.workspace = true
 cfg-if.workspace = true
 cookie = "0.18.0"
+eyre.workspace = true
 fig_integrations.workspace = true
 fig_os_shim.workspace = true
 fig_request.workspace = true
@@ -29,6 +30,7 @@ hex.workspace = true
 regex.workspace = true
 reqwest.workspace = true
 ring.workspace = true
+rustix.workspace = true
 semver = { version = "1.0.26", features = ["serde"] }
 serde.workspace = true
 serde_json.workspace = true

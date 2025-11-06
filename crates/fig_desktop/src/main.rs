@@ -101,8 +101,9 @@ async fn main() -> ExitCode {
 
     fig_telemetry::init_global_telemetry_emitter();
 
-    #[cfg(target_os = "macos")]
-    install::migrate_data_dir().await;
+    if let Err(err) = fig_install::migrate::migrate_if_needed().await {
+        error!(%err, "Failed to migrate data directory");
+    }
 
     if let Err(err) = fig_settings::settings::init_global() {
         error!(%err, "failed to init global settings");

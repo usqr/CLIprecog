@@ -25,25 +25,6 @@ const PREVIOUS_VERSION_KEY: &str = "desktop.versionAtPreviousLaunch";
 const MIGRATED_KEY: &str = "desktop.migratedFromFig";
 
 #[cfg(target_os = "macos")]
-pub async fn migrate_data_dir() {
-    // Migrate the user data dir
-    if let (Ok(old), Ok(new)) = (fig_util::directories::old_fig_data_dir(), fig_data_dir()) {
-        if !old.is_symlink() && old.is_dir() && !new.is_dir() {
-            match tokio::fs::rename(&old, &new).await {
-                Ok(()) => {
-                    if let Err(err) = symlink(&new, &old).await {
-                        error!(%err, "Failed to symlink old user data dir");
-                    }
-                },
-                Err(err) => {
-                    error!(%err, "Failed to migrate user data dir");
-                },
-            }
-        }
-    }
-}
-
-#[cfg(target_os = "macos")]
 fn run_input_method_migration() {
     use fig_integrations::input_method::InputMethod;
     use tokio::time::{
