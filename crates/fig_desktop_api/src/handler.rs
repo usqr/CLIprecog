@@ -258,7 +258,11 @@ where
                 AuthBuilderIdStartDeviceAuthorizationRequest(request) => {
                     auth::builder_id_start_device_authorization(request, &ctx).await
                 },
-                AuthStartUnifiedPortalRequest(request) => auth::start_unified_portal(request).await,
+                AuthStartUnifiedPortalRequest(request) => {
+                    let result = auth::start_unified_portal(request).await;
+                    event_handler.user_logged_in_callback(ctx).await;
+                    result
+                },
                 AuthBuilderIdPollCreateTokenRequest(request) => auth::builder_id_poll_create_token(request, &ctx).await,
                 // codewhisperer api
                 CodewhispererListCustomizationRequest(request) => codewhisperer::list_customization(request).await,
