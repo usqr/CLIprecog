@@ -775,8 +775,13 @@ mod tests {
 
     #[test]
     fn index_test_allowed_autoupdate_product_names_update() {
+        // Loads an index with the versions:
+        // - 1.1.0 | no update conditions
+        // - 1.2.0 | no update conditions
+        // - 1.2.1 | update conditions = [AllowedAutoUpdateProductNames("qv2")]
         let mut index = load_test_index();
 
+        // ProductName("Amazon Q") can update into 1.2.1 during manual update
         let next = index
             .find_next_version(FindNextVersionArgs {
                 target_triple: &TargetTriple::X86_64UnknownLinuxGnu,
@@ -795,6 +800,8 @@ mod tests {
             "1.2.1",
             "amazon q during manual update should update into 1.2.1"
         );
+
+        // ProductName("Amazon Q") updates into 1.2.0 during auto update
         let next = index
             .find_next_version(FindNextVersionArgs {
                 target_triple: &TargetTriple::X86_64UnknownLinuxGnu,
@@ -813,6 +820,8 @@ mod tests {
             "1.2.0",
             "amazon q during auto update should update into 1.2.0"
         );
+
+        // ProductName("qv2") updates into 1.2.1 during auto update
         let next = index
             .find_next_version(FindNextVersionArgs {
                 target_triple: &TargetTriple::X86_64UnknownLinuxGnu,
@@ -832,10 +841,11 @@ mod tests {
             "qv2 during auto update should update into 1.2.1"
         );
 
-        // Push a newer update that allows Amazon Q
+        // Push a newer update that allows both Amazon Q and qv2 to auto update into
         let mut last = index.versions.last().cloned().unwrap();
         last.update_conditions = vec![UpdateCondition::AllowedAutoUpdateProductNames(vec![
             ProductName::AmazonQ,
+            ProductName::Unknown("qv2".to_string()),
         ])];
         last.version = Version::from_str("2.0.0").unwrap();
         index.versions.push(last);
@@ -854,6 +864,24 @@ mod tests {
             .unwrap()
             .expect("should have update package");
         assert_eq!(next.version.to_string().as_str(), "2.0.0");
+        let next = index
+            .find_next_version(FindNextVersionArgs {
+                target_triple: &TargetTriple::X86_64UnknownLinuxGnu,
+                variant: &Variant::Full,
+                file_type: None,
+                current_version: "1.0.5",
+                product_name: &ProductName::Unknown("qv2".to_string()),
+                ignore_rollout: true,
+                is_auto_update: true,
+                threshold_override: None,
+            })
+            .unwrap()
+            .expect("should have update package");
+        assert_eq!(
+            next.version.to_string().as_str(),
+            "2.0.0",
+            "qv2 during auto update should update into 2.0.0"
+        );
     }
 
     #[test]
@@ -882,6 +910,60 @@ mod tests {
             next.version.to_string().as_str(),
             "1.2.1",
             "qv2 should update into 1.2.1"
+        );
+    }
+
+    #[test]
+    fn index_test_multiple_update_conditions_uses_and_boolean_logic() {
+        let mut index = load_test_index();
+
+        // - 1.2.1 | update conditions = [AllowedAutoUpdateProductNames("qv2")]
+        let next = index
+            .find_next_version(FindNextVersionArgs {
+                target_triple: &TargetTriple::X86_64UnknownLinuxGnu,
+                variant: &Variant::Full,
+                file_type: None,
+                current_version: "1.0.5",
+                product_name: &ProductName::Unknown("qv2".to_string()),
+                ignore_rollout: true,
+                is_auto_update: true,
+                threshold_override: None,
+            })
+            .unwrap()
+            .expect("should have update package");
+        assert_eq!(
+            next.version.to_string().as_str(),
+            "1.2.1",
+            "qv2 should update into 1.2.1"
+        );
+
+        index
+            .versions
+            .last_mut()
+            .unwrap()
+            .update_conditions
+            .push(UpdateCondition::AllowedAutoUpdateProductNames(vec![
+                ProductName::AmazonQ,
+            ]));
+
+        // qv2 can no longer update into 1.2.1
+        let next = index
+            .find_next_version(FindNextVersionArgs {
+                target_triple: &TargetTriple::X86_64UnknownLinuxGnu,
+                variant: &Variant::Full,
+                file_type: None,
+                current_version: "1.0.5",
+                product_name: &ProductName::Unknown("qv2".to_string()),
+                ignore_rollout: true,
+                is_auto_update: true,
+                threshold_override: None,
+            })
+            .unwrap()
+            .expect("should have update package");
+        assert_eq!(
+            next.version.to_string().as_str(),
+            "1.2.0",
+            "qv2 should update into 1.2.0"
         );
     }
 }
