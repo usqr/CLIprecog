@@ -115,7 +115,7 @@ pub async fn run_install(ctx: Arc<Context>, ignore_immediate_update: bool) {
             use tokio::time::timeout;
             // Check for updates but timeout after 3 seconds to avoid making the user wait too long
             // todo: don't download the index file twice
-            match timeout(Duration::from_secs(3), check_for_updates(true)).await {
+            match timeout(Duration::from_secs(3), check_for_updates(true, true)).await {
                 Ok(Ok(Some(_))) => {
                     crate::update::check_for_update(true, true).await;
                 },

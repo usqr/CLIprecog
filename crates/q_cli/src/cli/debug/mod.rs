@@ -218,6 +218,8 @@ pub enum DebugSubcommand {
         #[arg(short = 'r', long)]
         enable_rollout: bool,
         #[arg(short, long)]
+        is_auto_update: bool,
+        #[arg(short, long)]
         override_threshold: Option<u8>,
         #[arg(short, long)]
         file_type: String,
@@ -749,6 +751,7 @@ impl DebugSubcommand {
                 version: current_version,
                 enable_rollout,
                 override_threshold,
+                is_auto_update,
                 file_type,
             } => {
                 use fig_install::index::{
@@ -771,6 +774,7 @@ impl DebugSubcommand {
                         current_version,
                         product_name: &product_name,
                         ignore_rollout: !enable_rollout,
+                        is_auto_update: *is_auto_update,
                         threshold_override: *override_threshold,
                     });
 

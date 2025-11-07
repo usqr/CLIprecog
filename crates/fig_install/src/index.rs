@@ -111,6 +111,7 @@ impl Index {
         let current_version = args.current_version;
         let product_name = args.product_name;
         let ignore_rollout = args.ignore_rollout;
+        let is_auto_update = args.is_auto_update;
         let threshold_override = args.threshold_override;
 
         if !self.supported.iter().any(|support| {
@@ -143,7 +144,9 @@ impl Index {
             .filter(|version| {
                 version.update_conditions.is_empty()
                     || version.update_conditions.iter().all(|cond| match cond {
-                        UpdateCondition::AllowedProductNames(product_names) => product_names.contains(product_name),
+                        UpdateCondition::AllowedAutoUpdateProductNames(product_names) => {
+                            !is_auto_update || product_names.contains(product_name)
+                        },
                     })
             })
             .collect::<Vec<&RemoteVersion>>();
@@ -252,6 +255,7 @@ pub struct FindNextVersionArgs<'a> {
     pub file_type: Option<&'a FileType>,
     pub current_version: &'a str,
     pub product_name: &'a ProductName,
+    pub is_auto_update: bool,
     pub ignore_rollout: bool,
     pub threshold_override: Option<u8>,
 }
@@ -286,7 +290,7 @@ pub(crate) struct RemoteVersion {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum UpdateCondition {
-    AllowedProductNames(Vec<ProductName>),
+    AllowedAutoUpdateProductNames(Vec<ProductName>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, EnumString, Display)]
@@ -429,6 +433,7 @@ pub async fn check_for_updates(
     variant: &Variant,
     file_type: Option<&FileType>,
     ignore_rollout: bool,
+    is_auto_update: bool,
 ) -> Result<Option<UpdatePackage>, Error> {
     const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
     let product_name = ProductName::default();
@@ -439,6 +444,7 @@ pub async fn check_for_updates(
         current_version: CURRENT_VERSION,
         product_name: &product_name,
         ignore_rollout,
+        is_auto_update,
         threshold_override: None,
     })
 }
@@ -527,6 +533,7 @@ mod tests {
             &TargetTriple::UniversalAppleDarwin,
             &Variant::Full,
             Some(FileType::Dmg).as_ref(),
+            false,
             false,
         )
         .await
@@ -707,6 +714,7 @@ mod tests {
                 current_version: "1.2.1",
                 product_name: &product_name,
                 ignore_rollout: true,
+                is_auto_update: false,
                 threshold_override: None,
             })
             .unwrap();
@@ -723,6 +731,7 @@ mod tests {
                 current_version: "1.2.0",
                 product_name: &ProductName::Unknown("qv2".to_string()),
                 ignore_rollout: true,
+                is_auto_update: false,
                 threshold_override: None,
             })
             .unwrap()
@@ -740,6 +749,7 @@ mod tests {
             current_version: "1.2.1",
             product_name: &ProductName::AmazonQ,
             ignore_rollout: true,
+            is_auto_update: false,
             threshold_override: None,
         });
         assert!(next.is_err());
@@ -755,6 +765,7 @@ mod tests {
                 current_version: "1.0.5",
                 product_name: &ProductName::Unknown("qv2".to_string()),
                 ignore_rollout: true,
+                is_auto_update: false,
                 threshold_override: None,
             })
             .unwrap()
@@ -763,7 +774,7 @@ mod tests {
     }
 
     #[test]
-    fn index_test_allowed_product_names_update() {
+    fn index_test_allowed_autoupdate_product_names_update() {
         let mut index = load_test_index();
 
         let next = index
@@ -774,6 +785,25 @@ mod tests {
                 current_version: "1.0.5",
                 product_name: &ProductName::AmazonQ,
                 ignore_rollout: true,
+                is_auto_update: false,
+                threshold_override: None,
+            })
+            .unwrap()
+            .expect("should have update package");
+        assert_eq!(
+            next.version.to_string().as_str(),
+            "1.2.1",
+            "amazon q during manual update should update into 1.2.1"
+        );
+        let next = index
+            .find_next_version(FindNextVersionArgs {
+                target_triple: &TargetTriple::X86_64UnknownLinuxGnu,
+                variant: &Variant::Full,
+                file_type: None,
+                current_version: "1.0.5",
+                product_name: &ProductName::AmazonQ,
+                ignore_rollout: true,
+                is_auto_update: true,
                 threshold_override: None,
             })
             .unwrap()
@@ -781,9 +811,8 @@ mod tests {
         assert_eq!(
             next.version.to_string().as_str(),
             "1.2.0",
-            "amazon q should update into 1.2.0"
+            "amazon q during auto update should update into 1.2.0"
         );
-
         let next = index
             .find_next_version(FindNextVersionArgs {
                 target_triple: &TargetTriple::X86_64UnknownLinuxGnu,
@@ -792,6 +821,7 @@ mod tests {
                 current_version: "1.0.5",
                 product_name: &ProductName::Unknown("qv2".to_string()),
                 ignore_rollout: true,
+                is_auto_update: true,
                 threshold_override: None,
             })
             .unwrap()
@@ -799,12 +829,14 @@ mod tests {
         assert_eq!(
             next.version.to_string().as_str(),
             "1.2.1",
-            "qv2 should update into 1.2.1"
+            "qv2 during auto update should update into 1.2.1"
         );
 
         // Push a newer update that allows Amazon Q
         let mut last = index.versions.last().cloned().unwrap();
-        last.update_conditions = vec![UpdateCondition::AllowedProductNames(vec![ProductName::AmazonQ])];
+        last.update_conditions = vec![UpdateCondition::AllowedAutoUpdateProductNames(vec![
+            ProductName::AmazonQ,
+        ])];
         last.version = Version::from_str("2.0.0").unwrap();
         index.versions.push(last);
 
@@ -816,6 +848,7 @@ mod tests {
                 current_version: "1.0.5",
                 product_name: &ProductName::AmazonQ,
                 ignore_rollout: true,
+                is_auto_update: true,
                 threshold_override: None,
             })
             .unwrap()
@@ -824,11 +857,11 @@ mod tests {
     }
 
     #[test]
-    fn index_test_empty_allowed_product_names_does_not_update() {
+    fn index_test_empty_allowed_autoupdate_product_names_does_not_update() {
         let mut index = load_test_index();
 
         let mut last = index.versions.last().cloned().unwrap();
-        last.update_conditions = vec![UpdateCondition::AllowedProductNames(vec![])];
+        last.update_conditions = vec![UpdateCondition::AllowedAutoUpdateProductNames(vec![])];
         last.version = Version::from_str("2.0.0").unwrap();
         index.versions.push(last);
 
@@ -840,6 +873,7 @@ mod tests {
                 current_version: "1.0.5",
                 product_name: &ProductName::Unknown("qv2".to_string()),
                 ignore_rollout: true,
+                is_auto_update: true,
                 threshold_override: None,
             })
             .unwrap()

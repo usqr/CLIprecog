@@ -489,7 +489,7 @@
       "version": "1.2.1",
       "updateConditions": [
           {
-              "allowedProductNames": ["qv2"]
+              "allowedAutoUpdateProductNames": ["qv2"]
           }
       ],
       "packages": [

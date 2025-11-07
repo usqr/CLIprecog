@@ -97,6 +97,7 @@ fn tray_update(proxy: &EventLoopProxy) {
                 ignore_rollout: true,
                 interactive: true,
                 relaunch_dashboard: true,
+                is_auto_update: false,
             },
         )
         .await;
@@ -137,7 +138,7 @@ fn tray_update(proxy: &EventLoopProxy) {
 ///
 /// Returns `true` if we should continue with updating, `false` otherwise.
 async fn should_continue_with_update(ctx: &Context, proxy: &EventLoopProxy) -> bool {
-    match fig_install::check_for_updates(true).await {
+    match fig_install::check_for_updates(true, false).await {
         Ok(Some(pkg)) => {
             let file_type = get_file_type(ctx, &Variant::Full)
                 .await
