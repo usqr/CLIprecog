@@ -473,8 +473,7 @@ main() {
     fi
 
     echo "Next steps:"
-    echo "1. Run: $COMMAND_NAME --help to get started"
-    echo "2. Run: $COMMAND_NAME chat to start an interactive session"
+    echo "Run the command \"$COMMAND_NAME\" to get started!"
     echo
 }
 
