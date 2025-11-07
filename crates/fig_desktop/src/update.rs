@@ -101,7 +101,6 @@ pub async fn check_for_update(show_webview: bool, relaunch_dashboard: bool) -> b
             ignore_rollout: false,
             interactive: show_webview,
             relaunch_dashboard,
-            is_auto_update: true,
         })
         .await
         {

@@ -218,8 +218,6 @@ pub enum DebugSubcommand {
         #[arg(short = 'r', long)]
         enable_rollout: bool,
         #[arg(short, long)]
-        is_auto_update: bool,
-        #[arg(short, long)]
         override_threshold: Option<u8>,
         #[arg(short, long)]
         file_type: String,
@@ -750,27 +748,31 @@ impl DebugSubcommand {
                 variant,
                 version: current_version,
                 enable_rollout,
-                is_auto_update,
                 override_threshold,
                 file_type,
             } => {
+                use fig_install::index::{
+                    FindNextVersionArgs,
+                    ProductName,
+                };
                 use fig_util::manifest::{
                     Channel,
                     TargetTriple,
                     Variant,
                 };
 
+                let product_name = ProductName::default();
                 let result = fig_install::index::pull(&Channel::from_str(channel)?)
                     .await?
-                    .find_next_version(
-                        &TargetTriple::from_str(target_triple)?,
-                        &Variant::from_str(variant)?,
-                        Some(&FileType::from_str(file_type)?),
+                    .find_next_version(FindNextVersionArgs {
+                        target_triple: &TargetTriple::from_str(target_triple)?,
+                        variant: &Variant::from_str(variant)?,
+                        file_type: Some(&FileType::from_str(file_type)?),
                         current_version,
-                        !enable_rollout,
-                        *is_auto_update,
-                        *override_threshold,
-                    );
+                        product_name: &product_name,
+                        ignore_rollout: !enable_rollout,
+                        threshold_override: *override_threshold,
+                    });
 
                 println!("{result:#?}");
             },

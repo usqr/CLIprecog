@@ -23,7 +23,9 @@ use fig_util::system_info::get_system_id;
 use semver::Version;
 use serde::{
     Deserialize,
+    Deserializer,
     Serialize,
+    Serializer,
 };
 use strum::{
     Display,
@@ -102,16 +104,15 @@ impl Index {
     /// given target and variant without filtering on file type, e.g. in the case of Linux desktop
     /// bundles.
     #[allow(clippy::too_many_arguments)]
-    pub fn find_next_version(
-        &self,
-        target_triple: &TargetTriple,
-        variant: &Variant,
-        file_type: Option<&FileType>,
-        current_version: &str,
-        ignore_rollout: bool,
-        is_auto_update: bool,
-        threshold_override: Option<u8>,
-    ) -> Result<Option<UpdatePackage>, Error> {
+    pub fn find_next_version(&self, args: FindNextVersionArgs<'_>) -> Result<Option<UpdatePackage>, Error> {
+        let target_triple = args.target_triple;
+        let variant = args.variant;
+        let file_type = args.file_type;
+        let current_version = args.current_version;
+        let product_name = args.product_name;
+        let ignore_rollout = args.ignore_rollout;
+        let threshold_override = args.threshold_override;
+
         if !self.supported.iter().any(|support| {
             support.target_triple.as_ref() == Some(target_triple)
                 && support.variant == *variant
@@ -139,7 +140,12 @@ impl Index {
                 Some(rollout) => rollout.start <= right_now,
                 None => true,
             })
-            .filter(|version| !is_auto_update || !version.disable_autoupdate)
+            .filter(|version| {
+                version.update_conditions.is_empty()
+                    || version.update_conditions.iter().all(|cond| match cond {
+                        UpdateCondition::AllowedProductNames(product_names) => product_names.contains(product_name),
+                    })
+            })
             .collect::<Vec<&RemoteVersion>>();
 
         valid_versions.sort_unstable_by(|lhs, rhs| lhs.version.cmp(&rhs.version));
@@ -239,6 +245,17 @@ impl Index {
     }
 }
 
+#[derive(Debug)]
+pub struct FindNextVersionArgs<'a> {
+    pub target_triple: &'a TargetTriple,
+    pub variant: &'a Variant,
+    pub file_type: Option<&'a FileType>,
+    pub current_version: &'a str,
+    pub product_name: &'a ProductName,
+    pub ignore_rollout: bool,
+    pub threshold_override: Option<u8>,
+}
+
 #[allow(unused)]
 #[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -256,12 +273,59 @@ struct Support {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub(crate) struct RemoteVersion {
     pub version: Version,
     pub rollout: Option<Rollout>,
     pub packages: Vec<Package>,
     #[serde(default)]
-    pub disable_autoupdate: bool,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub update_conditions: Vec<UpdateCondition>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum UpdateCondition {
+    AllowedProductNames(Vec<ProductName>),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, EnumString, Display)]
+pub enum ProductName {
+    #[strum(serialize = "Amazon Q")]
+    AmazonQ,
+    #[strum(default)]
+    Unknown(String),
+}
+
+impl Serialize for ProductName {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            ProductName::AmazonQ => serializer.serialize_str("Amazon Q"),
+            ProductName::Unknown(s) => serializer.serialize_str(s),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for ProductName {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        match s.as_str() {
+            "Amazon Q" => Ok(ProductName::AmazonQ),
+            _ => Ok(ProductName::Unknown(s)),
+        }
+    }
+}
+
+impl Default for ProductName {
+    fn default() -> Self {
+        Self::AmazonQ
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
@@ -365,18 +429,18 @@ pub async fn check_for_updates(
     variant: &Variant,
     file_type: Option<&FileType>,
     ignore_rollout: bool,
-    is_auto_update: bool,
 ) -> Result<Option<UpdatePackage>, Error> {
     const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
-    pull(&channel).await?.find_next_version(
+    let product_name = ProductName::default();
+    pull(&channel).await?.find_next_version(FindNextVersionArgs {
         target_triple,
         variant,
         file_type,
-        CURRENT_VERSION,
+        current_version: CURRENT_VERSION,
+        product_name: &product_name,
         ignore_rollout,
-        is_auto_update,
-        None,
-    )
+        threshold_override: None,
+    })
 }
 
 pub async fn get_file_type(ctx: &Context, variant: &Variant) -> Result<FileType, Error> {
@@ -401,6 +465,7 @@ mod tests {
     use fig_util::{
         OLD_CLI_BINARY_NAMES,
         OLD_PRODUCT_NAME,
+        PRODUCT_NAME,
     };
 
     use super::*;
@@ -408,10 +473,18 @@ mod tests {
     macro_rules! test_ser_deser {
         ($ty:ident, $variant:expr, $text:expr) => {
             let quoted = format!("\"{}\"", $text);
-            assert_eq!(quoted, serde_json::to_string(&$variant).unwrap());
-            assert_eq!($variant, serde_json::from_str(&quoted).unwrap());
-            assert_eq!($variant, $ty::from_str($text).unwrap());
-            assert_eq!($text, $variant.to_string());
+            assert_eq!(
+                quoted,
+                serde_json::to_string(&$variant).unwrap(),
+                "serde to_string failed"
+            );
+            assert_eq!(
+                $variant,
+                serde_json::from_str(&quoted).unwrap(),
+                "serde from_str failed"
+            );
+            assert_eq!($variant, $ty::from_str($text).unwrap(), "from_str failed");
+            assert_eq!($text, $variant.to_string(), "to_string failed");
         };
     }
 
@@ -420,6 +493,20 @@ mod tests {
         test_ser_deser!(PackageArchitecture, PackageArchitecture::X86_64, "x86_64");
         test_ser_deser!(PackageArchitecture, PackageArchitecture::AArch64, "aarch64");
         test_ser_deser!(PackageArchitecture, PackageArchitecture::Universal, "universal");
+    }
+
+    #[test]
+    fn test_product_name_ser_deser() {
+        test_ser_deser!(ProductName, ProductName::AmazonQ, "Amazon Q");
+        test_ser_deser!(ProductName, ProductName::Unknown("other".to_string()), "other");
+    }
+
+    #[test]
+    fn test_product_name() {
+        assert_eq!(
+            serde_json::to_string(&ProductName::default()).unwrap(),
+            format!("\"{}\"", PRODUCT_NAME)
+        );
     }
 
     #[tokio::test]
@@ -440,7 +527,6 @@ mod tests {
             &TargetTriple::UniversalAppleDarwin,
             &Variant::Full,
             Some(FileType::Dmg).as_ref(),
-            false,
             false,
         )
         .await
@@ -574,11 +660,6 @@ mod tests {
 
         assert_eq!(index.versions.len(), 4);
 
-        assert!(
-            !index.versions[1].disable_autoupdate,
-            "missing disable_autoupdate field should default to false"
-        );
-
         // check the 1.0.0 entry matches
         assert_eq!(index.versions[2], RemoteVersion {
             version: Version::new(1, 0, 0),
@@ -607,7 +688,7 @@ mod tests {
                     cli_path: None,
                 }
             ],
-            disable_autoupdate: true,
+            update_conditions: vec![],
         });
     }
 
@@ -617,16 +698,17 @@ mod tests {
 
     #[test]
     fn index_latest_version_does_not_upgrade() {
+        let product_name = ProductName::default();
         let next = load_test_index()
-            .find_next_version(
-                &TargetTriple::AArch64UnknownLinuxMusl,
-                &Variant::Minimal,
-                Some(&FileType::TarZst),
-                "1.2.1",
-                true,
-                false,
-                None,
-            )
+            .find_next_version(FindNextVersionArgs {
+                target_triple: &TargetTriple::AArch64UnknownLinuxMusl,
+                variant: &Variant::Minimal,
+                file_type: Some(&FileType::TarZst),
+                current_version: "1.2.1",
+                product_name: &product_name,
+                ignore_rollout: true,
+                threshold_override: None,
+            })
             .unwrap();
         assert!(next.is_none());
     }
@@ -634,15 +716,15 @@ mod tests {
     #[test]
     fn index_outdated_version_upgrades_to_correct_version() {
         let next = load_test_index()
-            .find_next_version(
-                &TargetTriple::AArch64UnknownLinuxMusl,
-                &Variant::Minimal,
-                Some(&FileType::TarZst),
-                "1.2.0",
-                true,
-                false,
-                None,
-            )
+            .find_next_version(FindNextVersionArgs {
+                target_triple: &TargetTriple::AArch64UnknownLinuxMusl,
+                variant: &Variant::Minimal,
+                file_type: Some(&FileType::TarZst),
+                current_version: "1.2.0",
+                product_name: &ProductName::Unknown("qv2".to_string()),
+                ignore_rollout: true,
+                threshold_override: None,
+            })
             .unwrap()
             .expect("Should have UpdatePackage");
         assert_eq!(next.version.to_string(), "1.2.1".to_owned());
@@ -651,71 +733,121 @@ mod tests {
 
     #[test]
     fn index_missing_support_returns_error() {
-        let next = load_test_index().find_next_version(
-            &TargetTriple::AArch64UnknownLinuxMusl,
-            &Variant::Full,
-            Some(&FileType::TarZst),
-            "1.2.1",
-            true,
-            false,
-            None,
-        );
+        let next = load_test_index().find_next_version(FindNextVersionArgs {
+            target_triple: &TargetTriple::AArch64UnknownLinuxMusl,
+            variant: &Variant::Full,
+            file_type: Some(&FileType::TarZst),
+            current_version: "1.2.1",
+            product_name: &ProductName::AmazonQ,
+            ignore_rollout: true,
+            threshold_override: None,
+        });
         assert!(next.is_err());
     }
 
     #[test]
     fn index_with_optional_filetype_returns_highest_version() {
         let next = load_test_index()
-            .find_next_version(
-                &TargetTriple::X86_64UnknownLinuxGnu,
-                &Variant::Full,
-                None,
-                "1.0.5",
-                true,
-                false,
-                None,
-            )
+            .find_next_version(FindNextVersionArgs {
+                target_triple: &TargetTriple::X86_64UnknownLinuxGnu,
+                variant: &Variant::Full,
+                file_type: None,
+                current_version: "1.0.5",
+                product_name: &ProductName::Unknown("qv2".to_string()),
+                ignore_rollout: true,
+                threshold_override: None,
+            })
             .unwrap()
             .expect("should have update package");
         assert_eq!(next.version.to_string().as_str(), "1.2.1");
     }
 
     #[test]
-    fn index_autoupdate_does_not_update_into_disabled() {
+    fn index_test_allowed_product_names_update() {
         let mut index = load_test_index();
 
         let next = index
-            .find_next_version(
-                &TargetTriple::X86_64UnknownLinuxGnu,
-                &Variant::Full,
-                None,
-                "1.0.5",
-                true,
-                true,
-                None,
-            )
+            .find_next_version(FindNextVersionArgs {
+                target_triple: &TargetTriple::X86_64UnknownLinuxGnu,
+                variant: &Variant::Full,
+                file_type: None,
+                current_version: "1.0.5",
+                product_name: &ProductName::AmazonQ,
+                ignore_rollout: true,
+                threshold_override: None,
+            })
             .unwrap()
             .expect("should have update package");
-        assert_eq!(next.version.to_string().as_str(), "1.2.0");
+        assert_eq!(
+            next.version.to_string().as_str(),
+            "1.2.0",
+            "amazon q should update into 1.2.0"
+        );
 
-        // Push a newer update that does not have autoupdate disabled
+        let next = index
+            .find_next_version(FindNextVersionArgs {
+                target_triple: &TargetTriple::X86_64UnknownLinuxGnu,
+                variant: &Variant::Full,
+                file_type: None,
+                current_version: "1.0.5",
+                product_name: &ProductName::Unknown("qv2".to_string()),
+                ignore_rollout: true,
+                threshold_override: None,
+            })
+            .unwrap()
+            .expect("should have update package");
+        assert_eq!(
+            next.version.to_string().as_str(),
+            "1.2.1",
+            "qv2 should update into 1.2.1"
+        );
+
+        // Push a newer update that allows Amazon Q
         let mut last = index.versions.last().cloned().unwrap();
+        last.update_conditions = vec![UpdateCondition::AllowedProductNames(vec![ProductName::AmazonQ])];
         last.version = Version::from_str("2.0.0").unwrap();
-        last.disable_autoupdate = false;
         index.versions.push(last);
 
         let next = index
-            .find_next_version(
-                &TargetTriple::X86_64UnknownLinuxGnu,
-                &Variant::Full,
-                None,
-                "1.0.5",
-                true,
-                true,
-                None,
-            )
+            .find_next_version(FindNextVersionArgs {
+                target_triple: &TargetTriple::X86_64UnknownLinuxGnu,
+                variant: &Variant::Full,
+                file_type: None,
+                current_version: "1.0.5",
+                product_name: &ProductName::AmazonQ,
+                ignore_rollout: true,
+                threshold_override: None,
+            })
             .unwrap()
             .expect("should have update package");
         assert_eq!(next.version.to_string().as_str(), "2.0.0");
+    }
+
+    #[test]
+    fn index_test_empty_allowed_product_names_does_not_update() {
+        let mut index = load_test_index();
+
+        let mut last = index.versions.last().cloned().unwrap();
+        last.update_conditions = vec![UpdateCondition::AllowedProductNames(vec![])];
+        last.version = Version::from_str("2.0.0").unwrap();
+        index.versions.push(last);
+
+        let next = index
+            .find_next_version(FindNextVersionArgs {
+                target_triple: &TargetTriple::X86_64UnknownLinuxGnu,
+                variant: &Variant::Full,
+                file_type: None,
+                current_version: "1.0.5",
+                product_name: &ProductName::Unknown("qv2".to_string()),
+                ignore_rollout: true,
+                threshold_override: None,
+            })
+            .unwrap()
+            .expect("should have update package");
+        assert_eq!(
+            next.version.to_string().as_str(),
+            "1.2.1",
+            "qv2 should update into 1.2.1"
+        );
     }
 }
