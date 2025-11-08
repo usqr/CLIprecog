@@ -71,10 +71,9 @@ export default function LoginModal({ next }: { next: () => void }) {
     try {
       setError(null);
       setLoginState("loading");
+      const res = await Auth.startUnifiedPortal({});
       setPkceTimedOut(false);
       setAuthRequestId(undefined);
-
-      const res = await Auth.startUnifiedPortal({});
 
       // Handle social login (Google/GitHub)
       if (res.kind === "social") {
@@ -294,8 +293,7 @@ export default function LoginModal({ next }: { next: () => void }) {
                 onClick={() => {
                   setLoginMethod("deviceCode");
                   setLoginState("not started");
-                  setAuthRequestId(undefined);
-                  Auth.cancelPkceAuthorization().catch(console.error);
+                  setError(null);
                 }}
               >
                 Login with Device Code
@@ -335,6 +333,8 @@ export default function LoginModal({ next }: { next: () => void }) {
                 onClick={() => {
                   setLoginState("not started");
                   setError(null);
+                  setAuthRequestId(undefined);
+                  Auth.cancelPkceAuthorization().catch(console.error);
                 }}
               >
                 Back
