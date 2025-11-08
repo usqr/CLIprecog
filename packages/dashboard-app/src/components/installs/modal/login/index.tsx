@@ -72,6 +72,8 @@ export default function LoginModal({ next }: { next: () => void }) {
       setError(null);
       setLoginState("loading");
       const res = await Auth.startUnifiedPortal({});
+      setPkceTimedOut(false);
+      setAuthRequestId(undefined);
 
       // Handle social login (Google/GitHub)
       if (res.kind === "social") {
@@ -90,9 +92,6 @@ export default function LoginModal({ next }: { next: () => void }) {
 
       if (isSsoKind && res.issuerUrl && res.idcRegion) {
         // Start PKCE auth
-        setPkceTimedOut(false);
-        setAuthRequestId(undefined);
-
         const init = await Auth.startPkceAuthorization({
           issuerUrl: res.issuerUrl,
           region: res.idcRegion,
@@ -295,7 +294,6 @@ export default function LoginModal({ next }: { next: () => void }) {
                   setLoginMethod("deviceCode");
                   setLoginState("not started");
                   setError(null);
-                  Auth.cancelPkceAuthorization().catch(console.error);
                 }}
               >
                 Login with Device Code
@@ -322,7 +320,6 @@ export default function LoginModal({ next }: { next: () => void }) {
                       setLoginMethod("deviceCode");
                       setLoginState("not started");
                       setError(null);
-                      Auth.cancelPkceAuthorization().catch(console.error);
                     }}
                   >
                     Try authenticating with device code
@@ -336,6 +333,7 @@ export default function LoginModal({ next }: { next: () => void }) {
                 onClick={() => {
                   setLoginState("not started");
                   setError(null);
+                  setAuthRequestId(undefined);
                   Auth.cancelPkceAuthorization().catch(console.error);
                 }}
               >
@@ -357,7 +355,13 @@ export default function LoginModal({ next }: { next: () => void }) {
                     ? () => setTab("iam")
                     : () => setTab("builderId")
                 }
-                signInText={completedOnboarding ? "Log back in" : "Sign in"}
+                signInText={
+                  completedOnboarding
+                    ? tab === "builderId"
+                      ? "Login with Builder ID"
+                      : "Login with IDC"
+                    : "Sign in"
+                }
               />
               <Button
                 variant="ghost"
@@ -563,7 +567,13 @@ export default function LoginModal({ next }: { next: () => void }) {
                 ? () => setTab("iam")
                 : () => setTab("builderId")
             }
-            signInText={completedOnboarding ? "Log back in" : "Sign in"}
+            signInText={
+              completedOnboarding
+                ? tab === "builderId"
+                  ? "Login with Builder ID"
+                  : "Login with IDC"
+                : "Sign in"
+            }
           />
         )}
       </div>
