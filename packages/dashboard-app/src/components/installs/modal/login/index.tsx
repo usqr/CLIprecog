@@ -294,7 +294,8 @@ export default function LoginModal({ next }: { next: () => void }) {
                 onClick={() => {
                   setLoginMethod("deviceCode");
                   setLoginState("not started");
-                  setError(null);
+                  setAuthRequestId(undefined);
+                  Auth.cancelPkceAuthorization().catch(console.error);
                 }}
               >
                 Login with Device Code
@@ -355,12 +356,12 @@ export default function LoginModal({ next }: { next: () => void }) {
                     : () => setTab("builderId")
                 }
                 signInText={
-        completedOnboarding
-          ? tab === "builderId"
-            ? "Login with Builder ID"
-            : "Login with IDC"
-          : "Sign in"
-      }
+                  completedOnboarding
+                    ? tab === "builderId"
+                      ? "Login with Builder ID"
+                      : "Login with IDC"
+                    : "Sign in"
+                }
               />
               <Button
                 variant="ghost"
@@ -566,13 +567,13 @@ export default function LoginModal({ next }: { next: () => void }) {
                 ? () => setTab("iam")
                 : () => setTab("builderId")
             }
-             signInText={
-        completedOnboarding
-          ? tab === "builderId"
-            ? "Login with Builder ID"
-            : "Login with IDC"
-          : "Sign in"
-      }
+            signInText={
+              completedOnboarding
+                ? tab === "builderId"
+                  ? "Login with Builder ID"
+                  : "Login with IDC"
+                : "Sign in"
+            }
           />
         )}
       </div>

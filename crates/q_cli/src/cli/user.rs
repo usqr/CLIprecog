@@ -131,10 +131,10 @@ enum AuthMethod {
 impl Display for AuthMethod {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            AuthMethod::BuilderId => write!(f, "Use for Free with Builder ID"),
+            AuthMethod::BuilderId => write!(f, "Use with Builder ID"),
             AuthMethod::Social(SocialProvider::Google) => write!(f, "Use with Google"),
             AuthMethod::Social(SocialProvider::Github) => write!(f, "Use with GitHub"),
-            AuthMethod::IdentityCenter => write!(f, "Use with Pro license"),
+            AuthMethod::IdentityCenter => write!(f, "Use with IDC Account"),
         }
     }
 }

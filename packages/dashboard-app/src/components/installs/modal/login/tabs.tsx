@@ -39,7 +39,7 @@ function BuilderIdTab({
         variant={"ghost"}
         onClick={toggleTab}
       >
-        <span className="text-xs">Use with Pro license</span>
+        <span className="text-xs">Use with IDC Account</span>
       </Button>
     </div>
   );
@@ -232,7 +232,7 @@ function IamTab({
           variant={"ghost"}
           onClick={toggleTab}
         >
-          <span className="text-xs">Use for Free with Builder ID</span>
+          <span className="text-xs">Use with Builder ID</span>
         </Button>
       </div>
     </div>
