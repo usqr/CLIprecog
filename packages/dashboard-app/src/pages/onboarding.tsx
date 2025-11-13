@@ -24,9 +24,10 @@ export default function Page() {
               Amazon Q Developer CLI users can now upgrade to the Kiro CLI
             </h1>
             <p className="text-sm leading-tight">
-              The Kiro CLI leverages the agentic CLI features of Q Developer
-              CLI, and is fully compatible with Q Developer CLI. If you have
-              auto updates enabled, you will be updated on 11/21.{" "}
+              The Kiro CLI leverages the agentic features of Q CLI and can be
+              used with your existing Q Developer subscription. If you have auto
+              updates enabled for the Q CLI, unless you disable that setting, Q
+              CLI will auto update to Kiro CLI on 11/24{" "}
               <Link
                 href={KIRO_CLI_URL}
                 className="font-medium no-underline"
