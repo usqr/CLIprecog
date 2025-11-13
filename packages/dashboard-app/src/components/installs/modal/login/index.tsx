@@ -10,7 +10,7 @@ import Tab, { ProfileTab } from "./tabs";
 import { useLocalStateZodDefault } from "@/hooks/store/useState";
 import { z } from "zod";
 import { Link } from "@/components/ui/link";
-import { Q_MIGRATION_URL } from "@/lib/constants";
+import { KIRO_CLI_URL } from "@/lib/constants";
 import { useAuth, useAuthRequest, useRefreshAuth } from "@/hooks/store/useAuth";
 
 export default function LoginModal({ next }: { next: () => void }) {
@@ -191,10 +191,10 @@ export default function LoginModal({ next }: { next: () => void }) {
         {completedOnboarding && tab == "builderId" && (
           <div className="text-center flex flex-col">
             <div className="font-ember font-bold">
-              CodeWhisperer is now Amazon Q
+              Amazon Q Developer CLI users can now upgrade to the Kiro CLI
             </div>
-            <Link href={Q_MIGRATION_URL} className="text-sm">
-              Read the announcement blog post
+            <Link href={KIRO_CLI_URL} className="text-sm">
+              Learn more &gt;
             </Link>
           </div>
         )}

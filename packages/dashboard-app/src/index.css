@@ -72,6 +72,11 @@
     --ring: 240 10% 3.9%;
 
     --radius: 0.5rem;
+
+    /* Amazon Q Developer CLI upgrade banner colors */
+    --q-banner-bg: #262626;
+    --q-banner-border: #8e48ff;
+    --q-banner-link: #b07fff;
   }
 
   body {
@@ -107,6 +112,11 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
+
+    /* Amazon Q Developer CLI upgrade banner colors */
+    --q-banner-bg: #262626;
+    --q-banner-border: #8e48ff;
+    --q-banner-link: #b07fff;
   }
 }
 
@@ -140,7 +150,8 @@
   }
 
   .gradient-q-secondary-dark {
-    background: radial-gradient(
+    background:
+      radial-gradient(
         122.5% 122.5% at 0% 0%,
         #000000 0%,
         rgba(0, 0, 0, 0) 100%
@@ -161,6 +172,11 @@
         rgba(83, 139, 247, 0) 100%
       ),
       #301673;
+  }
+
+  .q-banner {
+    background-color: var(--q-banner-bg);
+    border: 1px solid var(--q-banner-border);
   }
 }
 
