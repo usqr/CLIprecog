@@ -20,7 +20,7 @@ export const TELEMETRY_WIKI_URL =
   "https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/opt-out-IDE.html";
 export const Q_MIGRATION_URL =
   "https://docs.aws.amazon.com/codewhisperer/latest/userguide/whisper-legacy.html";
-export const KIRO_CLI_URL = "https://kiro.dev/cli/upgrade";
+export const KIRO_CLI_URL = "https://kiro.dev/cli-upgrade";
 
 export const AMZN_START_URL = "https://amzn.awsapps.com/start";
 
