@@ -62,6 +62,7 @@ use fig_proto::util::get_shell;
 use fig_util::directories::{
     figterm_socket_path,
     logs_dir,
+    update_lock_path,
 };
 use fig_util::env_var::QTERM_SESSION_ID;
 use fig_util::{
@@ -253,6 +254,8 @@ pub enum InternalSubcommand {
     DumpState {
         component: StateComponent,
     },
+    /// Currently only used by macOS after finishing an update. The old binary calls `FinishUpdate`
+    /// on the new binary at the end of updating.
     FinishUpdate {
         #[arg(long)]
         relaunch_dashboard: bool,
@@ -784,6 +787,8 @@ impl InternalSubcommand {
                     verbose: false,
                 })
                 .ok();
+
+                let _ = tokio::fs::remove_file(update_lock_path(&fig_os_shim::Context::new())?).await;
 
                 Ok(ExitCode::SUCCESS)
             },
