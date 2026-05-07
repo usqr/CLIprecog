@@ -12,13 +12,9 @@ members = [
 default-members = ["crates/q_cli"]
 
 [workspace.package]
-authors = [
-    "Amazon Q CLI Team (q-cli@amazon.com)",
-    "Chay Nabors (nabochay@amazon.com)",
-    "Brandon Kiser (bskiser@amazon.com)",
-]
+authors = ["Precog CLI contributors"]
 edition = "2024"
-homepage = "https://aws.amazon.com/q/"
+homepage = "https://github.com/usqr/CLIprecog"
 publish = false
 version = "1.19.7"
 license = "MIT OR Apache-2.0"

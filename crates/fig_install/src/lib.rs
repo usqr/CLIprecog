@@ -193,7 +193,12 @@ pub async fn update(
         is_auto_update,
     }: UpdateOptions,
 ) -> Result<bool, Error> {
+    // Precog: auto-update is disabled at the source (no update CDN configured).
+    let _ = (ctx, on_update, ignore_rollout, interactive, relaunch_dashboard, is_auto_update);
+    return Ok(false);
+    #[allow(unreachable_code)]
     info!("Checking for updates...");
+    #[allow(unreachable_code)]
     if let Some(update) = check_for_updates(ignore_rollout, is_auto_update).await? {
         info!("Found update: {}", update.version);
         debug!("Update info: {:?}", update);

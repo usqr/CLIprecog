@@ -95,8 +95,8 @@ pub async fn check_for_update(show_webview: bool, relaunch_dashboard: bool) -> b
         None
     };
 
-    // If not debug or override, check for update
-    if !is_cargo_debug_build() && !fig_settings::settings::get_bool_or("app.disableAutoupdates", false) {
+    // Precog: auto-update on launch is disabled (no update CDN configured).
+    if false && !is_cargo_debug_build() && !fig_settings::settings::get_bool_or("app.disableAutoupdates", false) {
         match fig_install::update(Context::new(), updating_cb, UpdateOptions {
             ignore_rollout: false,
             interactive: show_webview,

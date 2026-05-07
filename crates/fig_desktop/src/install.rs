@@ -350,7 +350,7 @@ pub async fn initialize_fig_dir(env: &fig_os_shim::Env) -> anyhow::Result<()> {
 
     if let Some(bundle_path) = get_bundle_path() {
         let exe = bundle_path.join("Contents").join("MacOS").join(APP_PROCESS_NAME);
-        let startup_launch_agent = LaunchdPlist::new("com.amazon.codewhisperer.launcher")
+        let startup_launch_agent = LaunchdPlist::new("dev.precog.cli.launcher")
             .program_arguments([&exe.to_string_lossy(), "--is-startup", "--no-dashboard"])
             .associated_bundle_identifiers([APP_BUNDLE_ID])
             .run_at_load(true);
@@ -468,7 +468,7 @@ async fn run_linux_install(ctx: Arc<Context>, settings: Arc<fig_settings::Settin
     // launch_ibus().await;
 }
 
-/// Installs the correct version of the Amazon Q for CLI GNOME Shell extension, if required.
+/// Installs the correct version of the Precog GNOME Shell extension, if required.
 #[cfg(target_os = "linux")]
 async fn install_gnome_shell_extension<Ctx, ExtensionsCtx>(
     ctx: &Ctx,
