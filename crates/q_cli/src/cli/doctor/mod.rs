@@ -2106,13 +2106,6 @@ pub async fn doctor_cli(all: bool, strict: bool) -> Result<ExitCode> {
         })?;
     }
 
-    // Remove update lock on doctor runs to fix bad state if update crashed.
-    if let Ok(update_lock) = fig_util::directories::update_lock_path(&Context::new()) {
-        if update_lock.exists() {
-            std::fs::remove_file(update_lock).ok();
-        }
-    }
-
     run_checks(
         "Let's check if you're logged in...".into(),
         vec![&LoginStatusCheck {}],
@@ -2125,7 +2118,6 @@ pub async fn doctor_cli(all: bool, strict: bool) -> Result<ExitCode> {
     launch_fig_desktop(LaunchArgs {
         wait_for_socket: true,
         open_dashboard: false,
-        immediate_update: true,
         verbose: false,
     })
     .ok();

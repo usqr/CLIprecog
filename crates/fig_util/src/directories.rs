@@ -455,15 +455,6 @@ pub fn settings_path() -> Result<PathBuf> {
     Ok(fig_data_dir()?.join("settings.json"))
 }
 
-/// The path to the lock file used to indicate that the app is updating
-///
-/// - Linux: `$HOME/.local/share/{data_dir}/update.lock`
-/// - MacOS: `$HOME/Library/Application Support/{data_dir}/update.lock`
-/// - Windows: `%LOCALAPPDATA%\{data_dir}\update.lock`
-pub fn update_lock_path(ctx: &impl FsProvider) -> Result<PathBuf> {
-    Ok(fig_data_dir_ctx(ctx)?.join("update.lock"))
-}
-
 /// The path to the midway cookie
 ///
 /// Path: `$HOME/.midway/cookie`
@@ -551,7 +542,6 @@ mod linux_tests {
 
     #[test]
     fn all_paths() {
-        let ctx = Context::new();
         assert!(home_dir().is_ok());
         #[cfg(unix)]
         assert!(home_local_bin().is_ok());
@@ -565,7 +555,6 @@ mod linux_tests {
         assert!(backups_dir().is_ok());
         assert!(logs_dir().is_ok());
         assert!(settings_path().is_ok());
-        assert!(update_lock_path(&ctx).is_ok());
         assert!(midway_cookie_path().is_ok());
     }
 }
@@ -746,14 +735,6 @@ mod tests {
         linux!(settings_path(), @"$HOME/.local/share/precog/settings.json");
         macos!(settings_path(), @"$HOME/Library/Application Support/precog/settings.json");
         windows!(settings_path(), @r"C:\Users\$USER\AppData\Local\Precog\settings.json");
-    }
-
-    #[test]
-    fn snapshot_update_lock_path() {
-        let ctx = Context::new();
-        linux!(update_lock_path(&ctx), @"$HOME/.local/share/precog/update.lock");
-        macos!(update_lock_path(&ctx), @"$HOME/Library/Application Support/precog/update.lock");
-        windows!(update_lock_path(&ctx), @r"C:\Users\$USER\AppData\Local\Precog\update.lock");
     }
 
     #[test]
