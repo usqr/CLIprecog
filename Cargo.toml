@@ -20,10 +20,6 @@ version = "1.19.7"
 license = "MIT OR Apache-2.0"
 
 [workspace.dependencies]
-amzn-codewhisperer-client = { path = "crates/amzn-codewhisperer-client" }
-amzn-codewhisperer-streaming-client = { path = "crates/amzn-codewhisperer-streaming-client" }
-amzn-consolas-client = { path = "crates/amzn-consolas-client" }
-amzn-qdeveloper-streaming-client = { path = "crates/amzn-qdeveloper-streaming-client" }
 anstream = "0.6.13"
 anyhow = "1.0.98"
 appkit-nsworkspace-bindings = { path = "crates/macos-utils/appkit-nsworkspace-bindings" }
