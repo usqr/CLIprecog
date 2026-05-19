@@ -16,7 +16,6 @@ mod settings;
 mod telemetry;
 mod theme;
 mod uninstall;
-mod user;
 
 use std::io::{
     Write as _,
@@ -42,7 +41,6 @@ use eyre::{
     bail,
 };
 use feed::Feed;
-use fig_auth::is_logged_in;
 use fig_ipc::local::open_ui_element;
 use fig_log::{
     LogArgs,
@@ -64,7 +62,6 @@ use tracing::{
 };
 
 use self::integrations::IntegrationsSubcommands;
-use self::user::RootUserSubcommand;
 use crate::util::desktop::{
     LaunchArgs,
     launch_fig_desktop,
@@ -136,12 +133,6 @@ pub enum CliRootCommands {
     Theme(theme::ThemeArgs),
     /// Create a new Github issue
     Issue(issue::IssueArgs),
-    /// Root level user subcommands
-    #[command(flatten)]
-    RootUser(user::RootUserSubcommand),
-    /// Manage your account
-    #[command(subcommand)]
-    User(user::UserSubcommand),
     /// Fix and diagnose common issues
     Doctor(doctor::DoctorArgs),
     /// Generate CLI completion spec
@@ -190,11 +181,6 @@ impl CliRootCommands {
             CliRootCommands::Init(_) => "init",
             CliRootCommands::Theme(_) => "theme",
             CliRootCommands::Issue(_) => "issue",
-            CliRootCommands::RootUser(RootUserSubcommand::Login(_)) => "login",
-            CliRootCommands::RootUser(RootUserSubcommand::Logout) => "logout",
-            CliRootCommands::RootUser(RootUserSubcommand::Whoami { .. }) => "whoami",
-            CliRootCommands::RootUser(RootUserSubcommand::Profile) => "profile",
-            CliRootCommands::User(_) => "user",
             CliRootCommands::Doctor(_) => "doctor",
             CliRootCommands::Completion(_) => "completion",
             CliRootCommands::Internal(_) => "internal",
@@ -288,8 +274,6 @@ impl Cli {
                 CliRootCommands::Uninstall { no_confirm } => uninstall::uninstall_command(no_confirm).await,
                 CliRootCommands::Diagnostic(args) => args.execute().await,
                 CliRootCommands::Init(args) => args.execute().await,
-                CliRootCommands::User(user) => user.execute().await,
-                CliRootCommands::RootUser(root_user) => root_user.execute().await,
                 CliRootCommands::Doctor(args) => args.execute().await,
                 CliRootCommands::Hook(hook_subcommand) => hook_subcommand.execute().await,
                 CliRootCommands::Theme(theme_args) => theme_args.execute().await,
@@ -435,14 +419,9 @@ async fn launch_dashboard(help_fallback: bool) -> Result<ExitCode> {
         verbose: true,
     })?;
 
-    let route = match is_logged_in().await {
-        true => Some("/".into()),
-        false => None,
-    };
-
     println!("Opening {PRODUCT_NAME} dashboard");
 
-    open_ui_element(UiElement::MissionControl, route)
+    open_ui_element(UiElement::MissionControl, Some("/".into()))
         .await
         .context("Failed to open dashboard")?;
 
@@ -523,59 +502,6 @@ mod test {
             ],
             CliRootCommands::Internal(InternalSubcommand::AttemptToFinishInputMethodInstallation {
                 bundle_path: Some(std::path::PathBuf::from("/path/to/bundle.app"))
-            })
-        );
-    }
-
-    #[test]
-    fn test_inline_shell_completion() {
-        use internal::InternalSubcommand;
-
-        assert_parse!(
-            ["_", "inline-shell-completion", "--buffer", ""],
-            CliRootCommands::Internal(InternalSubcommand::InlineShellCompletion { buffer: "".to_string() })
-        );
-
-        assert_parse!(
-            ["_", "inline-shell-completion", "--buffer", "foo"],
-            CliRootCommands::Internal(InternalSubcommand::InlineShellCompletion {
-                buffer: "foo".to_string()
-            })
-        );
-
-        assert_parse!(
-            ["_", "inline-shell-completion", "--buffer", "-"],
-            CliRootCommands::Internal(InternalSubcommand::InlineShellCompletion {
-                buffer: "-".to_string()
-            })
-        );
-
-        assert_parse!(
-            ["_", "inline-shell-completion", "--buffer", "--"],
-            CliRootCommands::Internal(InternalSubcommand::InlineShellCompletion {
-                buffer: "--".to_string()
-            })
-        );
-
-        assert_parse!(
-            ["_", "inline-shell-completion", "--buffer", "--foo bar"],
-            CliRootCommands::Internal(InternalSubcommand::InlineShellCompletion {
-                buffer: "--foo bar".to_string()
-            })
-        );
-
-        assert_parse!(
-            [
-                "_",
-                "inline-shell-completion-accept",
-                "--buffer",
-                "abc",
-                "--suggestion",
-                "def"
-            ],
-            CliRootCommands::Internal(InternalSubcommand::InlineShellCompletionAccept {
-                buffer: "abc".to_string(),
-                suggestion: "def".to_string()
             })
         );
     }

@@ -11,10 +11,7 @@ use std::process::{
     ExitCode,
 };
 
-use anstream::{
-    eprintln,
-    println,
-};
+use anstream::println;
 use clap::{
     Subcommand,
     ValueEnum,
@@ -215,7 +212,6 @@ pub enum DebugSubcommand {
     Shell,
     /// Update the shell config permissions to have the correct owner and access rights
     FixPermissions,
-    RefreshAuthToken,
 }
 
 impl DebugSubcommand {
@@ -793,13 +789,6 @@ impl DebugSubcommand {
             },
             DebugSubcommand::FixPermissions => {
                 fix_permissions::fix_permissions(&env)?;
-            },
-            DebugSubcommand::RefreshAuthToken => match fig_auth::refresh_token().await? {
-                Some(_) => eprintln!("Refreshed token"),
-                None => {
-                    eprintln!("No token to refresh");
-                    return Ok(ExitCode::FAILURE);
-                },
             },
         }
         Ok(ExitCode::SUCCESS)

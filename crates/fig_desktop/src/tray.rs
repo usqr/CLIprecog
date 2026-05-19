@@ -30,7 +30,6 @@ use crate::event::{
     Event,
     WindowEvent,
 };
-use crate::webview::LOGIN_PATH;
 use crate::{
     AUTOCOMPLETE_ID,
     DASHBOARD_ID,
@@ -55,8 +54,6 @@ use crate::{
 //         }
 //     }};
 // }
-
-const LOGIN_MENU_ID: &str = "onboarding";
 
 pub fn handle_event(menu_event: &MenuEvent, proxy: &EventLoopProxy) {
     match &*menu_event.id().0 {
@@ -85,19 +82,6 @@ pub fn handle_event(menu_event: &MenuEvent, proxy: &EventLoopProxy) {
                     window_id: DASHBOARD_ID.clone(),
                     window_event: WindowEvent::Batch(vec![
                         WindowEvent::NavigateRelative { path: "/".into() },
-                        WindowEvent::Show,
-                    ]),
-                })
-                .unwrap();
-        },
-        LOGIN_MENU_ID => {
-            proxy
-                .send_event(Event::WindowEvent {
-                    window_id: DASHBOARD_ID.clone(),
-                    window_event: WindowEvent::Batch(vec![
-                        WindowEvent::NavigateRelative {
-                            path: LOGIN_PATH.into(),
-                        },
                         WindowEvent::Show,
                     ]),
                 })
@@ -162,58 +146,33 @@ pub async fn build_tray(
     _event_loop_window_target: &EventLoopWindowTarget,
     _figterm_state: &FigtermState,
 ) -> tray_icon::Result<TrayIcon> {
-    let is_logged_in = fig_auth::is_logged_in().await;
     TrayIconBuilder::new()
-        .with_icon(get_icon(is_logged_in))
+        .with_icon(get_icon())
         .with_icon_as_template(true)
-        .with_menu(Box::new(get_context_menu(is_logged_in)))
+        .with_menu(Box::new(get_context_menu()))
         .build()
 }
 
-pub fn get_icon(is_logged_in: bool) -> Icon {
-    let (icon_rgba, icon_width, icon_height) = {
-        let bytes = if is_logged_in {
-            cfg_if! {
-                if #[cfg(target_os = "linux")] {
-                    include_bytes!("../icons/icon-monochrome-light.png").to_vec()
-                } else {
-                    include_bytes!("../icons/icon-monochrome.png").to_vec()
-                }
-            }
+pub fn get_icon() -> Icon {
+    cfg_if! {
+        if #[cfg(target_os = "linux")] {
+            let bytes: Vec<u8> = include_bytes!("../icons/icon-monochrome-light.png").to_vec();
         } else {
-            cfg_if! {
-                if #[cfg(target_os = "linux")] {
-                    // This is intentionally the same as when logged in since Linux tray icons
-                    // don't really seem to work that well when multiple choices are available.
-                    include_bytes!("../icons/icon-monochrome-light.png").to_vec()
-                } else {
-                    include_bytes!("../icons/not-logged-in.png").to_vec()
-                }
-            }
-        };
-        let image = image::load_from_memory(&bytes)
-            .expect("Failed to open icon path")
-            .into_rgba8();
-        let (width, height) = image.dimensions();
-        let rgba = image.into_raw();
-        (rgba, width, height)
-    };
-    Icon::from_rgba(icon_rgba, icon_width, icon_height).expect("Failed to open icon")
-}
-
-fn get_image_rgba(image_bytes: &[u8]) -> (Vec<u8>, u32, u32) {
-    let image = image::load_from_memory(image_bytes)
+            let bytes: Vec<u8> = include_bytes!("../icons/icon-monochrome.png").to_vec();
+        }
+    }
+    let image = image::load_from_memory(&bytes)
         .expect("Failed to open icon path")
         .into_rgba8();
     let (width, height) = image.dimensions();
     let rgba = image.into_raw();
-    (rgba, width, height)
+    Icon::from_rgba(rgba, width, height).expect("Failed to open icon")
 }
 
-pub fn get_context_menu(is_logged_in: bool) -> Menu {
+pub fn get_context_menu() -> Menu {
     let mut tray_menu = Menu::new();
 
-    let elements = menu(is_logged_in);
+    let elements = menu();
     for elem in elements {
         elem.add_to_menu(&mut tray_menu);
     }
@@ -354,39 +313,15 @@ impl MenuElement {
     }
 }
 
-fn menu(is_logged_in: bool) -> Vec<MenuElement> {
+fn menu() -> Vec<MenuElement> {
     let not_working = MenuElement::entry(None, None, format!("{PRODUCT_NAME} not working?"), "not-working");
     let manual = MenuElement::entry(None, None, "User Guide", "user-manual");
     let version = MenuElement::info(None, format!("Version: {}", env!("CARGO_PKG_VERSION")));
     let quit = MenuElement::entry(None, None, format!("Quit {PRODUCT_NAME}"), "quit");
-    // let dashboard = MenuElement::entry(None, None, "Dashboard", "dashboard");
     let settings = MenuElement::entry(None, None, "Settings", "settings");
-    // let developer = MenuElement::sub_menu("Developer", vec![
-    //     MenuElement::entry(None, None, "Dashboard Devtools", "dashboard-devtools"),
-    //     MenuElement::entry(None, None, "Autocomplete Devtools", "autocomplete-devtools"),
-    //     MenuElement::entry(None, None, "Companion Devtools", "companion-devtools"),
-    // ]);
 
-    let onboarded_completed = fig_settings::state::get_bool_or("desktop.completedOnboarding", false);
-    let yellow_circle_img = get_image_rgba(include_bytes!("../icons/yellow-circle.png"));
-    let mut menu = if !is_logged_in && !onboarded_completed {
-        vec![
-            MenuElement::info(
-                Some(yellow_circle_img),
-                format!("{PRODUCT_NAME} hasn't been set up yet..."),
-            ),
-            MenuElement::entry(None, None, "Get Started", LOGIN_MENU_ID),
-        ]
-    } else if !is_logged_in {
-        vec![
-            MenuElement::info(Some(yellow_circle_img), "Your session has expired"),
-            MenuElement::entry(None, None, "Log back in", LOGIN_MENU_ID),
-        ]
-    } else {
-        vec![settings]
-    };
-
-    menu.extend(vec![
+    vec![
+        settings,
         MenuElement::Separator,
         manual,
         not_working,
@@ -394,7 +329,5 @@ fn menu(is_logged_in: bool) -> Vec<MenuElement> {
         version,
         MenuElement::Separator,
         quit,
-    ]);
-
-    menu
+    ]
 }
