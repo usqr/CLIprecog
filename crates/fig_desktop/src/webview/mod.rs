@@ -1031,27 +1031,6 @@ async fn init_webview_notification_listeners(proxy: EventLoopProxy) {
         }
     );
 
-    // I don't think this is meant to be here anymore
-    // watcher!(settings, "app.beta", |_: JsonNotification, proxy: &EventLoopProxy| {
-    //     let proxy = proxy.clone();
-    //     tokio::spawn(fig_install::update(
-    //         Some(Box::new(move |_| {
-    //             proxy
-    //                 .send_event(Event::ShowMessageNotification {
-    //                     title: "Fig Update".into(),
-    //                     body: "Fig is updating in the background. You can continue to use Fig while
-    // it updates.".into(),                     parent: None,
-    //                 })
-    //                 .unwrap();
-    //         })),
-    //         fig_install::UpdateOptions {
-    //             ignore_rollout: true,
-    //             interactive: true,
-    //             relaunch_dashboard: true,
-    //         },
-    //     ));
-    // });
-
     // Midway watcher
     tokio::spawn(async move {
         let mut res = NOTIFICATION_BUS.subscribe_midway();

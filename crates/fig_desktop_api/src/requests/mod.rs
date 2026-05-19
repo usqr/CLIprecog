@@ -13,7 +13,6 @@ pub mod profile;
 pub mod settings;
 pub mod state;
 pub mod telemetry;
-pub mod update;
 
 pub type ServerOriginatedSubMessage = fig_proto::fig::server_originated_message::Submessage;
 pub type RequestResult = Result<Box<ServerOriginatedSubMessage>, Error>;

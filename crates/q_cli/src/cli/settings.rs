@@ -199,7 +199,6 @@ impl SettingsArgs {
                     launch_fig_desktop(LaunchArgs {
                         wait_for_socket: true,
                         open_dashboard: false,
-                        immediate_update: true,
                         verbose: true,
                     })?;
 

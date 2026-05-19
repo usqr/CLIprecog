@@ -62,7 +62,6 @@ use fig_proto::util::get_shell;
 use fig_util::directories::{
     figterm_socket_path,
     logs_dir,
-    update_lock_path,
 };
 use fig_util::env_var::QTERM_SESSION_ID;
 use fig_util::{
@@ -253,21 +252,6 @@ pub enum InternalSubcommand {
     },
     DumpState {
         component: StateComponent,
-    },
-    /// Currently only used by macOS after finishing an update. The old binary calls `FinishUpdate`
-    /// on the new binary at the end of updating.
-    FinishUpdate {
-        #[arg(long)]
-        relaunch_dashboard: bool,
-        #[arg(long)]
-        delete_bundle: Option<String>,
-    },
-    #[cfg(target_os = "macos")]
-    SwapFiles {
-        from: PathBuf,
-        to: PathBuf,
-        #[arg(long)]
-        not_same_bundle_name: bool,
     },
     #[cfg(target_os = "macos")]
     BrewUninstall {
@@ -709,7 +693,6 @@ impl InternalSubcommand {
                 launch_fig_desktop(LaunchArgs {
                     wait_for_socket: true,
                     open_dashboard: false,
-                    immediate_update: false,
                     verbose: false,
                 })
                 .ok();
@@ -756,77 +739,6 @@ impl InternalSubcommand {
 
                 println!("{}", state.json);
                 Ok(ExitCode::SUCCESS)
-            },
-            InternalSubcommand::FinishUpdate {
-                relaunch_dashboard,
-                delete_bundle,
-            } => {
-                // Wait some time for the previous installation to close
-                tokio::time::sleep(Duration::from_millis(100)).await;
-
-                crate::util::quit_fig(false).await.ok();
-
-                tokio::time::sleep(Duration::from_millis(200)).await;
-
-                if let Some(bundle_path) = delete_bundle {
-                    let path = std::path::Path::new(&bundle_path);
-                    if path.exists() {
-                        tokio::fs::remove_dir_all(&path)
-                            .await
-                            .map_err(|err| tracing::warn!("Failed to remove {path:?}: {err}"))
-                            .ok();
-                    }
-
-                    tokio::time::sleep(Duration::from_millis(200)).await;
-                }
-
-                launch_fig_desktop(LaunchArgs {
-                    wait_for_socket: false,
-                    open_dashboard: relaunch_dashboard,
-                    immediate_update: false,
-                    verbose: false,
-                })
-                .ok();
-
-                let _ = tokio::fs::remove_file(update_lock_path(&fig_os_shim::Context::new())?).await;
-
-                Ok(ExitCode::SUCCESS)
-            },
-            #[cfg(target_os = "macos")]
-            InternalSubcommand::SwapFiles {
-                from,
-                to,
-                not_same_bundle_name,
-            } => {
-                use std::io::stderr;
-                use std::os::unix::prelude::OsStrExt;
-
-                let from_cstr = match std::ffi::CString::new(from.as_os_str().as_bytes()).context("Invalid from path") {
-                    Ok(cstr) => cstr,
-                    Err(err) => {
-                        writeln!(stderr(), "Invalid from path: {err}").ok();
-                        return Ok(ExitCode::FAILURE);
-                    },
-                };
-
-                let to_cstr = match std::ffi::CString::new(to.as_os_str().as_bytes()) {
-                    Ok(cstr) => cstr,
-                    Err(err) => {
-                        writeln!(stderr(), "Invalid to path: {err}").ok();
-                        return Ok(ExitCode::FAILURE);
-                    },
-                };
-
-                match fig_install::macos::install(from_cstr, to_cstr, !not_same_bundle_name) {
-                    Ok(_) => {
-                        writeln!(stdout(), "success").ok();
-                        Ok(ExitCode::SUCCESS)
-                    },
-                    Err(err) => {
-                        writeln!(stderr(), "Failed to swap files: {err}").ok();
-                        Ok(ExitCode::FAILURE)
-                    },
-                }
             },
             #[cfg(target_os = "macos")]
             InternalSubcommand::BrewUninstall { zap } => {
