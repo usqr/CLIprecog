@@ -35,8 +35,6 @@ crossterm.workspace = true
 ctrlc = "3.4.6"
 dialoguer = { version = "0.11.0", features = ["fuzzy-select"] }
 eyre.workspace = true
-fig_api_client.workspace = true
-fig_auth.workspace = true
 fig_diagnostic.workspace = true
 fig_install.workspace = true
 fig_integrations.workspace = true

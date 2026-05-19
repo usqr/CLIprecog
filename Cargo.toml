@@ -57,8 +57,6 @@ crossterm = { version = "0.28.1", features = ["event-stream", "events"] }
 dashmap = "6.0.1"
 dirs = "5.0.0"
 eyre = "0.6.8"
-fig_api_client = { path = "crates/fig_api_client" }
-fig_auth = { path = "crates/fig_auth" }
 fig_aws_common = { path = "crates/fig_aws_common" }
 fig_desktop_api = { path = "crates/fig_desktop_api" }
 fig_diagnostic = { path = "crates/fig_diagnostic" }
