@@ -184,7 +184,6 @@ impl<'a> fig_desktop_api::handler::EventHandler for EventHandler<'a> {
             request.context.intercept_state,
         )
     }
-
 }
 
 #[allow(clippy::too_many_arguments)]

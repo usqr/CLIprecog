@@ -815,4 +815,3 @@ export async function sendDragWindowRequest(
     );
   });
 }
-

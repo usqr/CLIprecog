@@ -12,16 +12,30 @@
 //! `packages/autocomplete-specs/`.
 
 use std::borrow::Cow;
-use std::path::{Path, PathBuf};
+use std::path::{
+    Path,
+    PathBuf,
+};
 use std::sync::Arc;
 
 use anyhow::Result;
 use fig_os_shim::Context;
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize,
+    Serialize,
+};
 use tokio::sync::Mutex;
-use tracing::{debug, warn};
+use tracing::{
+    debug,
+    warn,
+};
 use wry::http::header::CONTENT_TYPE;
-use wry::http::{HeaderValue, Request, Response, StatusCode};
+use wry::http::{
+    HeaderValue,
+    Request,
+    Response,
+    StatusCode,
+};
 
 use crate::webview::WindowId;
 
@@ -135,7 +149,7 @@ async fn cached_index(dir: &Path) -> SpecIndex {
             Err(err) => {
                 warn!(%err, "Failed to read spec index");
                 *cache = Some(SpecIndex::default());
-            }
+            },
         }
     }
     cache.clone().unwrap_or_default()
@@ -206,6 +220,6 @@ pub async fn handle(
         Err(err) => {
             warn!(?candidate, %err, "Failed to read spec file");
             Ok(res_404())
-        }
+        },
     }
 }

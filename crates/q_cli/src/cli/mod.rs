@@ -62,11 +62,11 @@ use tracing::{
 };
 
 use self::integrations::IntegrationsSubcommands;
+use crate::util::CliContext;
 use crate::util::desktop::{
     LaunchArgs,
     launch_fig_desktop,
 };
-use crate::util::CliContext;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, ValueEnum)]
 pub enum OutputFormat {

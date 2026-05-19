@@ -2,7 +2,10 @@
 
 ## Status
 ✅ Workspace `cargo check --workspace --tests` clean.
-Pending: full `cargo build`, dashboard `pnpm build`, smoke test.
+✅ `cargo build --release --workspace` clean (warnings only, 4m 29s).
+✅ `pnpm install && pnpm -r build` — dashboard + autocomplete packages build.
+✅ `precog install --no-confirm`, `precog setup --no-confirm`, `precog doctor` — no login gate, exit 0.
+Pending: autocomplete interactive smoke (requires new shell session).
 
 ## Completed this session
 - `fig_telemetry` — gutted CW client + `fig_auth::builder_id_token` tagging; dropped `amzn-codewhisperer-client` dep
@@ -30,6 +33,4 @@ Pending: full `cargo build`, dashboard `pnpm build`, smoke test.
 - Deleted unused crates: `amzn-codewhisperer-client`, `amzn-codewhisperer-streaming-client`, `amzn-consolas-client`, `amzn-qdeveloper-streaming-client`; removed from workspace deps
 
 ## Verification still to run
-- `cargo build` (release path)
-- `pnpm install && pnpm -r build` for dashboard (proto regen via `buf generate`)
-- `precog setup`, `precog doctor`, autocomplete smoke
+- Autocomplete interactive smoke (open a fresh shell with the new binary on PATH; the `precog doctor` "terminal not running with latest integration" warning will clear on restart).

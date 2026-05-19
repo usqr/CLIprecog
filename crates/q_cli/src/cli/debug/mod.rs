@@ -201,9 +201,7 @@ pub enum DebugSubcommand {
         rate: f64,
     },
     /// Open up the devtools of a specific webview
-    Devtools {
-        app: App,
-    },
+    Devtools { app: App },
     /// Lists installed IntelliJ variants
     #[cfg(any(target_os = "macos", target_os = "linux"))]
     #[command(name = "list-intellij-variants")]
