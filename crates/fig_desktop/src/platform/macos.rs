@@ -689,10 +689,8 @@ impl PlatformStateImpl {
 
         if !is_xterm && supports_ime {
             tracing::debug!("Sending notif dev.precog.cli.edit_buffer_updated");
-            NotificationCenter::distributed_center().post_notification(
-                ns_string!("dev.precog.cli.edit_buffer_updated"),
-                &NSDictionary::new(),
-            );
+            NotificationCenter::distributed_center()
+                .post_notification(ns_string!("dev.precog.cli.edit_buffer_updated"), &NSDictionary::new());
         } else {
             let caret = if is_xterm {
                 active_window

@@ -118,12 +118,8 @@ impl SettingsArgs {
                     bail!("The EDITOR environment variable is not set")
                 }
             },
-            Some(SettingsSubcommands::List { all: _, format }) => {
-                Self::print_all_settings(format)
-            },
-            Some(SettingsSubcommands::All { format }) => {
-                Self::print_all_settings(format)
-            },
+            Some(SettingsSubcommands::List { all: _, format }) => Self::print_all_settings(format),
+            Some(SettingsSubcommands::All { format }) => Self::print_all_settings(format),
             None => match &self.key {
                 Some(key) => match (&self.value, self.delete) {
                     (Some(_), true) => Err(eyre::eyre!(

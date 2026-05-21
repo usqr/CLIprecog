@@ -1,0 +1,15 @@
+{
+  "entries": [
+    {
+      "type": "release",
+      "title": "Precog fork",
+      "description": "",
+      "date": "2026-05-19",
+      "hidden": true,
+      "link": "",
+      "changes": [
+        { "type": "added", "description": "" }
+      ]
+    }
+  ]
+}

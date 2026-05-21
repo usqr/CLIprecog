@@ -152,9 +152,7 @@ impl AppSubcommand {
                 }
             },
             AppSubcommand::Prompts => {
-                if fig_util::manifest::is_minimal() {
-                } else if desktop_app_running() {
-                } else {
+                if !fig_util::manifest::is_minimal() && !desktop_app_running() {
                     let no_autolaunch = settings::get_bool_or("app.disableAutolaunch", false) || manifest::is_minimal();
                     let user_quit_app = state::get_bool_or("APP_TERMINATED_BY_USER", false);
                     if !no_autolaunch && !user_quit_app && !fig_util::system_info::in_ssh() {
