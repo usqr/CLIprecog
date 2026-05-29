@@ -22,6 +22,9 @@ const CODEX_FILES: &[&str] = &[
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
+    // Silence `unexpected_cfgs` warnings from the `objc` macro's legacy `cfg(feature = "cargo-clippy")`
+    // checks.
+    println!("cargo::rustc-check-cfg=cfg(feature, values(\"cargo-clippy\"))");
 
     let out_dir = std::env::var("OUT_DIR").unwrap();
     let out_dir = std::path::Path::new(&out_dir);

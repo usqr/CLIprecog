@@ -7,6 +7,9 @@ use std::{
 use image::imageops::FilterType;
 
 fn main() {
+    // Silence `unexpected_cfgs` warnings from the `objc` macro's legacy `cfg(feature = "cargo-clippy")`
+    // checks.
+    println!("cargo::rustc-check-cfg=cfg(feature, values(\"cargo-clippy\"))");
     build_assets();
 }
 

@@ -11,5 +11,12 @@
     "build": "npx @withfig/autocomplete-tools compile",
     "build:index": "node ./scripts/generate-index.mjs"
   },
+  "dependencies": {
+    "@fig/autocomplete-generators": "^2.4.0",
+    "@fig/autocomplete-helpers": "^2.0.0",
+    "semver": "^7.7.2",
+    "strip-json-comments": "^5.0.1",
+    "yaml": "^2.5.1"
+  },
   "files": ["src", "build", "LICENSE", "UPSTREAM-README.md"]
 }
