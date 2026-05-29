@@ -6,8 +6,6 @@ members = [
     "crates/macos-utils/accessibility-master/accessibility",
     "crates/macos-utils/accessibility-master/accessibility-sys",
     "crates/macos-utils/appkit-nsworkspace-bindings",
-    "tests/fig-api/fig-api-mock",
-    "tests/figterm2",
 ]
 default-members = ["crates/q_cli"]
 
@@ -151,7 +149,7 @@ tracing-subscriber = { version = "0.3.19", features = [
     "time",
 ] }
 unicode-width = "0.2.0"
-url = "2.5.4"
+url = { version = "2.5.4", features = ["serde"] }
 uuid = { version = "1.15.1", features = ["v4", "serde"] }
 walkdir = "2.5.0"
 which = "6.0.3"
