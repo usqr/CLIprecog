@@ -250,3 +250,8 @@ opt-level = 3
 
 [profile.dev.package.backtrace]
 opt-level = 3
+
+# Local patch: tolerate WKURLSchemeTask "already stopped" throws instead of
+# aborting precog_desktop. See vendor/wry-0.48.1/src/wkwebview/class/url_scheme_handler.rs.
+[patch.crates-io]
+wry = { path = "vendor/wry-0.48.1" }

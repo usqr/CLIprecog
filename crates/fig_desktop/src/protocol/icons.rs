@@ -68,8 +68,12 @@ static ASSETS: LazyLock<HashMap<AssetSpecifier<'static>, Arc<Cow<'static, [u8]>>
     }
 
     load_assets! {
-        "alert", "asterisk", "box", "carrot", "characters", "command", "commandkey", "cpu", "database",
-        "file", "folder", "flag", "gear", "invite", "option", "package", "string", "symlink", "template"
+        "alert", "android", "apple", "asterisk", "aws", "azure", "box", "carrot", "characters",
+        "command", "commandkey", "commit", "cpu", "database", "default-file-icon", "default-folder-icon",
+        "discord", "docker", "file", "firebase", "flag", "folder", "gcloud", "gear", "git", "github",
+        "gitlab", "gradle", "heroku", "invite", "kubernetes", "netlify", "node", "npm", "okteto",
+        "option", "package", "q", "red-flag", "slack", "statusbar", "string", "symlink", "template",
+        "twitter", "vercel", "yarn"
     }
 
     map

@@ -33,12 +33,14 @@ Early fork. Renaming and decoupling from AWS is in progress. The upstream code b
 | `extensions/vscode`, `extensions/jetbrains` | Editor integrations (kept upstream-as-is for now) |
 | `proto/` | Protobuf IPC schema between the components |
 
-## Local development
+## Install
+
+There are no prebuilt binaries yet — install from source.
 
 Prerequisites:
 
 - macOS (Xcode 13+) or Linux with the build deps below
-- Rust toolchain (`rustup`)
+- Rust toolchain (`rustup`); the workspace pins `1.87.0` via `rust-toolchain.toml`
 - Node 22+, `pnpm`, `mise` for tool versioning
 - `protoc`
 
@@ -52,12 +54,75 @@ sudo apt install build-essential pkg-config jq dpkg curl wget cmake clang \
   valac libibus-1.0-dev libglib2.0-dev sqlite3 libxdo-dev protobuf-compiler
 ```
 
-Build the workspace:
+On macOS, Homebrew covers most of it:
+
+```sh
+brew install protobuf pnpm mise rustup
+rustup-init -y --default-toolchain 1.87.0
+```
+
+Clone, install JS deps, and build the CLI:
+
+```sh
+git clone https://github.com/usqr/CLIprecog.git
+cd CLIprecog
+mise install                       # node + python pinned in .mise.toml
+pnpm install --ignore-scripts
+cargo build --release -p q_cli     # produces target/release/q_cli (~38 MB)
+```
+
+Drop the binary onto your PATH as `precog`:
+
+```sh
+install -m 755 target/release/q_cli ~/.local/bin/precog
+```
+
+(Make sure `~/.local/bin` is on `PATH`; on macOS you may prefer `/usr/local/bin` or `/opt/homebrew/bin`.)
+
+## Run
+
+First-time setup — install shell integrations and verify:
+
+```sh
+precog setup --no-confirm          # writes the bashrc/zshrc pre/post hooks
+precog doctor                      # checks the install
+```
+
+Restart your terminal so the integration loads in a fresh session; `precog doctor` will then stop reporting the `Q_TERM` version mismatch.
+
+Day-to-day commands:
+
+| Command | What it does |
+|---------|--------------|
+| `precog` | Show the popular subcommands |
+| `precog --help-all` | List every subcommand |
+| `precog dashboard` | Open the settings / onboarding dashboard |
+| `precog launch` / `restart` / `quit` | Manage the background `fig_desktop` overlay app |
+| `precog doctor` | Diagnose integration problems |
+| `precog settings` | Tweak autocomplete behaviour, theme, keybindings |
+| `precog integrations` | Manage editor / shell integrations |
+| `precog uninstall` | Remove shell hooks and the desktop app |
+
+Autocomplete itself is passive — once the shell integration is loaded, the dropdown appears as you type. There's nothing to invoke.
+
+## Local development
+
+Build everything (workspace crates + JS packages) for hacking:
 
 ```sh
 mise install
 pnpm install --ignore-scripts
-cargo build
+cargo build                        # debug build of every workspace member
+pnpm -r build                      # dashboard, autocomplete, specs, bindings
+```
+
+Useful checks before opening a PR (mirrors the husky pre-commit hook):
+
+```sh
+cargo +nightly fmt --check         # rustup toolchain install nightly --component rustfmt
+cargo clippy --locked -- -D warnings
+typos --config .typos.toml         # brew install typos-cli  /  cargo install typos-cli
+pnpm exec prettier --check .
 ```
 
 ## License

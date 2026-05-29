@@ -1,5 +1,3 @@
-// This is needed for objc
-#![allow(unexpected_cfgs)]
 #![allow(deprecated)]
 
 use std::ffi::CString;
