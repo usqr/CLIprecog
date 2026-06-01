@@ -68,8 +68,12 @@ static ASSETS: LazyLock<HashMap<AssetSpecifier<'static>, Arc<Cow<'static, [u8]>>
     }
 
     load_assets! {
-        "alert", "asterisk", "box", "carrot", "characters", "command", "commandkey", "cpu", "database",
-        "file", "folder", "flag", "gear", "invite", "option", "package", "string", "symlink", "template"
+        "alert", "android", "apple", "asterisk", "aws", "azure", "box", "carrot", "characters",
+        "command", "commandkey", "commit", "cpu", "database", "default-file-icon", "default-folder-icon",
+        "discord", "docker", "file", "firebase", "flag", "folder", "gcloud", "gear", "git", "github",
+        "gitlab", "gradle", "heroku", "invite", "kubernetes", "netlify", "node", "npm", "okteto",
+        "option", "package", "q", "red-flag", "slack", "statusbar", "string", "symlink", "template",
+        "twitter", "vercel", "yarn"
     }
 
     map
@@ -297,6 +301,24 @@ fn transform_unix_to_windows_path(path: Cow<'_, str>) -> Cow<'_, Path> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn embeds_spec_referenced_icons() {
+        // The autocomplete popup requests `fig://icon?type=X` for these high-frequency
+        // icon types (see the vendored specs in packages/autocomplete-specs). Each must
+        // be embedded in ASSETS, otherwise resolve_asset falls back to the blank
+        // `template` icon and the popup shows generic icons. Regression guard for the
+        // missing-popup-icons bug.
+        for name in [
+            "git", "github", "gitlab", "docker", "aws", "npm", "node", "yarn", "kubernetes",
+            "okteto", "commit", "apple", "android", "heroku", "discord", "twitter",
+        ] {
+            assert!(
+                ASSETS.contains_key(&AssetSpecifier::Named(name.into())),
+                "icon `{name}` referenced by specs is not embedded in ASSETS"
+            );
+        }
+    }
 
     #[test]
     fn unix_to_windows_path_transform() {
