@@ -36,6 +36,7 @@ pub(crate) mod mux {
 }
 
 /// Stress Testing Protocol Buffers
+#[allow(dead_code)]
 pub(crate) mod stress {
     include!(concat!(env!("OUT_DIR"), "/stress.rs"));
 }
