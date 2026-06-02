@@ -417,7 +417,7 @@ grep "activated server.*iterm2" $TMPDIR/precoglog/imk.log | tail -3
   `[workspace.lints.clippy]` allow `uninlined_format_args`, `iter_kv_map`, `unnested_or_patterns`.
 - `fig_os_shim/src/process_info/pid.rs`: inlined format args. `icons.rs`: nightly-rustfmt'd.
 - `deny.toml`: ignored inherited transitive RUSTSEC (rustls-webpki 2026-0098/0099/0104, 2026-0009) + unmaintained, with FIXMEs. Real fix = upgrade aws-smithy/rustls stack (inherited from main).
-- `.typos.toml`: exclude `packages/autocomplete-specs/src/**` + `vendor/**`; accept `cpy`. `agents.md` reworded (PNGs→PNG files).
+- `.typos.toml`: exclude `packages/autocomplete-specs/src/**` + `vendor/**`; accept `cpy`. `agents.md` PNG wording reworded.
 - `vendor/wry-0.48.1/Cargo.toml`: `[lints]` allow deprecated + clippy::all (Linux deprecated webkit2gtk APIs).
 - `q_cli/src/cli/uninstall.rs`: removed unused `use tracing::error;` (linux path) → fixed Clippy ubuntu.
 

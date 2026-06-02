@@ -96,6 +96,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+      - name: Install protoc (Windows)
+        run: choco install protoc -y --no-progress
       - uses: dtolnay/rust-toolchain@1.84.0
         id: toolchain
         with:
@@ -116,6 +118,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+      - name: Install protoc (Windows)
+        run: choco install protoc -y --no-progress
       - uses: dtolnay/rust-toolchain@nightly
         id: toolchain
         with:
