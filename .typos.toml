@@ -1,6 +1,14 @@
 [files]
+# Vendored / upstream sources we don't own and shouldn't spell-check:
+# - autocomplete-specs/src: upstream Fig completion specs (command descriptions)
+# - vendor: third-party vendored crates (e.g. wry-0.48.1)
+extend-exclude = [
+  "packages/autocomplete-specs/src/**",
+  "vendor/**",
+]
 
 [default.extend-words]
 mmaped = "mmaped"
 caf = "caf" # used in chat tools test
 PNGs = "PNGs"
+cpy = "cpy" # `ditto_cpy` etc. in fig_desktop install paths

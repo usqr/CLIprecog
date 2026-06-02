@@ -310,8 +310,22 @@ mod tests {
         // `template` icon and the popup shows generic icons. Regression guard for the
         // missing-popup-icons bug.
         for name in [
-            "git", "github", "gitlab", "docker", "aws", "npm", "node", "yarn", "kubernetes",
-            "okteto", "commit", "apple", "android", "heroku", "discord", "twitter",
+            "git",
+            "github",
+            "gitlab",
+            "docker",
+            "aws",
+            "npm",
+            "node",
+            "yarn",
+            "kubernetes",
+            "okteto",
+            "commit",
+            "apple",
+            "android",
+            "heroku",
+            "discord",
+            "twitter",
         ] {
             assert!(
                 ASSETS.contains_key(&AssetSpecifier::Named(name.into())),

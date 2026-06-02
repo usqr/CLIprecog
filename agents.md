@@ -215,8 +215,8 @@ autocomplete overlay anchored under the cursor with real suggestions.
   `…=docker`, `…=node`, etc. — none in `ASSETS`. The fallback `PlatformState::icon_lookup`
   on macOS calls `NSWorkspace iconForFileType:@"git"` which returns a generic file icon, then
   `resolve_asset` falls through to `DEFAULT_ICON = "template"`. The bundle's
-  `Contents/Resources/autocomplete-specs/build/icons/` shipped 47 PNGs but **nothing in
-  fig_desktop reads from there** — they're dead weight. **Fix:** copied all 28 missing PNGs
+  `Contents/Resources/autocomplete-specs/build/icons/` shipped 47 PNG files but **nothing in
+  fig_desktop reads from there** — they're dead weight. **Fix:** copied all 28 missing PNG files
   from `packages/autocomplete-specs/icons/` (source of truth, 49 files = 47 PNG + 2 SVG)
   into `crates/fig_desktop/icons/autocomplete/`, expanded `load_assets!` to all 47 PNG names.
   `build.rs` resizes them to 32×32 at compile time, `include_bytes!` embeds the OUT_DIR
