@@ -362,10 +362,15 @@ version = "0.58"
 [target.'cfg(target_os = "windows")'.dependencies.windows-version]
 version = "0.1"
 
-[lints.rust.unexpected_cfgs]
-level = "warn"
-priority = 0
-check-cfg = [
+[lints.rust]
+# Vendored third-party crate: relax lints so the pinned-toolchain CI
+# (clippy/test with -D warnings) doesn't fail on upstream wry's own code
+# (e.g. deprecated webkit2gtk APIs on Linux).
+deprecated = "allow"
+unexpected_cfgs = { level = "allow", priority = 0, check-cfg = [
     "cfg(linux)",
     "cfg(gtk)",
-]
+] }
+
+[lints.clippy]
+all = "allow"
