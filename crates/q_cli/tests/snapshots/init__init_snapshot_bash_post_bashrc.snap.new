@@ -1,5 +1,6 @@
 ---
 source: crates/q_cli/tests/init.rs
+assertion_line: 94
 expression: init
 ---
 Q_SHELL="/bin/zsh"
