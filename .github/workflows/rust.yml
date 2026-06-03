@@ -93,6 +93,11 @@ jobs:
   cargo-clippy-windows:
     name: Clippy Windows
     runs-on: windows-latest
+    # Windows is not a supported target for this fork (macOS-focused). fig_ipc is
+    # built on Unix-domain sockets (tokio::net::UnixStream) with no Windows port,
+    # so q_cli does not compile here. Kept as an informational signal but
+    # non-blocking until/unless a Windows IPC transport is added.
+    continue-on-error: true
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -115,6 +120,9 @@ jobs:
   cargo-test-windows:
     name: Test Windows
     runs-on: windows-latest
+    # See cargo-clippy-windows: Windows is unsupported (no fig_ipc Windows IPC
+    # transport). Non-blocking until a port lands.
+    continue-on-error: true
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
