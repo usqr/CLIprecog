@@ -56,8 +56,8 @@ pub enum Pid {
 impl std::fmt::Display for Pid {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Pid::Real(_, raw) => write!(f, "{}", raw),
-            Pid::Fake(fake) => write!(f, "{}", fake),
+            Pid::Real(_, raw) => write!(f, "{raw}"),
+            Pid::Fake(fake) => write!(f, "{fake}"),
         }
     }
 }

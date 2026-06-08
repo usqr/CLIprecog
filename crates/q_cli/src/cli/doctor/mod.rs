@@ -214,6 +214,7 @@ macro_rules! doctor_warning {
         DoctorError::warning(format!($($arg)*))
     }}
 }
+#[allow(unused_imports)]
 pub(crate) use doctor_warning;
 
 macro_rules! doctor_error {
@@ -221,6 +222,7 @@ macro_rules! doctor_error {
         DoctorError::error(format!($($arg)*))
     }}
 }
+#[allow(unused_imports)]
 pub(crate) use doctor_error;
 
 #[allow(unused_macros)]
@@ -234,6 +236,7 @@ macro_rules! doctor_fix {
         }
     };
 }
+#[allow(unused_imports)]
 pub(crate) use doctor_fix;
 
 macro_rules! doctor_fix_async {

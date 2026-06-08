@@ -19,6 +19,7 @@ fn debug_verify_codesign() -> Result<()> {
 }
 
 #[test]
+#[ignore = "hits the release-index service; not available for the Precog fork"]
 fn debug_get_index() -> Result<()> {
     cli()
         .args(["debug", "get-index", "stable"])
@@ -37,6 +38,7 @@ fn debug_list_intellij_variants() -> Result<()> {
 }
 
 #[test]
+#[ignore = "auth subsystem was removed in the Precog fork"]
 fn debug_refresh_auth_token() -> Result<()> {
     cli()
         .args(["debug", "refresh-auth-token"])
