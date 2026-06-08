@@ -137,6 +137,7 @@ mod test {
     use super::*;
 
     #[tokio::test]
+    #[ignore = "hits live AWS Cognito identity pools; flaky in CI (TooManyRequestsException: Rate exceeded)"]
     async fn pools() {
         for telemetry_stage in [TelemetryStage::BETA, TelemetryStage::EXTERNAL_PROD] {
             get_cognito_credentials_send(&telemetry_stage).await.unwrap();

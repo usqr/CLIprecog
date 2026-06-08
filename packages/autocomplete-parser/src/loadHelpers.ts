@@ -34,9 +34,7 @@ const makeCdnUrlFactory =
 // vendored specs from disk (`packages/autocomplete-specs/build/`). This
 // factory only fires in browser-only dev builds (no native shell), and falls
 // back to a local dev server.
-const cdnUrlFactory = makeCdnUrlFactory(
-  "http://localhost:8080/specs/",
-);
+const cdnUrlFactory = makeCdnUrlFactory("http://localhost:8080/specs/");
 
 const stringImportCache = new Map<string, unknown>();
 

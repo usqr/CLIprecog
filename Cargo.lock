@@ -2645,6 +2645,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "fig-api-mock"
+version = "1.19.7"
+dependencies = [
+ "async-trait",
+ "clap",
+ "fig_desktop_api",
+ "fig_os_shim",
+ "fig_proto",
+ "fig_settings",
+ "tokio",
+]
+
+[[package]]
 name = "fig_aws_common"
 version = "1.19.7"
 dependencies = [
@@ -3180,6 +3193,22 @@ dependencies = [
  "winapi",
  "windows 0.58.0",
  "winreg 0.55.0",
+]
+
+[[package]]
+name = "figterm2"
+version = "1.19.7"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "fig_ipc",
+ "fig_proto",
+ "fig_remote_ipc",
+ "fig_util",
+ "portable-pty",
+ "tempfile",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]
@@ -10811,8 +10840,6 @@ checksum = "1e9df38ee2d2c3c5948ea468a8406ff0db0b29ae1ffde1bcf20ef305bcc95c51"
 [[package]]
 name = "wry"
 version = "0.48.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2e33c08b174442ff80d5c791020696f9f8b4e4a87b8cfc7494aad6167ec44e1"
 dependencies = [
  "base64 0.22.1",
  "block2 0.5.1",
