@@ -508,7 +508,6 @@ impl WebviewManager {
                             let autocomplete_enabled =
                                 !fig_settings::settings::get_bool_or("autocomplete.disable", false)
                                     && PlatformState::accessibility_is_enabled().unwrap_or(true);
-                            // && fig_request::fig_auth::is_logged_in();
 
                             proxy
                                 .send_event(Event::WindowEvent {
@@ -523,7 +522,6 @@ impl WebviewManager {
                             let autocomplete_enabled =
                                 !fig_settings::settings::get_bool_or("autocomplete.disable", false)
                                     && PlatformState::accessibility_is_enabled().unwrap_or(true);
-                            // && fig_request::fig_auth::is_logged_in();
 
                             proxy
                                 .send_event(Event::WindowEvent {

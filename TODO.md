@@ -1,11 +1,16 @@
 # TODO — Auth removal (WIP on `chore/remove-login`)
 
 ## Status
-✅ Workspace `cargo check --workspace --tests` clean.
+✅ Workspace `cargo check --workspace --tests` clean (re-verified 2026-06-03 on a fresh container, 1m 47s; warnings only).
 ✅ `cargo build --release --workspace` clean (warnings only, 4m 29s).
-✅ `pnpm install && pnpm -r build` — dashboard + autocomplete packages build.
+✅ `pnpm install && pnpm -r build` — dashboard + autocomplete packages build (re-verified 2026-06-03).
 ✅ `precog install --no-confirm`, `precog setup --no-confirm`, `precog doctor` — no login gate, exit 0.
-Pending: autocomplete interactive smoke (requires new shell session).
+Pending: autocomplete interactive smoke (requires a display + new shell session; not runnable in the headless CI container).
+
+> Build note: `cargo check`/`build` for `fig_desktop` needs the GTK/webkit system libs from the
+> README apt list (`libgtk-3-dev libwebkit2gtk-4.1-dev libjavascriptcoregtk-4.1-dev
+> libayatana-appindicator3-dev librsvg2-dev libdbus-1-dev libssl-dev libxdo-dev`). A fresh
+> container without them fails at the `gdk-3.0` pkg-config probe.
 
 ## Completed this session
 - `fig_telemetry` — gutted CW client + `fig_auth::builder_id_token` tagging; dropped `amzn-codewhisperer-client` dep
