@@ -29,7 +29,6 @@ use indoc::formatdoc;
 use super::internal::should_figterm_launch::should_figterm_launch_exit_status;
 use crate::util::app_path_from_bundle_id;
 
-const INLINE_ENABLED_SETTINGS_KEY: &str = "inline.enabled";
 const SHELL_INTEGRATIONS_ENABLED_STATE_KEY: &str = "shell-integrations.enabled";
 
 static IS_SNAPSHOT_TEST: LazyLock<bool> = LazyLock::new(|| fig_os_shim::Env::new().q_init_snapshot_test());
@@ -151,26 +150,10 @@ async fn shell_init(shell: &Shell, when: &When, rcfile: &Option<String>) -> Resu
         to_source.push(assign_shell_variable(shell, "SHOULD_QTERM_LAUNCH", status, false));
     }
 
-    let inline_enabled = fig_settings::settings::get_bool_or(INLINE_ENABLED_SETTINGS_KEY, true);
-
     if let When::Post = when {
-        if !matches!(
-            (shell, rcfile.as_deref()),
-            (Shell::Zsh, Some("zprofile")) | (Shell::Bash, Some("profile" | "bash_profile"))
-        ) && fig_settings::state::get_bool_or("dotfiles.enabled", true)
-            && shell == &Shell::Zsh
-            && when == &When::Post
-            && inline_enabled
-            && !*IS_SNAPSHOT_TEST
-        {
-            to_source.push(guard_source(
-                shell,
-                false,
-                "Q_DOTFILES_SOURCED",
-                GuardAssignment::AfterSourcing,
-                fig_integrations::shell::inline_shell_completion_plugin::ZSH_SCRIPT,
-            ));
-        }
+        // The inline shell completion plugin was removed alongside auth removal: it called
+        // `<cli> _ inline-shell-completion`, an internal subcommand that no longer exists.
+        // Emitting it made the shell spam "unrecognized subcommand" on every keystroke.
 
         // if stdin().is_tty() && env::var_os(PROCESS_LAUNCHED_BY_Q).is_none() {
         //     // if no value, assume that we have seen onboarding already.
@@ -266,17 +249,6 @@ async fn shell_init(shell: &Shell, when: &When, rcfile: &Option<String>) -> Resu
         }
     }
 
-    if inline_enabled && when == &When::Post && shell == &Shell::Zsh && !*IS_SNAPSHOT_TEST {
-        let key = "prompt.inline.count";
-        if let Ok(prompt_count) = fig_settings::state::get_int(key) {
-            let prompt_count = prompt_count.unwrap_or_default();
-            if prompt_count < 1 {
-                let _ = fig_settings::state::set_value(key, prompt_count + 1);
-                to_source.push(inline_prompt_code(*shell));
-            }
-        }
-    }
-
     Ok(to_source.join("\n"))
 }
 
@@ -304,19 +276,6 @@ fn input_method_prompt_code(shell: Shell, terminal: &Terminal) -> String {
             "printf '\\n🚀 {PRODUCT_NAME} supports {terminal}!\\n\\nEnable integrations with {terminal} by \
              running:\\n  {}\\n\\n'\n",
             format!("{CLI_BINARY_NAME} integrations install input-method").magenta()
-        ),
-    )
-}
-
-fn inline_prompt_code(shell: Shell) -> String {
-    guard_source(
-        &shell,
-        false,
-        "Q_INLINE_PROMPT",
-        GuardAssignment::AfterSourcing,
-        format!(
-            "printf '\\n{PRODUCT_NAME} now supports AI-powered inline completions!\\n\\nTo disable run: {}\\n\\n'\n",
-            format!("{CLI_BINARY_NAME} inline disable").magenta()
         ),
     )
 }
@@ -392,20 +351,6 @@ mod tests {
                 format!(
                     "\n🚀 {PRODUCT_NAME} supports {terminal}!\n\nEnable integrations with {terminal} by running:\n  {}\n\n",
                     format!("{CLI_BINARY_NAME} integrations install input-method").magenta()
-                )
-            );
-
-            let inline_prompt_output = run_shell_stdout(&shell, &inline_prompt_code(shell));
-
-            println!("=== inline_prompt {shell:?} ===");
-            println!("{inline_prompt_output}");
-            println!("===");
-
-            assert_eq!(
-                inline_prompt_output,
-                format!(
-                    "\n{PRODUCT_NAME} now supports AI-powered inline completions!\n\nTo disable run: {}\n\n",
-                    format!("{CLI_BINARY_NAME} inline disable").magenta()
                 )
             );
 
